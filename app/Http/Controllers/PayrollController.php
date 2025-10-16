@@ -20,21 +20,33 @@ class PayrollController extends Controller
         }
 
         $payPeriods = PayPeriod::orderBy('end_date', 'desc')->get();
-        $employees = User::where('role', 'employee')->get();
-
-        // Date range filter
         $start = $request->input('start_date');
         $end = $request->input('end_date');
         $payrolls = collect();
         $currentPeriod = null;
+        $employees = collect();
         if ($start && $end) {
+            // Determine if this is a whole month filter
+            $startDate = \Carbon\Carbon::parse($start);
+            $endDate = \Carbon\Carbon::parse($end);
+            $isWholeMonth = $startDate->isSameDay($startDate->copy()->startOfMonth()) && $endDate->isSameDay($endDate->copy()->endOfMonth());
+            if ($isWholeMonth) {
+                $employees = User::where('role', 'employee')->where('pay_period', 'monthly')->get();
+            } else {
+                $employees = User::where('role', 'employee')->where('pay_period', 'semi-monthly')->get();
+            }
+
             $currentPeriod = PayPeriod::firstOrCreate([
                 'start_date' => $start,
                 'end_date' => $end
             ], ['status' => 'draft']);
+
             if ($currentPeriod) {
                 $payrolls = Payslip::with(['user', 'payPeriod'])
                     ->where('pay_period_id', $currentPeriod->id)
+                    ->whereHas('user', function($q) use ($isWholeMonth) {
+                        $q->where('pay_period', $isWholeMonth ? 'monthly' : 'semi-monthly');
+                    })
                     ->get();
 
                 // compute work_days (weekdays) and present_days for each payslip
@@ -51,6 +63,9 @@ class PayrollController extends Controller
                     return $p;
                 });
             }
+        } else {
+            // Default: show all employees (or leave empty)
+            $employees = User::where('role', 'employee')->get();
         }
 
         // (Generation moved to generateForRange route)
