@@ -118,8 +118,11 @@ class PayrollController extends Controller
             $sss = $basicPay * 0.045; // 4.5% SSS
             $gsis = $basicPay * 0.09; // 9% GSIS
             $philhealth = $basicPay * 0.035; // 3.5% PhilHealth
+            $other_deductions = 0; // Reset on generation
 
-            $netPay = $basicPay + $overtimePay - $lateDeductions - $absenceDeductions - $sss - $gsis - $philhealth;
+            $totalDeductions = $lateDeductions + $absenceDeductions + $sss + $gsis + $philhealth + $other_deductions;
+            $grossPay = $basicPay + $overtimePay;
+            $netPay = $grossPay - $totalDeductions;
 
             Payslip::updateOrCreate(
                 [
@@ -134,6 +137,7 @@ class PayrollController extends Controller
                     'sss' => $sss,
                     'gsis' => $gsis,
                     'philhealth' => $philhealth,
+                    'other_deductions' => $other_deductions,
                     'net_pay' => $netPay,
                     'total_hours_worked' => $totalHours,
                     'overtime_hours' => $overtimeHours,
@@ -194,6 +198,24 @@ class PayrollController extends Controller
         return view('payroll.payslip', compact('payslip', 'employee', 'payPeriod'));
     }
 
+    /**
+     * Update Other Deduction for a payslip.
+     */
+    public function updateOtherDeduction(Request $request, Payslip $payslip)
+    {
+        $request->validate([
+            'other_deductions' => 'required|numeric|min:0',
+        ]);
+        $user = Auth::user();
+        // Only admin/hr can do this.
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+        $payslip->other_deductions = $request->input('other_deductions');
+        $payslip->save();
+        return redirect()->back()->with('success', 'Other Deduction updated successfully.');
+    }
+
     private function getCurrentPayPeriod()
     {
         $today = Carbon::today();
@@ -232,5 +254,34 @@ class PayrollController extends Controller
 
         $presentDays = $dtrRecords->unique('date')->count();
         return $workingDays - $presentDays;
+    }
+
+    public function updateDeductions(Request $request, Payslip $payslip)
+    {
+        $request->validate([
+            'sss' => 'required|numeric|min:0',
+            'gsis' => 'required|numeric|min:0',
+            'philhealth' => 'required|numeric|min:0',
+            'other_deductions' => 'required|numeric|min:0',
+        ]);
+
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $payslip->sss = $request->input('sss');
+        $payslip->gsis = $request->input('gsis');
+        $payslip->philhealth = $request->input('philhealth');
+        $payslip->other_deductions = $request->input('other_deductions');
+
+        // Recalculate net pay
+        $totalDeductions = $payslip->sss + $payslip->gsis + $payslip->philhealth + $payslip->other_deductions + $payslip->late_deductions + $payslip->absences_deductions;
+        $grossPay = $payslip->basic_pay + $payslip->overtime_pay;
+        $payslip->net_pay = $grossPay - $totalDeductions;
+
+        $payslip->save();
+
+        return back()->with('success', 'Deductions updated successfully.');
     }
 }

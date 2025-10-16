@@ -54,5 +54,36 @@ function initEmployeeModal() {
 	}
 }
 
+function initDeductionModal() {
+  const modal = document.getElementById('deductionModal');
+  const form = document.getElementById('deductionForm');
+  const payslipIdInput = document.getElementById('deduction_payslip_id');
+  const otherDeductionInput = document.getElementById('other_deductions');
+
+  if (!modal) return;
+
+  window.openDeductionModal = function(payslipId, otherDeduction = 0) {
+    payslipIdInput.value = payslipId;
+    otherDeductionInput.value = otherDeduction || 0;
+    // Set the action dynamically (? route/payslip/update endpoint)
+    form.action = '/payroll/payslip/' + payslipId + '/deduction';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  window.closeDeductionModal = function() {
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+    if (form) form.reset();
+  }
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) window.closeDeductionModal();
+  });
+}
+
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEmployeeModal);
 else initEmployeeModal();
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDeductionModal);
+else initDeductionModal();

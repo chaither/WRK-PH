@@ -26,6 +26,8 @@ Route::prefix('payroll')->name('payroll.')->group(function() {
     Route::post('/generate', [PayrollController::class, 'generateForRange'])->name('generate.range');
     Route::post('/pay-periods/{payPeriod}/complete', [PayrollController::class, 'completePayPeriod'])->name('pay-periods.complete');
     Route::get('/employees/{employee}/pay-periods/{payPeriod}/payslip', [PayrollController::class, 'showPayslip'])->name('show-payslip');
+    Route::put('/payslip/{payslip}/deduction', [PayrollController::class, 'updateOtherDeduction'])->name('payroll.payslip.deduction');
+    Route::put('/payslips/{payslip}/deductions', [PayrollController::class, 'updateDeductions'])->name('payslips.update-deductions');
 });
 Route::get('dtr/admin', [DTRController::class, 'adminView'])->name('dtr.admin');
 

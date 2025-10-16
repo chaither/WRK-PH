@@ -102,12 +102,15 @@
                             <td class="px-4 py-2">₱{{ number_format($payslip->sss, 2) }}</td>
                             <td class="px-4 py-2">₱{{ number_format($payslip->gsis, 2) }}</td>
                             <td class="px-4 py-2">₱{{ number_format($payslip->philhealth, 2) }}</td>
-                            <td class="px-4 py-2">₱{{ number_format($payslip->late_deductions + $payslip->absences_deductions, 2) }}</td>
+                            <td class="px-4 py-2">₱{{ number_format($payslip->other_deductions ?? 0, 2) }}</td>
                             <td class="px-4 py-2">₱{{ number_format($payslip->net_pay, 2) }}</td>
                             <td class="px-4 py-2">
-                                <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-blue-500 hover:text-blue-700" title="View Payslip">
+                                <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-blue-500 hover:text-blue-700 mr-2" title="View Payslip">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                <button onclick="openEditDeductionsModal({{ $payslip->id }}, {{ $payslip->sss }}, {{ $payslip->gsis }}, {{ $payslip->philhealth }}, {{ $payslip->other_deductions ?? 0 }})" class="text-red-500 hover:text-red-700" title="Set Other Deduction">
+                                    <i class="fas fa-coins"></i>
+                                </button>
                             </td>
                         </tr>
                     @empty
@@ -121,3 +124,78 @@
     </div>
 </div>
 @endsection
+
+@push('modals')
+<div id="editDeductionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-md p-6 max-w-lg w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Edit Deductions</h2>
+            <button onclick="closeEditDeductionsModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editDeductionsForm" method="POST" action="" class="space-y-6">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="payslip_id" id="edit_deductions_payslip_id">
+
+            <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+                <h3 class="text-lg font-semibold mb-4 text-blue-800">Government Deductions</h3>
+                <div>
+                    <label for="sss_amount" class="block text-gray-700 font-medium mb-2">SSS (₱)</label>
+                    <input type="number" min="0" step="0.01" name="sss" id="sss_amount" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="gsis_amount" class="block text-gray-700 font-medium mb-2">GSIS (₱)</label>
+                    <input type="number" min="0" step="0.01" name="gsis" id="gsis_amount" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="philhealth_amount" class="block text-gray-700 font-medium mb-2">PhilHealth (₱)</label>
+                    <input type="number" min="0" step="0.01" name="philhealth" id="philhealth_amount" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+                <h3 class="text-lg font-semibold mb-4 text-blue-800">Other Deductions</h3>
+                <div>
+                    <label for="other_deductions_amount" class="block text-gray-700 font-medium mb-2">Other Deductions (₱)</label>
+                    <input type="number" min="0" step="0.01" name="other_deductions" id="other_deductions_amount" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-4 pt-6">
+                <button type="button" onclick="closeEditDeductionsModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endpush
+
+@push('scripts')
+<script>
+    function openEditDeductionsModal(payslipId, sss, gsis, philhealth, other_deductions) {
+        document.getElementById('edit_deductions_payslip_id').value = payslipId;
+
+        document.getElementById('sss_amount').value = sss;
+        document.getElementById('gsis_amount').value = gsis;
+        document.getElementById('philhealth_amount').value = philhealth;
+        document.getElementById('other_deductions_amount').value = 0; // As per user request
+
+        const form = document.getElementById('editDeductionsForm');
+        form.action = "/payroll/payslips/" + payslipId + "/deductions";
+
+        document.getElementById('editDeductionsModal').classList.remove('hidden');
+        document.getElementById('editDeductionsModal').classList.add('flex');
+    }
+
+    function closeEditDeductionsModal() {
+        document.getElementById('editDeductionsModal').classList.add('hidden');
+        document.getElementById('editDeductionsModal').classList.remove('flex');
+    }
+</script>
+@endpush

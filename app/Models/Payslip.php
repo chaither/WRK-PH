@@ -17,6 +17,7 @@ class Payslip extends Model
         'sss',
         'gsis',
         'philhealth',
+        'other_deductions',
         'net_pay',
         'total_hours_worked',
         'overtime_hours',
