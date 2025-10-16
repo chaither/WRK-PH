@@ -8,15 +8,10 @@
         <h2 class="text-2xl font-bold mb-6">Payroll Management</h2>
 
         <div class="mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-blue-100 p-6 rounded-lg">
                     <h3 class="text-xl font-semibold text-blue-800">Total Employees</h3>
                     <p class="text-3xl font-bold text-blue-600">{{ $totalEmployees ?? 0 }}</p>
-                </div>
-
-                <div class="bg-green-100 p-6 rounded-lg">
-                    <h3 class="text-xl font-semibold text-green-800">Total Work Hours</h3>
-                    <p class="text-3xl font-bold text-green-600">{{ $totalHours ?? 0 }}</p>
                 </div>
 
                 <div class="bg-purple-100 p-6 rounded-lg">
@@ -24,6 +19,19 @@
                     <p class="text-3xl font-bold text-purple-600">₱{{ number_format($totalPayroll ?? 0, 2) }}</p>
                 </div>
             </div>
+        </div>
+
+        {{-- Quick-select buttons for semi-monthly payroll --}}
+        <div class="mb-2 flex gap-2">
+            @php
+                $now = \Carbon\Carbon::now();
+                $firstHalfStart = $now->copy()->startOfMonth()->format('Y-m-d');
+                $firstHalfEnd = $now->copy()->day(15)->format('Y-m-d');
+                $secondHalfStart = $now->copy()->day(16)->format('Y-m-d');
+                $secondHalfEnd = $now->copy()->endOfMonth()->format('Y-m-d');
+            @endphp
+            <a href="?start_date={{ $firstHalfStart }}&end_date={{ $firstHalfEnd }}" class="px-3 py-2 bg-blue-100 text-blue-800 rounded hover:bg-blue-200">1st–15th ({{ $now->format('F Y') }})</a>
+            <a href="?start_date={{ $secondHalfStart }}&end_date={{ $secondHalfEnd }}" class="px-3 py-2 bg-purple-100 text-purple-800 rounded hover:bg-purple-200">16th–End ({{ $now->format('F Y') }})</a>
         </div>
 
         <form method="GET" class="mb-4 flex flex-wrap gap-4 items-end">
@@ -38,19 +46,41 @@
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Filter</button>
         </form>
         @if($start && $end)
-        <form method="POST" action="{{ route('payroll.generate.range') }}" class="mb-4">
-            @csrf
-            <input type="hidden" name="start_date" value="{{ $start }}">
-            <input type="hidden" name="end_date" value="{{ $end }}">
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Generate Payroll</button>
-        </form>
+            @php $period = $currentPeriod; @endphp
+            <div class="mb-4 flex items-center justify-between">
+                <div>
+                    @if($period && $period->status === 'paid')
+                        <span class="px-3 py-2 bg-green-100 text-green-800 rounded">Payroll for selected period: <strong>Paid</strong></span>
+                    @elseif($period && $period->status === 'unpaid')
+                        <span class="px-3 py-2 bg-yellow-100 text-yellow-800 rounded">Payroll for selected period: <strong>Unpaid</strong></span>
+                    @else
+                        <span class="px-3 py-2 bg-gray-100 text-gray-800 rounded">Payroll for selected period: <strong>Not generated</strong></span>
+                    @endif
+                </div>
+
+                <div class="flex gap-3">
+                    <form method="POST" action="{{ route('payroll.generate.range') }}" class="">
+                        @csrf
+                        <input type="hidden" name="start_date" value="{{ $start }}">
+                        <input type="hidden" name="end_date" value="{{ $end }}">
+                        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Generate Payroll</button>
+                    </form>
+
+                    @if(!empty($period) && ($payrolls->count() ?? 0) > 0 && $period->status !== 'paid')
+                        <form method="POST" action="{{ route('payroll.pay-periods.complete', ['payPeriod' => $period->id]) }}">
+                            @csrf
+                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Done Payment</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
         @endif
         <div class="overflow-x-auto">
             <table class="min-w-full table-auto">
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="px-4 py-2">Employee</th>
-                        <th class="px-4 py-2">Work Hours</th>
+                        <th class="px-4 py-2">Work Days</th>
                         <th class="px-4 py-2">Rate/Hour</th>
                         <th class="px-4 py-2">Gross Pay</th>
                         <th class="px-4 py-2">SSS</th>
@@ -65,7 +95,7 @@
                     @forelse($payrolls as $payslip)
                         <tr class="border-b">
                             <td class="px-4 py-2">{{ $payslip->user->name }}</td>
-                            <td class="px-4 py-2">{{ $payslip->total_hours_worked }}</td>
+                            <td class="px-4 py-2">{{ $payslip->present_days ?? 0 }} / {{ $payslip->work_days ?? 0 }}</td>
                             <td class="px-4 py-2">₱{{ number_format(optional($payslip->user)->hourly_rate, 2) }}</td>
                             <td class="px-4 py-2">₱{{ number_format($payslip->basic_pay + $payslip->overtime_pay, 2) }}</td>
                             <td class="px-4 py-2">₱{{ number_format($payslip->sss, 2) }}</td>

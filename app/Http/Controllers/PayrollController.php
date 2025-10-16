@@ -33,22 +33,27 @@ class PayrollController extends Controller
                 'end_date' => $end
             ], ['status' => 'draft']);
             if ($currentPeriod) {
-                $payrolls = Payslip::with('user')
+                $payrolls = Payslip::with(['user', 'payPeriod'])
                     ->where('pay_period_id', $currentPeriod->id)
                     ->get();
+
+                // compute work_days (weekdays) and present_days for each payslip
+                $payrolls = $payrolls->map(function($p) {
+                    $start = \Carbon\Carbon::parse($p->payPeriod->start_date);
+                    $end = \Carbon\Carbon::parse($p->payPeriod->end_date);
+                    $workDays = 0;
+                    for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+                        if ($d->isWeekday()) $workDays++;
+                    }
+                    $presentDays = max(0, $workDays - ($p->absent_days ?? 0));
+                    $p->work_days = $workDays;
+                    $p->present_days = $presentDays;
+                    return $p;
+                });
             }
         }
 
-        // Handle generate payroll action
-        if ($request->isMethod('post') && $request->input('generate_payroll') && $start && $end) {
-            // Only generate if not already generated
-            $currentPeriod = PayPeriod::firstOrCreate([
-                'start_date' => $start,
-                'end_date' => $end
-            ], ['status' => 'draft']);
-            $this->generatePayslips($currentPeriod);
-            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('success', 'Payroll generated for selected period.');
-        }
+        // (Generation moved to generateForRange route)
 
         $totalEmployees = $employees->count();
         $totalHours = $payrolls->sum('total_hours_worked');
@@ -123,7 +128,8 @@ class PayrollController extends Controller
             );
         }
 
-        $payPeriod->update(['status' => 'completed']);
+    // mark period as unpaid after creating payslips
+    $payPeriod->update(['status' => 'unpaid']);
         return redirect()->route('payroll.index')->with('success', 'Payslips generated successfully');
     }
 
@@ -143,10 +149,25 @@ class PayrollController extends Controller
             'end_date' => $end
         ], ['status' => 'draft']);
 
+        // Do not regenerate if already generated/unpaid or paid
+        if (in_array($payPeriod->status, ['unpaid', 'paid'])) {
+            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('info', 'Payroll for the selected period has already been generated.');
+        }
+
         // Call existing generator
         $this->generatePayslips($payPeriod);
 
         return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('success', 'Payroll generated for selected period.');
+    }
+
+    // Mark pay period as completed (done payment)
+    public function completePayPeriod(PayPeriod $payPeriod)
+    {
+        if ($payPeriod->status !== 'paid') {
+            $payPeriod->update(['status' => 'paid']);
+        }
+
+        return redirect()->route('payroll.index', ['start_date' => $payPeriod->start_date, 'end_date' => $payPeriod->end_date])->with('success', 'Pay period marked as paid.');
     }
 
     public function showPayslip(User $employee, PayPeriod $payPeriod)
