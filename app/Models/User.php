@@ -22,6 +22,13 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'position',
+        'basic_salary',
+        'pay_period',
+        'daily_rate',
+        'hourly_rate',
+        'work_start',
+        'work_end',
     ];
 
     /**
@@ -39,13 +46,15 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'work_start' => 'datetime',
+        'work_end' => 'datetime',
+        'basic_salary' => 'decimal:2',
+        'daily_rate' => 'decimal:2',
+        'hourly_rate' => 'decimal:2',
+    ];
 
     public function isAdmin(): bool
     {
@@ -60,5 +69,13 @@ class User extends Authenticatable
     public function isEmployee(): bool
     {
         return $this->role === 'employee';
+    }
+
+    public function hasRole($role): bool
+    {
+        if (is_array($role)) {
+            return in_array($this->role, $role);
+        }
+        return $this->role === $role;
     }
 }
