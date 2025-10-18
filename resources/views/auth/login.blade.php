@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HRIS DTR - Login</title>
+    <title>LIMEHILLS DTR - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
 
-/* Dark blue gradient */
-body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(90deg, #1E3A8A 0%, #1E40AF 100%); /* dark blue to slightly lighter dark blue */
-    min-height: 100vh;
-    display: flex;
-    overflow: hidden;
-    color: white;
-}
-
+        /* Dark blue gradient */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(90deg, #1E3A8A 0%, #1E40AF 100%); /* dark blue to slightly lighter dark blue */
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+            color: white;
+        }
 
         /* Login Card White */
         .login-card {
@@ -93,7 +92,7 @@ body {
     <!-- Left Section -->
     <div class="hidden md:flex flex-1 flex-col justify-center items-center relative p-12">
         <h1 class="text-5xl font-extrabold mb-4 text-center text-white">Welcome!</h1>
-<p class="text-xl mb-12 text-center text-white opacity-90 max-w-lg">Your gateway to effortless time management</p>
+    <p class="text-xl mb-12 text-center text-white opacity-90 max-w-lg">Your gateway to effortless time management</p>
 
         
         <div class="flex space-x-8">
@@ -149,7 +148,7 @@ body {
                     <label for="email" class="block text-sm font-semibold text-gray-900 mb-1">Email</label>
                     <input type="email" name="email" id="email" required autocomplete="email"
                         class="input-field w-full px-4 py-3 rounded-md text-sm text-gray-900 placeholder-gray-500 focus:ring focus:ring-indigo-300"
-                        placeholder="user@company.com"
+                        placeholder="user@gmail.com"
                         value="{{ old('email') }}">
                 </div>
 
