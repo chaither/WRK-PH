@@ -11,7 +11,8 @@ use App\Http\Controllers\PayrollController;
 
 // Auth Routes
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/', [LoginController::class, 'login']);
+Route::post('/', [LoginController::class, 'login'])->name('login.submit');
+
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // App Routes (Auth handled in controllers)
