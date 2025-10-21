@@ -28,6 +28,7 @@ Route::prefix('payroll')->name('payroll.')->group(function() {
     Route::post('/generate', [PayrollController::class, 'generateForRange'])->name('generate.range');
     Route::post('/pay-periods/{payPeriod}/complete', [PayrollController::class, 'completePayPeriod'])->name('pay-periods.complete');
     Route::get('/employees/{employee}/pay-periods/{payPeriod}/payslip', [PayrollController::class, 'showPayslip'])->name('show-payslip');
+    Route::get('/download-pdf', [PayrollController::class, 'downloadPdf'])->name('download_pdf');
     Route::put('/payslip/{payslip}/deduction', [PayrollController::class, 'updateOtherDeduction'])->name('payroll.payslip.deduction');
     Route::put('/payslips/{payslip}/deductions', [PayrollController::class, 'updateDeductions'])->name('payslips.update-deductions');
 });

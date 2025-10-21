@@ -67,6 +67,12 @@
                         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Generate Payroll</button>
                     </form>
 
+                    @if(!empty($period) && ($payrolls->count() ?? 0) > 0)
+                        <a href="{{ route('payroll.download_pdf', ['start_date' => $start, 'end_date' => $end]) }}" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" target="_blank">
+                            <i class="fas fa-file-pdf mr-2"></i> Download PDF
+                        </a>
+                    @endif
+
                     @if(!empty($period) && ($payrolls->count() ?? 0) > 0 && $period->status !== 'paid')
                         <form method="POST" action="{{ route('payroll.pay-periods.complete', ['payPeriod' => $period->id]) }}">
                             @csrf

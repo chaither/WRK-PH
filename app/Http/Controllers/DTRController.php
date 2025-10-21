@@ -44,7 +44,7 @@ class DTRController extends Controller
     public function clockIn()
     {
         $user = Auth::user();
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Manila'); // Explicitly set timezone for clock-in
         $today = $now->toDateString();
         
         $existingRecord = DTRRecord::where('user_id', $user->id)
@@ -71,7 +71,7 @@ class DTRController extends Controller
     public function clockOut()
     {
         $user = Auth::user();
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Manila'); // Explicitly set timezone for clock-out
         $today = $now->toDateString();
         
         $record = DTRRecord::where('user_id', $user->id)
