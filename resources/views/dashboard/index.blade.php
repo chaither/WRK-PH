@@ -31,6 +31,7 @@
     </div>
 
     <!-- Main Dashboard Grid -->
+    @if(auth()->user()->role !== 'employee')
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
         
         <!-- Left Column -->
@@ -119,7 +120,7 @@
             </div>
         </div>
     </div>
-
+    @endif
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

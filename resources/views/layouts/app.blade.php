@@ -85,50 +85,6 @@
 
         <!-- Content -->
         <div class="flex-1">
-            <!-- Top Navigation -->
-            <div class="bg-white shadow-md p-4">
-                <div class="flex justify-between items-center">
-                    <button class="block md:hidden" onclick="document.querySelector('.sidebar').classList.toggle('-translate-x-full')">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="flex items-center space-x-4">
-                        <span>{{ auth()->user()->name }}</span>
-                        <span class="px-2 py-1 rounded-full text-xs capitalize" style="background-color: #EEE">
-                            {{ auth()->user()->role }}
-                        </span>
-                    </div>
-                </div>
-        @php $viteManifest = public_path('build/manifest.json'); @endphp
-        @unless (file_exists($viteManifest))
-        <!-- Minimal JS fallback when assets haven't been built. Keeps modal and delete helpers available in dev. -->
-        <script>
-        (function(){
-            if (window.openEmployeeModal) return;
-            window.openEmployeeModal = function(){
-                const modal = document.getElementById('employeeModal');
-                if (!modal) return;
-                modal.classList.remove('hidden'); modal.classList.add('flex');
-            };
-            window.closeEmployeeModal = function(){
-                const modal = document.getElementById('employeeModal');
-                const form = document.getElementById('employeeForm');
-                if (!modal) return;
-                modal.classList.remove('flex'); modal.classList.add('hidden');
-                if (form) form.reset();
-            };
-            window.deleteEmployee = function(id){
-                if (confirm('Are you sure you want to delete this employee?')){
-                    const form = document.createElement('form'); form.method='POST'; form.action=`/employees/${id}`;
-                    const csrf = document.createElement('input'); csrf.type='hidden'; csrf.name='_token'; csrf.value=document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')||'';
-                    const method = document.createElement('input'); method.type='hidden'; method.name='_method'; method.value='DELETE';
-                    form.appendChild(csrf); form.appendChild(method); document.body.appendChild(form); form.submit();
-                }
-            };
-        })();
-        </script>
-        @endunless
-            </div>
-
             <!-- Main Content -->
             <main class="p-6">
                 @yield('content')

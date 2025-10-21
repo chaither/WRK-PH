@@ -17,7 +17,11 @@ Route::post('/', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // App Routes (Auth handled in controllers)
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
+});
+
 Route::resource('employees', EmployeeController::class);
 // Payroll Routes
 Route::prefix('payroll')->name('payroll.')->group(function() {
