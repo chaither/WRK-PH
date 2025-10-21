@@ -9,6 +9,7 @@ use App\Models\Payslip;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PayrollController extends Controller
 {
@@ -314,5 +315,46 @@ class PayrollController extends Controller
         $payslip->save();
 
         return back()->with('success', 'Deductions updated successfully.');
+    }
+
+    public function downloadPdf(Request $request)
+    {
+        if (!Auth::user()->hasRole(['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $start = $request->input('start_date');
+        $end = $request->input('end_date');
+
+        $payPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
+
+        if (!$payPeriod) {
+            return redirect()->back()->with('error', 'No payroll period found for the selected dates.');
+        }
+
+        $payrolls = Payslip::with(['user', 'payPeriod'])
+            ->where('pay_period_id', $payPeriod->id)
+            ->get();
+
+        $data = [
+            'payPeriod' => $payPeriod,
+            'payrolls' => $payrolls,
+        ];
+
+        // Render both views to HTML
+        $payrollHtml = view('payroll.payslips_pdf', $data)->render();
+        $signaturesHtml = view('payroll.payslips_signatures_pdf', $data)->render();
+
+        // No explicit page break needed here; will merge PDFs later
+        $combinedHtml = $payrollHtml . $signaturesHtml;
+
+        $pdf = Pdf::loadHtml($combinedHtml)->setPaper('a4', 'landscape');
+        
+        return $pdf->download('payroll_report_' . $start . '_' . $end . '.pdf');
     }
 }

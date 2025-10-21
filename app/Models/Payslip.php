@@ -13,7 +13,6 @@ class Payslip extends Model
         'basic_pay',
         'overtime_pay',
         'late_deductions',
-        'absences_deductions',
         'sss',
         'gsis',
         'philhealth',

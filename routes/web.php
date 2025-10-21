@@ -17,7 +17,11 @@ Route::post('/', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // App Routes (Auth handled in controllers)
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
+});
+
 Route::resource('employees', EmployeeController::class);
 // Payroll Routes
 Route::prefix('payroll')->name('payroll.')->group(function() {
@@ -28,6 +32,7 @@ Route::prefix('payroll')->name('payroll.')->group(function() {
     Route::post('/generate', [PayrollController::class, 'generateForRange'])->name('generate.range');
     Route::post('/pay-periods/{payPeriod}/complete', [PayrollController::class, 'completePayPeriod'])->name('pay-periods.complete');
     Route::get('/employees/{employee}/pay-periods/{payPeriod}/payslip', [PayrollController::class, 'showPayslip'])->name('show-payslip');
+    Route::get('/download-pdf', [PayrollController::class, 'downloadPdf'])->name('download_pdf');
     Route::put('/payslip/{payslip}/deduction', [PayrollController::class, 'updateOtherDeduction'])->name('payroll.payslip.deduction');
     Route::put('/payslips/{payslip}/deductions', [PayrollController::class, 'updateDeductions'])->name('payslips.update-deductions');
 });
