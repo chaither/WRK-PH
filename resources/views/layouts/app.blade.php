@@ -18,7 +18,7 @@
 <body class="bg-gray-100">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <div class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out z-30">
+        <div id="sidebar" class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
                 <span class="text-2xl font-bold">HRIS SYSTEM</span>
             </div>
@@ -78,13 +78,16 @@
         </div>
 
         <!-- Content -->
-        <div class="flex-1 md:ml-64">
+        <div id="content" class="flex-1 md:ml-64 transition-all duration-200 ease-in-out">
             <!-- Top Nav -->
             <nav class="bg-blue-800 text-white p-4">
-                <div class="container flex items-center px-4">
-                    <button id="hamburger" class="text-white focus:outline-none md:hidden">
+                <div class="flex items-center px-4">
+                    <button id="sidebarToggle" class="text-white focus:outline-none mr-4 md:hidden">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
+                    <div class="flex-1">
+
+                    </div>
                     
                     <div class="relative ml-auto">
                         <button id="profileDropdownToggle" class="rounded-full p-3 focus:outline-none">
@@ -112,17 +115,10 @@
     @stack('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const hamburger = document.getElementById('hamburger');
-            const sidebar = document.querySelector('div.bg-blue-800');
             const profileDropdownToggle = document.getElementById('profileDropdownToggle');
             const profileDropdown = document.getElementById('profileDropdown');
-            const mainContent = document.querySelector('.flex-1'); // Select the main content area
 
-            hamburger.addEventListener('click', function() {
-                sidebar.classList.toggle('-translate-x-full');
-                mainContent.classList.toggle('md:ml-64'); // Toggle margin for main content
-            });
-
+            
             profileDropdownToggle.addEventListener('click', function() {
                 profileDropdown.classList.toggle('hidden');
             });
@@ -131,6 +127,19 @@
             window.addEventListener('click', function(e) {
                 if (!profileDropdownToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
                     profileDropdown.classList.add('hidden');
+                }
+            });
+
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('-translate-x-full');
+                if (sidebar.classList.contains('-translate-x-full')) {
+                    content.classList.remove('ml-64');
+                } else {
+                    content.classList.add('ml-64');
                 }
             });
         });

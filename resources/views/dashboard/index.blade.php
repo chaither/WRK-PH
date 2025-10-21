@@ -13,7 +13,7 @@
 <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
     <!-- Header Section -->
     <div class="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50 p-6 mb-8">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-wrap justify-between items-center">
             <div>
                 <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     HRIS Dashboard
@@ -29,7 +29,7 @@
 
     <!-- Main Dashboard Grid -->
     @if(auth()->user()->role !== 'employee')
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 p-6">
         
         <!-- Left Column -->
         <div class="space-y-8">
@@ -62,7 +62,7 @@
 
     <!-- Top 10 Departments Section -->
     <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mx-6 mb-8 hover:shadow-2xl transition-all duration-500">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-wrap justify-between items-center mb-6">
             <h2 class="text-3xl font-bold text-gray-800">Daily Update</h2>
             <div class="flex items-center space-x-4">
                 <select class="bg-white/60 backdrop-blur-sm border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -75,7 +75,7 @@
         </div>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             <div class="bg-blue-600 rounded-xl p-6 text-white hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
