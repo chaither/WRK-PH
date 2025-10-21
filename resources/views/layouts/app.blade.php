@@ -18,8 +18,8 @@
 <body class="bg-gray-100">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <div class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
-            <div class="flex items-center space-x-2 px-4 mb-6">
+        <div class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out z-30">
+            <div class="flex items-center space-x-2 px-4 mb-8">
                 <span class="text-2xl font-bold">HRIS SYSTEM</span>
             </div>
             
@@ -78,7 +78,29 @@
         </div>
 
         <!-- Content -->
-        <div class="flex-1">
+        <div class="flex-1 md:ml-64">
+            <!-- Top Nav -->
+            <nav class="bg-blue-800 text-white p-4">
+                <div class="container flex items-center px-4">
+                    <button id="hamburger" class="text-white focus:outline-none md:hidden">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div class="relative ml-auto">
+                        <button id="profileDropdownToggle" class="rounded-full p-3 focus:outline-none">
+                            <i class="fas fa-user-circle text-3xl text-white"></i>
+                        </button>
+                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden">
+                            <a href="{{ route('password.request') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-key mr-2"></i>Change Password</a>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-sign-out-alt mr-2"></i>Logout</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
             <!-- Main Content -->
             <main class="p-6">
                 @yield('content')
@@ -88,5 +110,30 @@
     {{-- Render modals and stacked scripts pushed from views --}}
     @stack('modals')
     @stack('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburger = document.getElementById('hamburger');
+            const sidebar = document.querySelector('div.bg-blue-800');
+            const profileDropdownToggle = document.getElementById('profileDropdownToggle');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const mainContent = document.querySelector('.flex-1'); // Select the main content area
+
+            hamburger.addEventListener('click', function() {
+                sidebar.classList.toggle('-translate-x-full');
+                mainContent.classList.toggle('md:ml-64'); // Toggle margin for main content
+            });
+
+            profileDropdownToggle.addEventListener('click', function() {
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            // Close the dropdown if the user clicks outside of it
+            window.addEventListener('click', function(e) {
+                if (!profileDropdownToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
