@@ -158,26 +158,38 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-calculate hourly rate when daily rate changes
+    const basicSalaryInput = document.getElementById('basic_salary');
     const dailyRateInput = document.getElementById('daily_rate');
     const hourlyRateInput = document.getElementById('hourly_rate');
-    
-    dailyRateInput.addEventListener('input', function() {
-        const dailyRate = parseFloat(this.value) || 0;
-        const hourlyRate = dailyRate / 8; // Assuming 8 working hours per day
-        hourlyRateInput.value = hourlyRate.toFixed(2);
-    });
 
-    // Form validation
+    // Disable daily_rate and hourly_rate inputs as they will be auto-calculated
+    dailyRateInput.setAttribute('readonly', true);
+    hourlyRateInput.setAttribute('readonly', true);
+
+    // Function to calculate rates
+    function calculateRates() {
+        const basicSalary = parseFloat(basicSalaryInput.value) || 0;
+        const dailyRate = basicSalary / 22; // Assuming 22 working days in a month
+        const hourlyRate = dailyRate / 8; // Assuming 8 working hours per day
+
+        dailyRateInput.value = dailyRate.toFixed(2);
+        hourlyRateInput.value = hourlyRate.toFixed(2);
+    }
+
+    // Initial calculation on page load if basic salary is already set (e.g., from old() values)
+    calculateRates();
+
+    // Recalculate rates when basic salary changes
+    basicSalaryInput.addEventListener('input', calculateRates);
+
+    // Form validation (keeping existing validation, but adjusting for auto-calculated fields)
     const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
-        const basicSalary = parseFloat(document.getElementById('basic_salary').value);
-        const dailyRate = parseFloat(document.getElementById('daily_rate').value);
-        const hourlyRate = parseFloat(document.getElementById('hourly_rate').value);
-
-        if (basicSalary <= 0 || dailyRate <= 0 || hourlyRate <= 0) {
+        // Basic salary can be 0 or less, if it's the case, the rates will also be 0.
+        const basicSalary = parseFloat(basicSalaryInput.value);
+        if (basicSalary < 0) {
             e.preventDefault();
-            alert('Please ensure all salary amounts are greater than zero.');
+            alert('Basic Salary cannot be negative.');
         }
     });
 });

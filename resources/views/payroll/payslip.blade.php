@@ -57,9 +57,34 @@
                         <span>Absence Deductions:</span>
                         <span>₱{{ number_format($payslip->absences_deductions, 2) }}</span>
                     </div>
-                    <div class="flex justify-between font-semibold">
+                    
+                    <form action="{{ route('payslips.updateDeductions', $payslip) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="flex justify-between items-center mb-2">
+                            <span>SSS:</span>
+                            <input type="number" name="sss" value="{{ old('sss', $payslip->sss) }}" step="0.01" class="border rounded px-2 py-1 w-24 text-right">
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span>GSIS:</span>
+                            <input type="number" name="gsis" value="{{ old('gsis', $payslip->gsis) }}" step="0.01" class="border rounded px-2 py-1 w-24 text-right">
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span>PhilHealth:</span>
+                            <input type="number" name="philhealth" value="{{ old('philhealth', $payslip->philhealth) }}" step="0.01" class="border rounded px-2 py-1 w-24 text-right">
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span>Other Deductions:</span>
+                            <input type="number" name="other_deductions" value="{{ old('other_deductions', $payslip->other_deductions) }}" step="0.01" class="border rounded px-2 py-1 w-24 text-right">
+                        </div>
+                        <div class="text-right mt-4">
+                            <button type="submit" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">Update Deductions</button>
+                        </div>
+                    </form>
+
+                    <div class="flex justify-between font-semibold border-t pt-2 mt-2">
                         <span>Total Deductions:</span>
-                        <span>₱{{ number_format($payslip->late_deductions + $payslip->absences_deductions, 2) }}</span>
+                        <span>₱{{ number_format($payslip->late_deductions + $payslip->absences_deductions + $payslip->sss + $payslip->gsis + $payslip->philhealth + $payslip->other_deductions, 2) }}</span>
                     </div>
                 </div>
             </div>

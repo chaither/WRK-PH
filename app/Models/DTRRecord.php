@@ -37,11 +37,11 @@ class DTRRecord extends Model
 
         $timeIn = \Carbon\Carbon::parse($this->time_in);
         $timeOut = \Carbon\Carbon::parse($this->time_out);
-        $regularWorkHours = 8; // 8 hours regular work day
+        $regularWorkHours = 8;
 
-        // Calculate actual work hours (max 8 hours)
-        $actualHours = min($timeOut->diffInHours($timeIn), $regularWorkHours);
-        return $actualHours;
+        $totalMinutes = $timeOut->diffInMinutes($timeIn);
+        $actualHours = min($totalMinutes / 60, $regularWorkHours);
+        return max(0, (float) $actualHours);
     }
 
     public function calculateOvertimeHours()
@@ -52,10 +52,10 @@ class DTRRecord extends Model
 
         $timeIn = \Carbon\Carbon::parse($this->time_in);
         $timeOut = \Carbon\Carbon::parse($this->time_out);
-        $regularWorkHours = 8; // 8 hours regular work day
+        $regularWorkHours = 8;
 
-        // Calculate overtime (hours beyond 8 hours)
-        $totalHours = $timeOut->diffInHours($timeIn);
-        return max(0, $totalHours - $regularWorkHours);
+        $totalMinutes = $timeOut->diffInMinutes($timeIn);
+        $totalHours = $totalMinutes / 60;
+        return max(0, (float) $totalHours - $regularWorkHours);
     }
 }

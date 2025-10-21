@@ -87,8 +87,22 @@
                         </div>
                         <div>
                             <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
-                            <input type="password" name="password" id="password" required class="w-full px-3 py-2 border border-gray-300 rounded" placeholder="Enter password">
+                            <div class="relative">
+                                <input type="password" name="password" id="password" required class="w-full px-3 py-2 border border-gray-300 rounded pr-10" placeholder="Enter password">
+                                <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password')">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
                             <p class="text-sm text-gray-500 mt-1">Minimum 8 characters</p>
+                        </div>
+                        <div>
+                            <label for="password_confirmation" class="block text-gray-700 font-medium mb-2">Confirm Password</label>
+                            <div class="relative">
+                                <input type="password" name="password_confirmation" id="password_confirmation" required class="w-full px-3 py-2 border border-gray-300 rounded pr-10" placeholder="Confirm password">
+                                <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password_confirmation')">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
                         </div>
                         <div>
                             <label for="position" class="block text-gray-700 font-medium mb-2">Position</label>
@@ -100,10 +114,10 @@
                     <h4 class="text-lg font-semibold mb-4 text-blue-800">Salary Information</h4>
                     <div class="space-y-4">
                         <div>
-                            <label for="basic_salary" class="block text-gray-700 font-medium mb-2">Basic Salary</label>
+                            <label for="basic_salary_modal" class="block text-gray-700 font-medium mb-2">Basic Salary</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-2 text-gray-600">₱</span>
-                                <input type="number" name="basic_salary" id="basic_salary" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded" step="0.01" min="0" placeholder="0.00">
+                                <input type="number" name="basic_salary" id="basic_salary_modal" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded" step="0.01" min="0" placeholder="0.00">
                             </div>
                         </div>
                         <div>
@@ -115,17 +129,17 @@
                             </select>
                         </div>
                         <div>
-                            <label for="daily_rate" class="block text-gray-700 font-medium mb-2">Daily Rate</label>
+                            <label for="daily_rate_modal" class="block text-gray-700 font-medium mb-2">Daily Rate</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-2 text-gray-600">₱</span>
-                                <input type="number" name="daily_rate" id="daily_rate" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded" step="0.01" min="0" placeholder="0.00">
+                                <input type="number" name="daily_rate" id="daily_rate_modal" required readonly class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded" step="0.01" min="0" placeholder="0.00">
                             </div>
                         </div>
                         <div>
-                            <label for="hourly_rate" class="block text-gray-700 font-medium mb-2">Hourly Rate</label>
+                            <label for="hourly_rate_modal" class="block text-gray-700 font-medium mb-2">Hourly Rate</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-2 text-gray-600">₱</span>
-                                <input type="number" name="hourly_rate" id="hourly_rate" required class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded" step="0.01" min="0" placeholder="0.00">
+                                <input type="number" name="hourly_rate" id="hourly_rate_modal" required readonly class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded" step="0.01" min="0" placeholder="0.00">
                             </div>
                         </div>
                     </div>
@@ -151,4 +165,96 @@
         </form>
     </div>
 </div>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const basicSalaryInputModal = document.getElementById('basic_salary_modal');
+        const dailyRateInputModal = document.getElementById('daily_rate_modal');
+        const hourlyRateInputModal = document.getElementById('hourly_rate_modal');
+        const payPeriodSelectModal = document.getElementById('pay_period');
+
+        function calculateRatesModal() {
+            const basicSalary = parseFloat(basicSalaryInputModal.value) || 0;
+            const payPeriod = payPeriodSelectModal.value;
+            
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth(); // 0-indexed
+
+            let monthlyWorkingDays = 0;
+            const daysInMonth = new Date(year, month + 1, 0).getDate(); // Get last day of the month
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+                if (dayOfWeek >= 1 && dayOfWeek <= 6) { // Monday to Saturday
+                    monthlyWorkingDays++;
+                }
+            }
+
+            let workingDaysPerPeriod = 0;
+
+            if (payPeriod === 'monthly') {
+                workingDaysPerPeriod = monthlyWorkingDays;
+            } else if (payPeriod === 'semi-monthly') {
+                workingDaysPerPeriod = monthlyWorkingDays / 2; // Assuming even split for semi-monthly
+            }
+
+            let dailyRate = 0;
+            if (workingDaysPerPeriod > 0) {
+                dailyRate = basicSalary / workingDaysPerPeriod;
+            }
+            const hourlyRate = dailyRate / 8; // Assuming 8 working hours per day
+
+            dailyRateInputModal.value = dailyRate.toFixed(2);
+            hourlyRateInputModal.value = hourlyRate.toFixed(2);
+        }
+
+        basicSalaryInputModal.addEventListener('input', calculateRatesModal);
+        payPeriodSelectModal.addEventListener('change', calculateRatesModal); // Trigger on pay period change
+
+        window.openEmployeeModal = function() {
+            document.getElementById('employeeModal').classList.remove('hidden');
+            document.getElementById('employeeModal').classList.add('flex');
+            // Reset form fields when opening
+            document.getElementById('employeeForm').reset();
+            // Trigger initial calculation
+            calculateRatesModal();
+        };
+
+        window.closeEmployeeModal = function() {
+            document.getElementById('employeeModal').classList.add('hidden');
+            document.getElementById('employeeModal').classList.remove('flex');
+        };
+
+        // Password visibility toggle
+        window.togglePasswordVisibility = function(id) {
+            const input = document.getElementById(id);
+            const icon = input.nextElementSibling.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        };
+
+        // Client-side password confirmation validation
+        document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('password_confirmation').value;
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Password and Confirm Password do not match.');
+            }
+        });
+
+    });
+</script>
 @endpush

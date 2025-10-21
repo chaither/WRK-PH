@@ -112,7 +112,7 @@ class PayrollController extends Controller
             $basicPay = $totalHours * $employee->hourly_rate;
             $overtimePay = $overtimeHours * ($employee->hourly_rate * 1.25); // 25% overtime premium
             $lateDeductions = ($lateMinutes / 60) * $employee->hourly_rate;
-            $absenceDeductions = $absentDays * $employee->daily_rate;
+            $absenceDeductions = 0; // Set to 0 as requested
 
             // Example government deduction formulas (replace with your actual logic)
             $sss = $basicPay * 0.045; // 4.5% SSS
@@ -122,7 +122,7 @@ class PayrollController extends Controller
 
             $totalDeductions = $lateDeductions + $absenceDeductions + $sss + $gsis + $philhealth + $other_deductions;
             $grossPay = $basicPay + $overtimePay;
-            $netPay = $grossPay - $totalDeductions;
+            $netPay = max(0, $grossPay - $totalDeductions);
 
             Payslip::updateOrCreate(
                 [
@@ -252,8 +252,39 @@ class PayrollController extends Controller
             }
         }
 
+        // Subtract approved leave days from working days
+        $approvedLeaveRequests = \App\Models\LeaveRequest::where('user_id', $employee->id)
+            ->where('status', 'approved')
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                      ->orWhereBetween('end_date', [$startDate, $endDate])
+                      ->orWhere(function ($query) use ($startDate, $endDate) {
+                          $query->where('start_date', '<=', $startDate)
+                                ->where('end_date', '>=', $endDate);
+                      });
+            })
+            ->get();
+
+        $approvedLeaveDays = 0;
+        foreach ($approvedLeaveRequests as $leave) {
+            $leaveStart = Carbon::parse($leave->start_date);
+            $leaveEnd = Carbon::parse($leave->end_date);
+
+            // Calculate intersection of leave period and pay period
+            $overlapStart = $leaveStart->greaterThan($startDate) ? $leaveStart : $startDate;
+            $overlapEnd = $leaveEnd->lessThan($endDate) ? $leaveEnd : $endDate;
+
+            for ($date = $overlapStart->copy(); $date->lte($overlapEnd); $date->addDay()) {
+                if ($date->isWeekday()) {
+                    $approvedLeaveDays++;
+                }
+            }
+        }
+
+        $effectiveWorkingDays = $workingDays - $approvedLeaveDays;
+
         $presentDays = $dtrRecords->unique('date')->count();
-        return $workingDays - $presentDays;
+        return max(0, $effectiveWorkingDays - $presentDays);
     }
 
     public function updateDeductions(Request $request, Payslip $payslip)

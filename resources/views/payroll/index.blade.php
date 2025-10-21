@@ -108,7 +108,7 @@
                                 <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-blue-500 hover:text-blue-700 mr-2" title="View Payslip">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <button onclick="openEditDeductionsModal({{ $payslip->id }}, {{ $payslip->sss }}, {{ $payslip->gsis }}, {{ $payslip->philhealth }}, {{ $payslip->other_deductions ?? 0 }})" class="text-red-500 hover:text-red-700" title="Set Other Deduction">
+                                <button onclick="openEditDeductionsModal({{ $payslip->id }}, {{ $payslip->sss }}, {{ $payslip->gsis }}, {{ $payslip->philhealth }}, {{ $payslip->other_deductions ?? 0 }})" class="text-red-500 hover:text-red-700" title="Set Other Deduction" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
                                     <i class="fas fa-coins"></i>
                                 </button>
                             </td>
@@ -184,7 +184,7 @@
         document.getElementById('sss_amount').value = sss;
         document.getElementById('gsis_amount').value = gsis;
         document.getElementById('philhealth_amount').value = philhealth;
-        document.getElementById('other_deductions_amount').value = 0; // As per user request
+        document.getElementById('other_deductions_amount').value = other_deductions;
 
         const form = document.getElementById('editDeductionsForm');
         form.action = "/payroll/payslips/" + payslipId + "/deductions";

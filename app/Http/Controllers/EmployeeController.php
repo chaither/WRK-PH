@@ -44,11 +44,17 @@ class EmployeeController extends Controller
             'position' => 'required|string|max:255',
             'basic_salary' => 'required|numeric|min:0',
             'pay_period' => 'required|in:semi-monthly,monthly',
-            'daily_rate' => 'required|numeric|min:0',
-            'hourly_rate' => 'required|numeric|min:0',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
         ]);
+
+        // Calculate daily and hourly rates based on basic_salary
+        $basicSalary = (float) $validated['basic_salary'];
+        $dailyRate = $basicSalary / 22; // Assuming 22 working days per month
+        $hourlyRate = $dailyRate / 8; // Assuming 8 working hours per day
+
+        $validated['daily_rate'] = round($dailyRate, 2);
+        $validated['hourly_rate'] = round($hourlyRate, 2);
 
         $validated['role'] = 'employee';
         $validated['password'] = Hash::make($validated['password']);

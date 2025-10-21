@@ -29,6 +29,7 @@ class User extends Authenticatable
         'hourly_rate',
         'work_start',
         'work_end',
+        'leave_balance',
     ];
 
     /**

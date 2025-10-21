@@ -20,7 +20,7 @@
         <!-- Sidebar -->
         <div class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
             <div class="flex items-center space-x-2 px-4 mb-6">
-                <span class="text-2xl font-bold">DTR SYSTEM</span>
+                <span class="text-2xl font-bold">HRIS SYSTEM</span>
             </div>
             
             <nav>
@@ -46,6 +46,19 @@
                     <i class="fas fa-user-clock w-6"></i>
                     DTR Management
                 </a>
+                @endif
+                @if (Auth::user()->hasRole(['admin', 'hr']))
+                    <a href="{{ route('leave.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.index') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-calendar-alt w-6"></i>
+                        Leave Management
+                    </a>
+                    <a href="{{ route('leave.review') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.review') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-clipboard-list w-6"></i>
+                        Leave Request Review
+                    </a>
+                @endif
+                @if (Auth::user()->isEmployee())
+                    <a href="{{ route('employee.leave.index') }}" class="block px-4 py-2 text-gray-800 hover:bg-indigo-500 hover:text-white">My Leave Requests</a>
                 @endif
 
                 @if(in_array(auth()->user()->role, ['admin', 'hr']))
