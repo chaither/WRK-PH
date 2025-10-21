@@ -73,13 +73,7 @@
             </nav>
 
             <div class="absolute bottom-0 left-0 right-0 p-4">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="block w-full py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white text-center">
-                        <i class="fas fa-sign-out-alt w-6"></i>
-                        Logout
-                    </button>
-                </form>
+                
             </div>
         </div>
 
