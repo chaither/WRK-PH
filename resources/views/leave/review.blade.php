@@ -52,7 +52,9 @@
                         <p class="text-gray-900 whitespace-no-wrap">{{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}</p>
                     </td>
                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        <p class="text-gray-900 whitespace-no-wrap">{{ $request->reason }}</p>
+                        <a href="{{ Storage::url($request->reason) }}" target="_blank" class="text-blue-500 hover:text-blue-700 font-semibold">
+                            <i class="fas fa-file-alt mr-1"></i> View Letter
+                        </a>
                     </td>
                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                         <span class="relative inline-block px-3 py-1 font-semibold text-{{ $request->status === 'approved' ? 'green' : ($request->status === 'rejected' ? 'red' : 'orange') }}-900 leading-tight">

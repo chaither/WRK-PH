@@ -58,7 +58,10 @@
                     </a>
                 @endif
                 @if (Auth::user()->isEmployee())
-                    <a href="{{ route('employee.leave.index') }}" class="block px-4 py-2 text-gray-800 hover:bg-indigo-500 hover:text-white">My Leave Requests</a>
+                    <a href="{{ route('employee.leave.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-briefcase w-6"></i>
+                        My Leave Requests
+                    </a>
                 @endif
 
                 @if(in_array(auth()->user()->role, ['admin', 'hr']))
