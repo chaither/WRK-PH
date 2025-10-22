@@ -74,7 +74,7 @@
     <!-- Top 10 Departments Section -->
     <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mx-6 mb-8 hover:shadow-2xl transition-all duration-500">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-bold text-gray-800">Top 10 Departments</h2>
+            <h2 class="text-3xl font-bold text-gray-800">Daily Update</h2>
             <div class="flex items-center space-x-4">
                 <select class="bg-white/60 backdrop-blur-sm border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option>Department Name</option>
