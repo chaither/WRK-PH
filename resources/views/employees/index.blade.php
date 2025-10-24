@@ -69,7 +69,7 @@
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
                             <div class="flex justify-center space-x-2">
-                                <a href="{{ route('employees.edit', $employee->id) }}" 
+                                <a href="#" onclick="openEmployeeModal({{ $employee->toJson() }})" 
                                    class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" 
                                    title="Edit Employee">
                                     <i class="fas fa-edit"></i>
@@ -103,7 +103,7 @@
 <div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 p-6 transform transition-all duration-300 scale-100"> {{-- Sharper modal styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h3 class="text-2xl font-bold text-gray-800">Add New Employee</h3>
+            <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Employee</h3>
             <button onclick="closeEmployeeModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
                 <i class="fas fa-times text-lg"></i>
             </button>
@@ -111,6 +111,7 @@
 
         <form id="employeeForm" method="POST" action="{{ route('employees.store') }}" class="space-y-6">
             @csrf
+            <input type="hidden" name="_method" value="POST" id="_methodField">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {{-- Personal Information --}}
                 <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
@@ -128,7 +129,7 @@
                             <input type="email" name="email" id="email" required 
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter email address">
                         </div>
-                        <div>
+                        <div id="passwordFields">
                             <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                             <div class="relative">
                                 <input type="password" name="password" id="password" required 
@@ -139,7 +140,7 @@
                             </div>
                             <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
                         </div>
-                        <div>
+                        <div id="passwordConfirmationField">
                             <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                             <div class="relative">
                                 <input type="password" name="password_confirmation" id="password_confirmation" required 
@@ -238,8 +239,8 @@
                 <button type="button" onclick="closeEmployeeModal()" class="px-6 py-2 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
                     Cancel
                 </button>
-                <button type="submit" class="px-6 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-lg shadow-indigo-200">
-                    <i class="fas fa-user-plus mr-1"></i> Save Employee
+                <button type="submit" id="saveEmployeeBtn" class="px-6 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-lg shadow-indigo-200">
+                    <i class="fas fa-save mr-1"></i> Save Changes
                 </button>
             </div>
         </form>
@@ -255,6 +256,13 @@
         const hourlyRateInputModal = document.getElementById('hourly_rate_modal');
         const payPeriodSelectModal = document.getElementById('pay_period_modal'); // Renamed ID for clarity
         const employeeForm = document.getElementById('employeeForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const methodField = document.getElementById('_methodField');
+        const passwordFields = document.getElementById('passwordFields');
+        const passwordConfirmationField = document.getElementById('passwordConfirmationField');
+        const passwordInput = document.getElementById('password');
+        const passwordConfirmationInput = document.getElementById('password_confirmation');
+        const saveEmployeeBtn = document.getElementById('saveEmployeeBtn');
 
         /**
          * Calculates the number of working days (Mon-Sat) in the current month.
@@ -310,15 +318,53 @@
         // payPeriodSelectModal.addEventListener('change', calculateRatesModal); 
 
         // Open/Close Modal
-        window.openEmployeeModal = function() {
+        window.openEmployeeModal = function(employee = null) {
             document.getElementById('employeeModal').classList.remove('hidden');
             document.getElementById('employeeModal').classList.add('flex');
-            employeeForm.reset();
             
-            // Initialize calculated rates on open
-            basicSalaryInputModal.value = ''; // Ensure rates start at 0.00
-            payPeriodSelectModal.value = 'semi-monthly'; // Set a default value
-            calculateRatesModal(); 
+            if (employee) {
+                // Edit mode
+                modalTitle.textContent = 'Edit Employee';
+                employeeForm.action = '/employees/' + employee.id;
+                methodField.value = 'PUT';
+                saveEmployeeBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Update Employee';
+
+                // Populate form fields
+                document.getElementById('name').value = employee.name;
+                document.getElementById('email').value = employee.email;
+                document.getElementById('position').value = employee.position;
+                document.getElementById('role').value = employee.role;
+                document.getElementById('basic_salary_modal').value = employee.basic_salary;
+                document.getElementById('pay_period_modal').value = employee.pay_period;
+                document.getElementById('work_start').value = employee.work_start.substring(0, 5);
+                document.getElementById('work_end').value = employee.work_end.substring(0, 5);
+
+                // Hide password fields for edit mode (password changes can be a separate flow if needed)
+                passwordFields.classList.add('hidden');
+                passwordConfirmationField.classList.add('hidden');
+                passwordInput.removeAttribute('required');
+                passwordConfirmationInput.removeAttribute('required');
+                
+                calculateRatesModal(); // Recalculate rates for the existing employee
+            } else {
+                // Add mode
+                modalTitle.textContent = 'Add New Employee';
+                employeeForm.action = '{{ route('employees.store') }}';
+                methodField.value = 'POST';
+                saveEmployeeBtn.innerHTML = '<i class="fas fa-user-plus mr-1"></i> Save Employee';
+                
+                employeeForm.reset();
+                // Show password fields for add mode
+                passwordFields.classList.remove('hidden');
+                passwordConfirmationField.classList.remove('hidden');
+                passwordInput.setAttribute('required', 'required');
+                passwordConfirmationInput.setAttribute('required', 'required');
+
+                // Initialize calculated rates on open for add mode
+                basicSalaryInputModal.value = ''; // Ensure rates start at 0.00
+                payPeriodSelectModal.value = 'semi-monthly'; // Set a default value
+                calculateRatesModal();
+            }
         };
 
         window.closeEmployeeModal = function() {
@@ -343,12 +389,15 @@
 
         // Client-side password confirmation validation
         employeeForm.addEventListener('submit', function(e) {
+            // Only validate password if the fields are visible (i.e., in add mode)
+            if (!passwordFields.classList.contains('hidden')) {
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('password_confirmation').value;
 
             if (password !== confirmPassword) {
                 e.preventDefault();
                 alert('Password and Confirm Password do not match.');
+            }
             }
         });
     });
