@@ -170,8 +170,13 @@ class PayrollController extends Controller
         ], ['status' => 'draft']);
 
         // Do not regenerate if already generated/unpaid or paid
-        if (in_array($payPeriod->status, ['unpaid', 'paid'])) {
-            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('info', 'Payroll for the selected period has already been generated.');
+        if (in_array($payPeriod->status, ['unpaid', 'paid']) && !$request->has('force_regenerate')) {
+            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+        }
+
+        // If forced regeneration, set status to draft to allow re-generation
+        if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid'])) {
+            $payPeriod->update(['status' => 'draft']);
         }
 
         // Call existing generator

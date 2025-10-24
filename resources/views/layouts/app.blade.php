@@ -42,7 +42,7 @@
                     Employees
                 </a>
 
-                <a href="{{ route('dtr.admin') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
+                <a href="{{ route('dtr.admin', ['status' => 'present']) }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-user-clock w-6"></i>
                     DTR Management
                 </a>

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
@@ -51,29 +52,51 @@ class DTRController extends Controller
             ->where('date', $today)
             ->first();
 
-        if ($existingRecord) {
-            return back()->with('error', 'You have already clocked in today.');
+        // Get expected work start time from user's schedule
+        $workStartTime = Carbon::parse($user->work_start)->setTimezone('Asia/Manila');
+        $lateMinutes = 0;
+        $status = 'present';
+
+        // Create Carbon instances with today's date but using only the time for comparison
+        $clockInTimeOnly = Carbon::createFromTime($now->hour, $now->minute, $now->second, 'Asia/Manila');
+        $workStartTimeOnly = Carbon::createFromTime($workStartTime->hour, $workStartTime->minute, $workStartTime->second, 'Asia/Manila');
+
+        // Check if late
+        if ($clockInTimeOnly->greaterThan($workStartTimeOnly)) {
+            $lateMinutes = abs($clockInTimeOnly->diffInMinutes($workStartTimeOnly));
+            $status = 'late';
         }
 
-        // Check if late (assuming work starts at 9 AM)
-        $status = $now->hour >= 9 ? 'late' : 'present';
+        // If no record exists for today, create the first clock-in
+        if (!$existingRecord) {
+            DTRRecord::create([
+                'user_id' => $user->id,
+                'date' => $today,
+                'time_in' => $now,
+                'status' => $status,
+                'late_minutes' => $lateMinutes,
+            ]);
+            return back()->with('success', 'Successfully clocked in for the first time.');
+        }
 
-        DTRRecord::create([
-            'user_id' => $user->id,
-            'date' => $today,
-            'time_in' => $now->toTimeString(),
-            'status' => $status,
-        ]);
+        // If first clock-in exists, but second clock-in does not
+        if ($existingRecord->time_in && !$existingRecord->time_in_2) {
+            $existingRecord->update([
+                'time_in_2' => $now,
+            ]);
+            return back()->with('success', 'Successfully clocked in for the second time.');
+        }
 
-        return back()->with('success', 'Successfully clocked in.');
+        // If both clock-ins exist, prevent further clock-ins
+        return back()->with('error', 'You have already clocked in twice today.');
     }
 
     public function clockOut()
     {
         $user = Auth::user();
-        $now = Carbon::now('Asia/Manila'); // Explicitly set timezone for clock-out
+        $now = Carbon::now('Asia/Manila');
         $today = $now->toDateString();
-        
+
         $record = DTRRecord::where('user_id', $user->id)
             ->where('date', $today)
             ->first();
@@ -82,18 +105,30 @@ class DTRController extends Controller
             return back()->with('error', 'No clock-in record found for today.');
         }
 
-        if ($record->time_out) {
-            return back()->with('error', 'You have already clocked out today.');
+        // Clock-out for the first time
+        if ($record->time_in && !$record->time_out) {
+            $record->update([
+                'time_out' => $now,
+            ]);
+            // Recalculate all hours after first clock out
+            $record->recalculateAllHours();
+            return back()->with('success', 'Successfully clocked out for lunch.');
         }
 
-        $record->update([
-            'time_out' => $now->toTimeString(),
-        ]);
+        // Clock-out for the second time (after lunch)
+        if ($record->time_in_2 && !$record->time_out_2) {
+            $record->update([
+                'time_out_2' => $now,
+            ]);
+            // Recalculate all hours after second clock out
+            $record->recalculateAllHours();
+            return back()->with('success', 'Successfully clocked out for the day.');
+        }
 
-        return back()->with('success', 'Successfully clocked out.');
+        return back()->with('error', 'You have already clocked out twice today.');
     }
 
-    public function adminView()
+    public function adminView(Request $request)
     {
         $user = Auth::user();
         if (!$user || !in_array($user->role, ['admin', 'hr'])) {
@@ -101,14 +136,77 @@ class DTRController extends Controller
         }
 
         $today = Carbon::today();
-        $records = DTRRecord::with('user')
-            ->whereDate('date', $today)
-            ->get();
 
-		$presentCount = $records->where('status', 'present')->count();
-		$lateCount = $records->where('status', 'late')->count();
-		$absentCount = $user && in_array($user->role, ['admin', 'hr']) ? (User::where('role', 'employee')->count() - $records->count()) : 0;
+        // Calculate counts directly from DTR records for today
+        $allDtrToday = DTRRecord::whereDate('date', $today)->get();
 
-        return view('dtr.admin', compact('records', 'presentCount', 'lateCount', 'absentCount'));
+		$presentCount = $allDtrToday->where('status', 'present')->count();
+		$lateCount = $allDtrToday->where('status', 'late')->count();
+
+		$totalEmployees = User::where('role', 'employee')->count();
+		$employeesWithDTR = $allDtrToday->pluck('user_id')->unique()->count();
+		$absentCount = $totalEmployees - $employeesWithDTR;
+
+        $filterStatus = $request->input('status', 'present');
+
+        $employees = User::where('role', 'employee')
+                        ->orderBy('name')
+                        ->with(['dtrRecords' => function ($query) use ($today) {
+                            $query->whereDate('date', $today);
+                        }]);
+
+        if ($filterStatus == 'present' || $filterStatus == 'late') {
+            $employees->whereHas('dtrRecords', function ($query) use ($today, $filterStatus) {
+                $query->whereDate('date', $today)->where('status', $filterStatus);
+            });
+        } elseif ($filterStatus == 'absent') {
+            $employees->whereDoesntHave('dtrRecords', function ($query) use ($today) {
+                $query->whereDate('date', $today);
+            });
+        }
+
+        $employees = $employees->get();
+
+        $startDate = null;
+        $endDate = null;
+
+        return view('dtr.admin', compact('presentCount', 'lateCount', 'absentCount', 'employees', 'today', 'startDate', 'endDate', 'filterStatus'));
+    }
+
+    public function employeesIndex()
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $employees = User::where('role', 'employee')->orderBy('name')->get();
+
+        return view('dtr.employees_list', compact('employees'));
+    }
+
+    public function showEmployeeDTR(Request $request, User $employee)
+    {
+        // Ensure only admin/hr can view other employee's DTR
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : null;
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : null;
+        $selectedDate = $request->input('date') ? Carbon::parse($request->input('date')) : Carbon::today();
+
+        $query = DTRRecord::where('user_id', $employee->id);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('date', [$startDate, $endDate]);
+        } else {
+            $query->whereDate('date', $selectedDate);
+        }
+
+        $records = $query->orderBy('date', 'desc')->get();
+
+        return view('dtr.employee_dtr', compact('employee', 'records', 'selectedDate', 'startDate', 'endDate'));
     }
 }

@@ -52,6 +52,8 @@ Route::post('/leave-requests/{leaveRequest}/approve', [LeaveController::class, '
 Route::post('/leave-requests/{leaveRequest}/reject', [LeaveController::class, 'rejectLeaveRequest'])->name('leave.reject');
 
 Route::get('dtr/admin', [DTRController::class, 'adminView'])->name('dtr.admin');
+Route::get('dtr/employees/{employee}', [DTRController::class, 'showEmployeeDTR'])->name('dtr.employee.show');
+Route::get('dtr/employees', [DTRController::class, 'employeesIndex'])->name('dtr.employees.index');
 
 // DTR Routes
 Route::prefix('dtr')->name('dtr.')->group(function() {
