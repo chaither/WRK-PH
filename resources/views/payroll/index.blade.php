@@ -90,21 +90,24 @@
                         @csrf
                         <input type="hidden" name="start_date" value="{{ $start }}">
                         <input type="hidden" name="end_date" value="{{ $end }}">
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-sm">
-                            <i class="fas fa-calculator mr-1"></i> Generate
-                        </button>
+                        @if($period && in_array($period->status, ['unpaid', 'paid']))
+                            <button type="submit" name="force_regenerate" value="true" class="bg-orange-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm">
+                                <i class="fas fa-redo mr-1"></i> Regenerate Payroll
+                            </button>
+                        @else
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-sm">
+                                <i class="fas fa-calculator mr-1"></i> Generate Payroll
+                            </button>
+                        @endif
                     </form>
 
-<<<<<<< HEAD
                     {{-- Done Payment Button --}}
-=======
                     @if(!empty($period) && ($payrolls->count() ?? 0) > 0)
-                        <a href="{{ route('payroll.download_pdf', ['start_date' => $start, 'end_date' => $end]) }}" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" target="_blank">
+                        <a href="{{ route('payroll.download_pdf', ['start_date' => $start, 'end_date' => $end]) }}" class="bg-red-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm" target="_blank">
                             <i class="fas fa-file-pdf mr-2"></i> Download PDF
                         </a>
                     @endif
 
->>>>>>> 52c6ed0c543db19c12964109628fe2029b5e3559
                     @if(!empty($period) && ($payrolls->count() ?? 0) > 0 && $period->status !== 'paid')
                         <form method="POST" action="{{ route('payroll.pay-periods.complete', ['payPeriod' => $period->id]) }}">
                             @csrf
@@ -124,6 +127,7 @@
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th> {{-- Reduced px and py --}}
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Work Days</th>
+                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Work Hours</th>
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rate/Hour</th>
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Gross Pay</th>
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">SSS</th>
@@ -139,6 +143,7 @@
                         <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ $payslip->user->name }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->present_days ?? 0 }} / {{ $payslip->work_days ?? 0 }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱{{ number_format(optional($payslip->user)->hourly_rate, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱{{ number_format($payslip->basic_pay + $payslip->overtime_pay, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-red-600">₱{{ number_format($payslip->sss, 2) }}</td>
@@ -157,7 +162,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-4 py-4 text-center text-base text-gray-500 bg-white">
+                            <td colspan="11" class="px-4 py-4 text-center text-base text-gray-500 bg-white">
                                 <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                             </td>
                         </tr>
