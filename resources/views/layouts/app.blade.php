@@ -18,56 +18,56 @@
 <body class="bg-gray-100">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition duration-200 ease-in-out z-50">
+        <div id="sidebar" class="bg-blue-800 text-white w-16 hover:w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50 group">
             <div class="flex items-center space-x-2 px-4 mb-8">
-                <span class="text-2xl font-bold">HRIS SYSTEM</span>
+                <span class="text-2xl font-bold whitespace-nowrap">HRIS SYSTEM</span>
             </div>
             
             <nav>
-                <a href="{{ route('dashboard') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dashboard') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-home w-6"></i>
-                    Dashboard
+                <a href="{{ route('dashboard') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dashboard') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-home text-xl"></i>
+                    <span class="ml-3 hidden group-hover:block">Dashboard</span>
                 </a>
 
                 @if(auth()->user()->isEmployee())
-                <a href="{{ route('dtr.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.index') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-clock w-6"></i>
-                    Daily Time Record
+                <a href="{{ route('dtr.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.index') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-clock text-xl"></i>
+                    <span class="ml-3 hidden group-hover:block">Daily Time Record</span>
                 </a>
                 @endif
 
                 @if(auth()->user()->role === 'admin')
-                <a href="{{ route('employees.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('employees.*') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-users w-6"></i>
-                    Employees
+                <a href="{{ route('employees.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('employees.*') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-users text-xl"></i>
+                    <span class="ml-3 hidden group-hover:block">Employees</span>
                 </a>
 
-                <a href="{{ route('dtr.admin', ['status' => 'present']) }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-user-clock w-6"></i>
-                    DTR Management
+                <a href="{{ route('dtr.admin', ['status' => 'present']) }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-user-clock text-xl"></i>
+                    <span class="ml-3 hidden group-hover:block">DTR Management</span>
                 </a>
                 @endif
                 @if (Auth::user()->hasRole(['admin', 'hr']))
-                    <a href="{{ route('leave.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.index') ? 'bg-blue-700' : '' }}">
-                        <i class="fas fa-calendar-alt w-6"></i>
-                        Leave Management
+                    <a href="{{ route('leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.index') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-calendar-alt text-xl"></i>
+                        <span class="ml-3 hidden group-hover:block">Leave Management</span>
                     </a>
-                    <a href="{{ route('leave.review') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.review') ? 'bg-blue-700' : '' }}">
-                        <i class="fas fa-clipboard-list w-6"></i>
-                        Leave Request Review
+                    <a href="{{ route('leave.review') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.review') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-clipboard-list text-xl"></i>
+                        <span class="ml-3 hidden group-hover:block">Leave Request Review</span>
                     </a>
                 @endif
                 @if (Auth::user()->isEmployee())
-                    <a href="{{ route('employee.leave.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
-                        <i class="fas fa-briefcase w-6"></i>
-                        My Leave Requests
+                    <a href="{{ route('employee.leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-briefcase text-xl"></i>
+                        <span class="ml-3 hidden group-hover:block">My Leave Requests</span>
                     </a>
                 @endif
 
                 @if(in_array(auth()->user()->role, ['admin', 'hr']))
-                <a href="{{ route('payroll.index') }}" class="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('payroll.*') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-money-bill w-6"></i>
-                    Payroll
+                <a href="{{ route('payroll.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('payroll.*') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-money-bill text-xl"></i>
+                    <span class="ml-3 hidden group-hover:block">Payroll</span>
                 </a>
                 @endif
             </nav>
@@ -78,7 +78,7 @@
         </div>
 
         <!-- Content -->
-        <div id="content" class="flex-1 md:ml-64 transition-all duration-200 ease-in-out">
+        <div id="content" class="flex-1 md:ml-16 md:group-hover:ml-64 transition-all duration-300 ease-in-out">
             <!-- Top Nav -->
             <nav class="bg-blue-800 text-white p-4">
                 <div class="flex items-center px-4">
