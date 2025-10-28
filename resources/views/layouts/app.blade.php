@@ -18,73 +18,74 @@
 <body class="bg-gray-100">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-blue-800 text-white w-16 hover:w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50 group">
+        <div id="sidebar" class="bg-blue-800 text-white w-16 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
-                <span class="text-2xl font-bold whitespace-nowrap">HRIS SYSTEM</span>
+                <button id="sidebarToggle" class="text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap hidden md:block">HRIS SYSTEM</span>
             </div>
             
             <nav>
                 <a href="{{ route('dashboard') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dashboard') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-home text-xl"></i>
-                    <span class="ml-3 hidden group-hover:block">Dashboard</span>
+                    <span class="ml-3">Dashboard</span>
                 </a>
 
                 @if(auth()->user()->isEmployee())
                 <a href="{{ route('dtr.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.index') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-clock text-xl"></i>
-                    <span class="ml-3 hidden group-hover:block">Daily Time Record</span>
+                    <span class="ml-3">Daily Time Record</span>
                 </a>
                 @endif
 
                 @if(auth()->user()->role === 'admin')
                 <a href="{{ route('employees.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('employees.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-users text-xl"></i>
-                    <span class="ml-3 hidden group-hover:block">Employees</span>
+                    <span class="ml-3">Employees</span>
                 </a>
 
                 <a href="{{ route('dtr.admin', ['status' => 'present']) }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-user-clock text-xl"></i>
-                    <span class="ml-3 hidden group-hover:block">DTR Management</span>
+                    <span class="ml-3">DTR Management</span>
                 </a>
                 @endif
                 @if (Auth::user()->hasRole(['admin', 'hr']))
                     <a href="{{ route('leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-calendar-alt text-xl"></i>
-                        <span class="ml-3 hidden group-hover:block">Leave Management</span>
+                        <span class="ml-3">Leave Management</span>
                     </a>
                     <a href="{{ route('leave.review') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.review') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-clipboard-list text-xl"></i>
-                        <span class="ml-3 hidden group-hover:block">Leave Request Review</span>
+                        <span class="ml-3">Leave Request Review</span>
                     </a>
                 @endif
                 @if (Auth::user()->isEmployee())
                     <a href="{{ route('employee.leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-briefcase text-xl"></i>
-                        <span class="ml-3 hidden group-hover:block">My Leave Requests</span>
+                        <span class="ml-3">My Leave Requests</span>
                     </a>
                 @endif
 
                 @if(in_array(auth()->user()->role, ['admin', 'hr']))
                 <a href="{{ route('payroll.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('payroll.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-money-bill text-xl"></i>
-                    <span class="ml-3 hidden group-hover:block">Payroll</span>
+                    <span class="ml-3">Payroll</span>
                 </a>
                 @endif
             </nav>
-
+            
             <div class="absolute bottom-0 left-0 right-0 p-4">
                 
             </div>
         </div>
 
         <!-- Content -->
-        <div id="content" class="flex-1 md:ml-16 md:group-hover:ml-64 transition-all duration-300 ease-in-out">
+        <div id="content" class="flex-1 md:ml-16 transition-all duration-300 ease-in-out">
             <!-- Top Nav -->
             <nav class="bg-blue-800 text-white p-4">
                 <div class="flex items-center px-4">
-                    <button id="sidebarToggle" class="text-white focus:outline-none mr-4 md:hidden">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
+                    
                     <div class="flex-1">
 
                     </div>
@@ -132,14 +133,65 @@
 
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
+            const sidebarTitle = document.getElementById('sidebarTitle');
             const content = document.getElementById('content');
+            const navSpans = document.querySelectorAll('#sidebar nav span');
+
+            // Function to set sidebar state
+            function setSidebarState() {
+                // Temporarily disable transitions
+                sidebar.style.transition = 'none';
+                sidebarTitle.style.transition = 'none';
+                content.style.transition = 'none';
+                navSpans.forEach(span => span.style.transition = 'none');
+
+                const sidebarOpen = localStorage.getItem('sidebarOpen');
+                const isDesktop = window.innerWidth >= 768; // md breakpoint
+
+                if (sidebarOpen === 'true' || (sidebarOpen === null && isDesktop)) {
+                    sidebar.classList.remove('w-16');
+                    sidebar.classList.add('w-64');
+                    content.classList.remove('md:ml-16');
+                    content.classList.add('md:ml-64');
+                    navSpans.forEach(span => span.classList.remove('hidden'));
+                } else {
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-16');
+                    content.classList.remove('md:ml-64');
+                    content.classList.add('md:ml-16');
+                    navSpans.forEach(span => span.classList.add('hidden'));
+                }
+
+                // Re-enable transitions after a short delay
+                setTimeout(() => {
+                    sidebar.style.transition = ''; // Resets to CSS-defined transition
+                    sidebarTitle.style.transition = ''; // Resets to CSS-defined transition
+                    content.style.transition = ''; // Resets to CSS-defined transition
+                    navSpans.forEach(span => span.style.transition = '');
+                }, 50);
+            }
+
+            // Set initial state on load
+            setSidebarState();
+
+            // Adjust state on resize
+            window.addEventListener('resize', setSidebarState);
 
             sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('-translate-x-full');
-                if (sidebar.classList.contains('-translate-x-full')) {
-                    content.classList.remove('ml-64');
+                if (sidebar.classList.contains('w-16')) {
+                    sidebar.classList.remove('w-16');
+                    sidebar.classList.add('w-64');
+                    content.classList.remove('md:ml-16');
+                    content.classList.add('md:ml-64');
+                    navSpans.forEach(span => span.classList.remove('hidden'));
+                    localStorage.setItem('sidebarOpen', 'true');
                 } else {
-                    content.classList.add('ml-64');
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-16');
+                    content.classList.remove('md:ml-64');
+                    content.classList.add('md:ml-16');
+                    navSpans.forEach(span => span.classList.add('hidden'));
+                    localStorage.setItem('sidebarOpen', 'false');
                 }
             });
         });
