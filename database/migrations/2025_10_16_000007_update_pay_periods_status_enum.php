@@ -12,8 +12,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add 'unpaid' and 'paid' to the status enum
-        DB::statement("ALTER TABLE `pay_periods` MODIFY `status` ENUM('draft','processing','completed','unpaid','paid') NOT NULL DEFAULT 'draft'");
+        Schema::table('pay_periods', function (Blueprint $table) {
+            $table->string('status_new')->default('draft');
+        });
+
+        DB::statement('UPDATE pay_periods SET status_new = status;');
+
+        Schema::table('pay_periods', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+
+        Schema::table('pay_periods', function (Blueprint $table) {
+            $table->renameColumn('status_new', 'status');
+        });
     }
 
     /**
@@ -21,7 +32,18 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert back to original enum values
-        DB::statement("ALTER TABLE `pay_periods` MODIFY `status` ENUM('draft','processing','completed') NOT NULL DEFAULT 'draft'");
+        Schema::table('pay_periods', function (Blueprint $table) {
+            $table->string('status_new')->default('draft');
+        });
+
+        DB::statement('UPDATE pay_periods SET status_new = status;');
+
+        Schema::table('pay_periods', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
+
+        Schema::table('pay_periods', function (Blueprint $table) {
+            $table->renameColumn('status_new', 'status');
+        });
     }
 };
