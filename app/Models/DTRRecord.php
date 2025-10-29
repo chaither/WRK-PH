@@ -45,7 +45,7 @@ class DTRRecord extends Model
     {
         if (!$this->time_in || !$this->user) {
             $this->late_minutes = 0;
-            $this->status = 'pending'; // Or a suitable default
+            // Do not set status here, let recalculateAllHours handle it for missing time_in
             return;
         }
 
@@ -77,6 +77,11 @@ class DTRRecord extends Model
 
         $this->work_hours = $totalWorkHours;
         $this->overtime_hours = $totalOvertimeHours;
+
+        // Additional status check for half-day
+        if (!$this->time_in && $this->time_in_2 && $this->time_out_2 && $this->work_hours > 0) {
+            $this->status = 'half_day';
+        }
     }
 
     public function user(): BelongsTo
@@ -104,6 +109,7 @@ class DTRRecord extends Model
         \Log::info('DTRRecord ID: ' . $this->id . ' - time_out_2: ' . ($this->time_out_2 ? $this->time_out_2->toDateTimeString() : 'NULL'));
         \Log::info('DTRRecord ID: ' . $this->id . ' - Calculated workMinutes: ' . $workMinutes);
 
+        
 
         return max(0, (float) ($workMinutes / 60));
     }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use App\Helpers\TimeHelper;
 
 class DTRController extends Controller
 {
@@ -67,27 +68,51 @@ class DTRController extends Controller
             $status = 'late';
         }
 
+        $timeOfDay = TimeHelper::getTimeOfDay($now);
+
         // If no record exists for today, create the first clock-in
         if (!$existingRecord) {
-            DTRRecord::create([
+            $recordData = [
                 'user_id' => $user->id,
                 'date' => $today,
-                'time_in' => $now,
                 'status' => $status,
                 'late_minutes' => $lateMinutes,
-            ]);
-            return back()->with('success', 'Successfully clocked in for the first time.');
+            ];
+
+            if ($timeOfDay === 'Morning') {
+                $recordData['time_in'] = $now;
+                $message = 'Successfully clocked in for the morning.';
+            } else { // Afternoon
+                $recordData['time_in_2'] = $now;
+                $message = 'Successfully clocked in for the afternoon.';
+            }
+            
+            DTRRecord::create($recordData);
+            return back()->with('success', $message);
         }
 
-        // If first clock-in exists, but second clock-in does not
-        if ($existingRecord->time_in && !$existingRecord->time_in_2) {
-            $existingRecord->update([
-                'time_in_2' => $now,
-            ]);
-            return back()->with('success', 'Successfully clocked in for the second time.');
+        // If a record exists, check if it's a second clock-in or a morning/afternoon switch
+        if ($timeOfDay === 'Morning') {
+            if (!$existingRecord->time_in) {
+                $existingRecord->update([
+                    'time_in' => $now,
+                ]);
+                return back()->with('success', 'Successfully clocked in for the morning.');
+            } else if ($existingRecord->time_in && !$existingRecord->time_out && !$existingRecord->time_in_2) {
+                // Allow re-clocking in for morning if they clocked out for lunch and haven't clocked in for afternoon
+                return back()->with('error', 'You have already clocked in for the morning.');
+            }
+        } else { // Afternoon
+            if (!$existingRecord->time_in_2) {
+                $existingRecord->update([
+                    'time_in_2' => $now,
+                ]);
+                return back()->with('success', 'Successfully clocked in for the afternoon.');
+            } else if ($existingRecord->time_in_2 && !$existingRecord->time_out_2) {
+                return back()->with('error', 'You have already clocked in for the afternoon.');
+            }
         }
 
-        // If both clock-ins exist, prevent further clock-ins
         return back()->with('error', 'You have already clocked in twice today.');
     }
 
@@ -142,6 +167,7 @@ class DTRController extends Controller
 
 		$presentCount = $allDtrToday->where('status', 'present')->count();
 		$lateCount = $allDtrToday->where('status', 'late')->count();
+		$halfDayCount = $allDtrToday->where('status', 'half_day')->count();
 
 		$totalEmployees = User::where('role', 'employee')->count();
 		$employeesWithDTR = $allDtrToday->pluck('user_id')->unique()->count();
@@ -155,7 +181,7 @@ class DTRController extends Controller
                             $query->whereDate('date', $today);
                         }]);
 
-        if ($filterStatus == 'present' || $filterStatus == 'late') {
+        if ($filterStatus == 'present' || $filterStatus == 'late' || $filterStatus == 'half_day') {
             $employees->whereHas('dtrRecords', function ($query) use ($today, $filterStatus) {
                 $query->whereDate('date', $today)->where('status', $filterStatus);
             });
@@ -170,7 +196,7 @@ class DTRController extends Controller
         $startDate = null;
         $endDate = null;
 
-        return view('dtr.admin', compact('presentCount', 'lateCount', 'absentCount', 'employees', 'today', 'startDate', 'endDate', 'filterStatus'));
+        return view('dtr.admin', compact('presentCount', 'lateCount', 'absentCount', 'halfDayCount', 'employees', 'today', 'startDate', 'endDate', 'filterStatus'));
     }
 
     public function employeesIndex()

@@ -9,6 +9,14 @@ use App\Http\Controllers\DTRController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\ChangeShiftController;
+use App\Http\Controllers\ChangeRestdayController;
+use App\Http\Controllers\AdminChangeShiftController;
+use App\Http\Controllers\AdminChangeRestdayController;
+use App\Http\Controllers\NoBioRequestController;
+use App\Http\Controllers\AdminNoBioRequestController;
+use App\Http\Controllers\OvertimeRequestController;
+use App\Http\Controllers\AdminOvertimeRequestController;
 
 // Auth Routes
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -50,6 +58,42 @@ Route::post('/leave-request/store', [LeaveController::class, 'storeLeaveRequest'
 Route::get('/leave-requests-review', [LeaveController::class, 'reviewLeaveRequests'])->name('leave.review');
 Route::post('/leave-requests/{leaveRequest}/approve', [LeaveController::class, 'approveLeaveRequest'])->name('leave.approve');
 Route::post('/leave-requests/{leaveRequest}/reject', [LeaveController::class, 'rejectLeaveRequest'])->name('leave.reject');
+Route::get('/leave-requests/{leaveRequest}/reason-pdf', [LeaveController::class, 'generatePdfReason'])->name('leave.reason.pdf');
+
+// Attendance Routes
+Route::prefix('attendance')->name('attendance.')->group(function () {
+    Route::get('/change-shift', [ChangeShiftController::class, 'index'])->name('change-shift.index');
+    Route::post('/change-shift', [ChangeShiftController::class, 'store'])->name('change-shift.store');
+    Route::get('/change-restday', [ChangeRestdayController::class, 'index'])->name('change-restday.index');
+    Route::post('/change-restday', [ChangeRestdayController::class, 'store'])->name('change-restday.store');
+    Route::get('/no-bio-request', [NoBioRequestController::class, 'index'])->name('no-bio-request.index');
+    Route::post('/no-bio-request', [NoBioRequestController::class, 'store'])->name('no-bio-request.store');
+    Route::get('/overtime-request', [OvertimeRequestController::class, 'index'])->name('overtime-request.index');
+    Route::post('/overtime-request', [OvertimeRequestController::class, 'store'])->name('overtime-request.store');
+});
+
+// Admin Attendance Routes
+Route::prefix('admin/attendance')->name('admin.attendance.')->middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    // Change Shift Review
+    Route::get('/change-shift-requests', [AdminChangeShiftController::class, 'index'])->name('change-shift.review');
+    Route::post('/change-shift-requests/{id}/approve', [AdminChangeShiftController::class, 'approve'])->name('change-shift.approve');
+    Route::post('/change-shift-requests/{id}/reject', [AdminChangeShiftController::class, 'reject'])->name('change-shift.reject');
+
+    // Change Restday Review
+    Route::get('/change-restday-requests', [AdminChangeRestdayController::class, 'index'])->name('change-restday.review');
+    Route::post('/change-restday-requests/{id}/approve', [AdminChangeRestdayController::class, 'approve'])->name('change-restday.approve');
+    Route::post('/change-restday-requests/{id}/reject', [AdminChangeRestdayController::class, 'reject'])->name('change-restday.reject');
+
+    // No Bio Request Review
+    Route::get('/no-bio-requests', [AdminNoBioRequestController::class, 'index'])->name('no-bio-request.review');
+    Route::post('/no-bio-requests/{id}/approve', [AdminNoBioRequestController::class, 'approve'])->name('no-bio-request.approve');
+    Route::post('/no-bio-requests/{id}/reject', [AdminNoBioRequestController::class, 'reject'])->name('no-bio-request.reject');
+
+    // Overtime Request Review
+    Route::get('/overtime-requests', [AdminOvertimeRequestController::class, 'index'])->name('overtime-request.review');
+    Route::post('/overtime-requests/{id}/approve', [AdminOvertimeRequestController::class, 'approve'])->name('overtime-request.approve');
+    Route::post('/overtime-requests/{id}/reject', [AdminOvertimeRequestController::class, 'reject'])->name('overtime-request.reject');
+});
 
 Route::get('dtr/admin', [DTRController::class, 'adminView'])->name('dtr.admin');
 Route::get('dtr/employees/{employee}', [DTRController::class, 'showEmployeeDTR'])->name('dtr.employee.show');

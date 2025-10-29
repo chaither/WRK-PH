@@ -26,7 +26,7 @@
                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         End Date
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Reason
                     </th>
                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -46,9 +46,9 @@
                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                         <p class="text-gray-900 whitespace-no-wrap">{{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}</p>
                     </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        <a href="{{ Storage::url($request->reason) }}" target="_blank" class="text-blue-500 hover:text-blue-700 font-semibold">
-                            <i class="fas fa-file-alt mr-1"></i> View Letter
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                        <a href="{{ route('leave.reason.pdf', $request->id) }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                            <i class="fas fa-file-pdf mr-1"></i> View Letter
                         </a>
                     </td>
                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">

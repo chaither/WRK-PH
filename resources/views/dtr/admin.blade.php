@@ -2,6 +2,10 @@
 
 @section('title', 'DTR Management')
 
+@php
+    use App\Helpers\TimeHelper;
+@endphp
+
 @section('content')
 <div class="container mx-auto px-6 py-6"> {{-- Consistent compact padding --}}
     <header class="mb-6">
@@ -23,7 +27,7 @@
         </div>
 
         {{-- Statistics Cards (Consistent, bolder colors) --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"> {{-- Reduced gap --}}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"> {{-- Reduced gap --}}
             {{-- Present Card --}}
             <a href="{{ route('dtr.admin', ['status' => 'present']) }}" class="block bg-green-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
                 <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-user-check mr-2"></i> Present</h3>
@@ -36,6 +40,12 @@
                 <p class="text-4xl font-extrabold">{{ $lateCount }}</p>
             </a>
 
+            {{-- Half Day Card --}}
+            <a href="{{ route('dtr.admin', ['status' => 'half_day']) }}" class="block bg-blue-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
+                <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-sun mr-2"></i> Half Day</h3>
+                <p class="text-4xl font-extrabold">{{ $halfDayCount }}</p>
+            </a>
+
             {{-- Absent Card --}}
             <a href="{{ route('dtr.admin', ['status' => 'absent']) }}" class="block bg-red-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
                 <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-user-slash mr-2"></i> Absent</h3>
@@ -44,16 +54,16 @@
         </div>
 
         {{-- Employee List Table --}}
-        <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Employee List @if($filterStatus) ({{ ucfirst($filterStatus) }}) @endif</h2>
+        <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Employee List @if($filterStatus) ({{ ucfirst(str_replace('_', ' ', $filterStatus)) }}) @endif</h2>
         <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee Name</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Morning Time In</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Morning Time Out</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Afternoon Time In</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Afternoon Time Out</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time In 1</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 1</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time In 2</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 2</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Work Hours</th>
                     </tr>
@@ -68,23 +78,24 @@
                                 $dtrRecord = optional($employee->dtrRecords->first());
                             @endphp
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_in ? \Carbon\Carbon::parse($dtrRecord->time_in)->format('h:i A') : '-' }}
+                                {{ $dtrRecord->time_in ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_in)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_in)->format('h:i A') : '-' }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_out ? \Carbon\Carbon::parse($dtrRecord->time_out)->format('h:i A') : '-' }}
+                                {{ $dtrRecord->time_out ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_out)->format('h:i A') : '-' }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_in_2 ? \Carbon\Carbon::parse($dtrRecord->time_in_2)->format('h:i A') : '-' }}
+                                {{ $dtrRecord->time_in_2 ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_in_2)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_in_2)->format('h:i A') : '-' }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_out_2 ? \Carbon\Carbon::parse($dtrRecord->time_out_2)->format('h:i A') : '-' }}
+                                {{ $dtrRecord->time_out_2 ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out_2)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_out_2)->format('h:i A') : '-' }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-center">
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold capitalize
                                     {{ $dtrRecord->status === 'present' ? 'bg-green-100 text-green-800' : '' }}
                                     {{ $dtrRecord->status === 'late' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                    {{ $dtrRecord->status === 'absent' ? 'bg-red-100 text-red-800' : '' }}">
-                                    {{ $dtrRecord->status ?? 'N/A' }}
+                                    {{ $dtrRecord->status === 'absent' ? 'bg-red-100 text-red-800' : '' }}
+                                    {{ $dtrRecord->status === 'half_day' ? 'bg-blue-100 text-blue-800' : '' }}">
+                                    {{ str_replace('_', ' ', $dtrRecord->status ?? 'N/A') }}
                                 </span>
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 text-center">
