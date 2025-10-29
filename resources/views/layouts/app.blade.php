@@ -6,6 +6,8 @@
     <title>DTR System - @yield('title')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
             <meta name="csrf-token" content="{{ csrf_token() }}">
             @php $viteManifest = public_path('build/manifest.json'); @endphp
             @if (file_exists($viteManifest))
@@ -32,24 +34,87 @@
                     <span class="ml-3">Dashboard</span>
                 </a>
 
-                @if(auth()->user()->isEmployee())
-                <a href="{{ route('dtr.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.index') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-clock text-xl"></i>
-                    <span class="ml-3">Daily Time Record</span>
-                </a>
-                @endif
+                <!-- Attendance Dropdown -->
+                <div x-data="{ open: {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('admin.attendance.*') ? 'true' : 'false' }} }" class="relative ">
+                    <button @click="open = !open" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white w-full text-sm font-semibold justify-between {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('admin.attendance.*') ? 'bg-blue-700' : '' }}"
+                        :aria-expanded="open ? 'true' : 'false'">
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-clock text-xl mr-3"></i>
+                            <span class="ml-3">Attendance</span>
+                        </span>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <template x-if="open">
+                        <ul x-transition:enter="transition-all ease-in-out duration-300"
+                            x-transition:enter-start="opacity-25 max-h-0"
+                            x-transition:enter-end="opacity-100 max-h-xl"
+                            x-transition:leave="transition-all ease-in-out duration-300"
+                            x-transition:leave-start="opacity-100 max-h-xl"
+                            x-transition:leave-end="opacity-0 max-h-0"
+                            class="p-2 mt-2 space-y-2 overflow-hidden text-sm font-medium text-white bg-blue-700 rounded-md shadow-inner"
+                            aria-label="submenu">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ Auth::user()->isEmployee() ? route('dtr.index') : route('dtr.admin') }}">
+                                    Daily Time Record
+                                </a>
+                            </li>
+                            @if (Auth::user()->hasRole(['admin', 'hr']))
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('admin.attendance.change-shift.review') }}">
+                                    Shift Approval
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('admin.attendance.change-restday.review') }}">
+                                    Restday Approval
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('admin.attendance.no-bio-request.review') }}">
+                                    No Bio Request Approval
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('admin.attendance.overtime-request.review') }}">
+                                    Overtime Approval
+                                </a>
+                            </li>
+                            @else
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('attendance.change-shift.index') }}">
+                                    Change Shift
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('attendance.change-restday.index') }}">
+                                    Change Restday
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('attendance.no-bio-request.index') }}">
+                                    No Bio Request
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('attendance.overtime-request.index') }}">
+                                    Overtime Application
+                                </a>
+                            </li>
+                            @endif
+                        </ul>
+                    </template>
+                </div>
+                <!-- End Attendance Dropdown -->
 
                 @if(auth()->user()->role === 'admin')
                 <a href="{{ route('employees.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('employees.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-users text-xl"></i>
                     <span class="ml-3">Employees</span>
                 </a>
-
-                <a href="{{ route('dtr.admin', ['status' => 'present']) }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-user-clock text-xl"></i>
-                    <span class="ml-3">DTR Management</span>
-                </a>
                 @endif
+                
                 @if (Auth::user()->hasRole(['admin', 'hr']))
                     <a href="{{ route('leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-calendar-alt text-xl"></i>

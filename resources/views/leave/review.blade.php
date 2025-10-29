@@ -59,9 +59,9 @@
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-center">
                         {{ \Carbon\Carbon::parse($request->end_date)->format('M d, Y') }}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        <a href="{{ Storage::url($request->reason) }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center" title="View supporting document">
-                            <i class="fas fa-file-alt mr-1 text-sm"></i> View Letter
+                    <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate text-center">
+                        <a href="{{ route('leave.reason.pdf', $request->id) }}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center" title="View Reason as PDF">
+                            <i class="fas fa-file-pdf mr-1 text-sm"></i> View Letter
                         </a>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-center">
@@ -77,8 +77,8 @@
                         </span>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                        @if ($request->status === 'pending')
-                            <div class="flex justify-center space-x-2">
+                        <div class="flex justify-center items-center space-x-2">
+                            @if ($request->status === 'pending')
                                 {{-- Approve Button --}}
                                 <form action="{{ route('leave.approve', $request) }}" method="POST" class="inline-block">
                                     @csrf
@@ -103,7 +103,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-4 text-center text-base text-gray-500 bg-white">
+                        <td colspan="7" class="px-4 py-4 text-center text-base text-gray-500 bg-white">
                             <i class="fas fa-clipboard-check mr-2"></i> No pending leave requests found.
                         </td>
                     </tr>

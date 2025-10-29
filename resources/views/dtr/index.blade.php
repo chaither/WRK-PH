@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-6">
     <!-- Clock In/Out Section -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-2xl font-bold mb-4">Time Record - {{ now()->format('F d, Y') }}</h2>
+        <h2 class="text-2xl font-bold mb-4">Time Record - {{ \Carbon\Carbon::now('Asia/Manila')->format('F d, Y - h:i A') }}</h2>
         
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -33,10 +33,10 @@
                     </button>
                     @if($dtrRecord)
                         @if($dtrRecord->time_in)
-                            <p class="mt-2 text-gray-600">Morning Clock In: {{ \Carbon\Carbon::parse($dtrRecord->time_in)->format('h:i A') }}</p>
+                            <p class="mt-2 text-gray-600">{{ \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_in)) }} Clock In: {{ \Carbon\Carbon::parse($dtrRecord->time_in)->format('h:i A') }}</p>
                         @endif
                         @if($dtrRecord->time_in_2)
-                            <p class="mt-2 text-gray-600">Afternoon Clock In: {{ \Carbon\Carbon::parse($dtrRecord->time_in_2)->format('h:i A') }}</p>
+                            <p class="mt-2 text-gray-600">{{ \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_in_2)) }} Clock In: {{ \Carbon\Carbon::parse($dtrRecord->time_in_2)->format('h:i A') }}</p>
                         @endif
                     @endif
                 </form>
@@ -54,10 +54,10 @@
                     </button>
                     @if($dtrRecord)
                         @if($dtrRecord->time_out)
-                            <p class="mt-2 text-gray-600">Morning Clock Out: {{ \Carbon\Carbon::parse($dtrRecord->time_out)->format('h:i A') }}</p>
+                            <p class="mt-2 text-gray-600">{{ \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out)) }} Clock Out: {{ \Carbon\Carbon::parse($dtrRecord->time_out)->format('h:i A') }}</p>
                         @endif
                         @if($dtrRecord->time_out_2)
-                            <p class="mt-2 text-gray-600">Afternoon Clock Out: {{ \Carbon\Carbon::parse($dtrRecord->time_out_2)->format('h:i A') }}</p>
+                            <p class="mt-2 text-gray-600">{{ \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out_2)) }} Clock Out: {{ \Carbon\Carbon::parse($dtrRecord->time_out_2)->format('h:i A') }}</p>
                         @endif
                     @endif
                 </form>
@@ -74,10 +74,10 @@
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="px-4 py-2">Date</th>
-                        <th class="px-4 py-2">Morning Time In</th>
-                        <th class="px-4 py-2">Morning Time Out</th>
-                        <th class="px-4 py-2">Afternoon Time In</th>
-                        <th class="px-4 py-2">Afternoon Time Out</th>
+                        <th class="px-4 py-2">Time In 1</th>
+                        <th class="px-4 py-2">Time Out 1</th>
+                        <th class="px-4 py-2">Time In 2</th>
+                        <th class="px-4 py-2">Time Out 2</th>
                         <th class="px-4 py-2">Status</th>
                         <th class="px-4 py-2">Work Hours</th>
                     </tr>
@@ -86,10 +86,10 @@
                     @forelse($monthlyRecords as $record)
                         <tr class="border-b">
                             <td class="px-4 py-2 text-center">{{ $record->date->format('M d, Y') }}</td>
-                            <td class="px-4 py-2 text-center">{{ $record->time_in ? \Carbon\Carbon::parse($record->time_in)->format('h:i A') : '-' }}</td>
-                            <td class="px-4 py-2 text-center">{{ $record->time_out ? \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '-' }}</td>
-                            <td class="px-4 py-2 text-center">{{ $record->time_in_2 ? \Carbon\Carbon::parse($record->time_in_2)->format('h:i A') : '-' }}</td>
-                            <td class="px-4 py-2 text-center">{{ $record->time_out_2 ? \Carbon\Carbon::parse($record->time_out_2)->format('h:i A') : '-' }}</td>
+                            <td class="px-4 py-2 text-center">{{ $record->time_in ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_in)) . ': ' . \Carbon\Carbon::parse($record->time_in)->format('h:i A') : '-' }}</td>
+                            <td class="px-4 py-2 text-center">{{ $record->time_out ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_out)) . ': ' . \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '-' }}</td>
+                            <td class="px-4 py-2 text-center">{{ $record->time_in_2 ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_in_2)) . ': ' . \Carbon\Carbon::parse($record->time_in_2)->format('h:i A') : '-' }}</td>
+                            <td class="px-4 py-2 text-center">{{ $record->time_out_2 ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_out_2)) . ': ' . \Carbon\Carbon::parse($record->time_out_2)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">
                                 <span class="px-2 py-1 rounded-full text-xs capitalize
                                     {{ $record->status === 'present' ? 'bg-green-100 text-green-800' : '' }}

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Models\LeaveRequest; // Added this import
+use Barryvdh\DomPDF\Facade\Pdf; // Import the PDF facade
 
 class LeaveController extends Controller
 {
@@ -66,20 +67,31 @@ class LeaveController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'formal_letter' => 'required|file|mimes:pdf,docx|max:2048', // Max 2MB
+            'reason' => 'required|string|max:1000',
         ]);
-
-        $filePath = $request->file('formal_letter')->store('leave_letters', 'public');
 
         LeaveRequest::create([
             'user_id' => $user->id,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
-            'reason' => $filePath,
+            'reason' => $request->reason,
             'status' => 'pending',
         ]);
 
         return redirect()->route('employee.leave.index')->with('success', 'Leave request submitted successfully.');
+    }
+
+    public function generatePdfReason(LeaveRequest $leaveRequest)
+    {
+        // Ensure only admin/hr can view this or the employee themselves
+        $user = Auth::user();
+        if (!$user->hasRole(['admin', 'hr']) && $user->id !== $leaveRequest->user_id) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $pdf = Pdf::loadView('leave.reason_pdf', compact('leaveRequest'));
+        $filename = $leaveRequest->user->name . ' - Leave Request.pdf';
+        return $pdf->download($filename);
     }
 
     // HR/Admin leave request review methods
