@@ -37,5 +37,33 @@
             </div>
         </form>
     </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6 mt-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">My Pending Restday Change Requests</h2>
+        @if ($changeRestdayRequests->isEmpty())
+            <p class="text-gray-600">No pending change restday requests.</p>
+        @else
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Restdays</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Restdays</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach ($changeRestdayRequests as $request)
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ implode(', ', $request->current_restdays) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ implode(', ', $request->requested_restdays) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($request->status) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
 </div>
 @endsection

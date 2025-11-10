@@ -74,15 +74,18 @@ Route::post('/leave-requests/{leaveRequest}/reject', [LeaveController::class, 'r
 Route::get('/leave-requests/{leaveRequest}/reason-pdf', [LeaveController::class, 'generatePdfReason'])->name('leave.reason.pdf');
 
 // Attendance Routes
-Route::prefix('attendance')->name('attendance.')->group(function () {
-    Route::get('/change-shift', [ChangeShiftController::class, 'index'])->name('change-shift.index');
-    Route::post('/change-shift', [ChangeShiftController::class, 'store'])->name('change-shift.store');
-    Route::get('/change-restday', [ChangeRestdayController::class, 'index'])->name('change-restday.index');
-    Route::post('/change-restday', [ChangeRestdayController::class, 'store'])->name('change-restday.store');
-    Route::get('/no-bio-request', [NoBioRequestController::class, 'index'])->name('no-bio-request.index');
-    Route::post('/no-bio-request', [NoBioRequestController::class, 'store'])->name('no-bio-request.store');
-    Route::get('/overtime-request', [OvertimeRequestController::class, 'index'])->name('overtime-request.index');
-    Route::post('/overtime-request', [OvertimeRequestController::class, 'store'])->name('overtime-request.store');
+Route::middleware(['auth'])->group(function () {
+    // Attendance Routes
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/change-shift', [ChangeShiftController::class, 'index'])->name('change-shift.index');
+        Route::post('/change-shift', [ChangeShiftController::class, 'store'])->name('change-shift.store');
+        Route::get('/change-restday', [ChangeRestdayController::class, 'index'])->name('change-restday.index');
+        Route::post('/change-restday', [ChangeRestdayController::class, 'store'])->name('change-restday.store');
+        Route::get('/no-bio-request', [NoBioRequestController::class, 'index'])->name('no-bio-request.index');
+        Route::post('/no-bio-request', [NoBioRequestController::class, 'store'])->name('no-bio-request.store');
+        Route::get('/overtime-request', [OvertimeRequestController::class, 'index'])->name('overtime-request.index');
+        Route::post('/overtime-request', [OvertimeRequestController::class, 'store'])->name('overtime-request.store');
+    });
 });
 
 // Admin Attendance Routes

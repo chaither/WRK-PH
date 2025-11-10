@@ -35,7 +35,7 @@
                 </a>
 
                 <!-- Attendance Dropdown -->
-                <div x-data="{ open: {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('admin.attendance.*') ? 'true' : 'false' }} }" class="relative ">
+                <div x-data="{ open: {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('attendance.no-bio-request.*') || request()->routeIs('attendance.overtime-request.*') || request()->routeIs('admin.attendance.*') ? 'true' : 'false' }} }" class="relative ">
                     <button @click="open = !open" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white w-full text-sm font-semibold justify-between {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('admin.attendance.*') ? 'bg-blue-700' : '' }}"
                         :aria-expanded="open ? 'true' : 'false'">
                         <span class="inline-flex items-center">
@@ -76,6 +76,11 @@
                                     No Bio Request Approval
                                 </a>
                             </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('admin.attendance.overtime-request.review') }}">
+                                    Overtime Approval
+                                </a>
+                            </li>
                             @else
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
                                 <a class="w-full" href="{{ route('attendance.change-shift.index') }}">
@@ -90,6 +95,11 @@
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
                                 <a class="w-full" href="{{ route('attendance.no-bio-request.index') }}">
                                     No Bio Request
+                                </a>
+                            </li>
+                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                                <a class="w-full" href="{{ route('attendance.overtime-request.index') }}">
+                                    Apply for Overtime
                                 </a>
                             </li>
                             @endif

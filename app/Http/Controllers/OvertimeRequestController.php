@@ -10,7 +10,8 @@ class OvertimeRequestController extends Controller
 {
     public function index()
     {
-        return view('attendance.overtime_request.index');
+        $overtimeRequests = Auth::user()->overtimeRequests()->latest()->get();
+        return view('attendance.overtime_request.index', compact('overtimeRequests'));
     }
 
     public function store(Request $request)
