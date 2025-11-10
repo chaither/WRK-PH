@@ -30,6 +30,8 @@ class User extends Authenticatable
         'work_start',
         'work_end',
         'leave_balance',
+        'shift_id',
+        'rest_days',
     ];
 
     /**
@@ -55,6 +57,7 @@ class User extends Authenticatable
         'basic_salary' => 'decimal:2',
         'daily_rate' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
+        'rest_days' => 'array',
     ];
 
     public function isAdmin(): bool
@@ -83,5 +86,20 @@ class User extends Authenticatable
     public function dtrRecords()
     {
         return $this->hasMany(DTRRecord::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
+    }
+
+    public function changeShiftRequests()
+    {
+        return $this->hasMany(ChangeShiftRequest::class);
+    }
+
+    public function changeRestdayRequests()
+    {
+        return $this->hasMany(ChangeRestdayRequest::class);
     }
 }

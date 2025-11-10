@@ -76,11 +76,6 @@
                                     No Bio Request Approval
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('admin.attendance.overtime-request.review') }}">
-                                    Overtime Approval
-                                </a>
-                            </li>
                             @else
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
                                 <a class="w-full" href="{{ route('attendance.change-shift.index') }}">
@@ -95,11 +90,6 @@
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
                                 <a class="w-full" href="{{ route('attendance.no-bio-request.index') }}">
                                     No Bio Request
-                                </a>
-                            </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('attendance.overtime-request.index') }}">
-                                    Overtime Application
                                 </a>
                             </li>
                             @endif

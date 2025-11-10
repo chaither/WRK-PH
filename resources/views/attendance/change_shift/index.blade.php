@@ -15,15 +15,15 @@
             @csrf
             <div class="mb-4">
                 <label for="current_shift" class="block text-gray-700 text-sm font-bold mb-2">Current Shift:</label>
-                <input type="text" id="current_shift" name="current_shift" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{-- Auth::user()->shift->name ?? 'N/A' --}}" disabled>
+                <input type="text" id="current_shift" name="current_shift" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ $currentShift }}" disabled>
             </div>
             <div class="mb-4">
                 <label for="requested_shift" class="block text-gray-700 text-sm font-bold mb-2">Requested Shift:</label>
                 <select name="requested_shift" id="requested_shift" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     <option value="">Select a shift</option>
-                    {{-- @foreach($shifts as $shift)
-                        <option value="{{ $shift->id }}">{{ $shift->name }} ({{ $shift->start_time }} - {{ $shift->end_time }})</option>
-                    @endforeach --}}
+                    @foreach($shifts as $shift)
+                        <option value="{{ $shift->id }}">{{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('h:i A') }})</option>
+                    @endforeach
                 </select>
             </div>
             <div class="mb-6">

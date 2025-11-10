@@ -15,18 +15,15 @@
             @csrf
             <div class="mb-4">
                 <label for="current_restdays" class="block text-gray-700 text-sm font-bold mb-2">Current Restdays:</label>
-                <input type="text" id="current_restdays" name="current_restdays" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{-- Auth::user()->rest_days ?? 'N/A' --}}" disabled>
+                <input type="text" id="current_restdays" name="current_restdays" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="{{ $currentRestdays }}" disabled>
             </div>
             <div class="mb-4">
                 <label for="requested_restdays" class="block text-gray-700 text-sm font-bold mb-2">Requested Restdays:</label>
-                <select name="requested_restdays[]" id="requested_restdays" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" multiple>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                    <option value="Sunday">Sunday</option>
+                <select name="requested_restdays" id="requested_restdays" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="">Select restdays</option>
+                    @foreach($daysOfWeek as $day)
+                        <option value="{{ $day }}">{{ $day }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="mb-6">

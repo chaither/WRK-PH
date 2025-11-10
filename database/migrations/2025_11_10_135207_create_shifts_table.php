@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->json('rest_days')->nullable()->after('work_end');
+        Schema::create('shifts', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->timestamps();
         });
     }
 
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('rest_days');
-        });
+        Schema::dropIfExists('shifts');
     }
 };
