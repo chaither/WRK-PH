@@ -101,7 +101,7 @@
 
 @push('modals')
 <div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 p-6 transform transition-all duration-300 scale-100"> {{-- Sharper modal styling --}}
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col"> {{-- Sharper modal styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Employee</h3>
             <button onclick="closeEmployeeModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
@@ -112,122 +112,152 @@
         <form id="employeeForm" method="POST" action="{{ route('employees.store') }}" class="space-y-6">
             @csrf
             <input type="hidden" name="_method" value="POST" id="_methodField">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {{-- Personal Information --}}
-                <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
-                    <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
-                        <i class="fas fa-address-card mr-2 text-lg"></i> Personal Information
-                    </h4>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                            <input type="text" name="name" id="name" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter full name">
-                        </div>
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input type="email" name="email" id="email" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter email address">
-                        </div>
-                        <div id="passwordFields">
-                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <div class="relative">
-                                <input type="password" name="password" id="password" required 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md pr-10 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter password">
-                                <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password')">
-                                    <i class="fas fa-eye"></i>
-                                </span>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
-                        </div>
-                        <div id="passwordConfirmationField">
-                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                            <div class="relative">
-                                <input type="password" name="password_confirmation" id="password_confirmation" required 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md pr-10 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Confirm password">
-                                <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password_confirmation')">
-                                    <i class="fas fa-eye"></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <label for="position" class="block text-sm font-medium text-gray-700 mb-1">Position</label>
-                            <input type="text" name="position" id="position" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter job position">
-                        </div>
-                        <div>
-                            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
-                            <select name="role" id="role" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="employee">Employee (Default)</option>
-                                <option value="hr">HR Manager</option>
-                                <option value="admin">Administrator</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                {{-- Salary and Schedule Information --}}
-                <div class="space-y-6">
-                    {{-- Salary --}}
+            <div class="flex-grow overflow-y-auto pr-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Personal Information --}}
                     <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
                         <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
-                            <i class="fas fa-money-bill-wave mr-2 text-lg"></i> Payroll Details
+                            <i class="fas fa-address-card mr-2 text-lg"></i> Personal Information
                         </h4>
                         <div class="space-y-4">
                             <div>
-                                <label for="basic_salary_modal" class="block text-sm font-medium text-gray-700 mb-1">Monthly Basic Salary</label>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input type="text" name="name" id="name" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter full name">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input type="email" name="email" id="email" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter email address">
+                            </div>
+                            <div id="passwordFields">
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="basic_salary" id="basic_salary_modal" required 
-                                        class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
+                                    <input type="password" name="password" id="password" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md pr-10 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter password">
+                                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password')">
+                                        <i class="fas fa-eye"></i>
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                            </div>
+                            <div id="passwordConfirmationField">
+                                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                                <div class="relative">
+                                    <input type="password" name="password_confirmation" id="password_confirmation" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md pr-10 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Confirm password">
+                                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password_confirmation')">
+                                        <i class="fas fa-eye"></i>
+                                    </span>
                                 </div>
                             </div>
                             <div>
-                                <label for="pay_period_modal" class="block text-sm font-medium text-gray-700 mb-1">Pay Period</label>
-                                <select name="pay_period" id="pay_period_modal" required 
+                                <label for="position" class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                                <input type="text" name="position" id="position" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter job position">
+                            </div>
+                            <div>
+                                <label for="role" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
+                                <select name="role" id="role" required 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">Select pay period</option>
-                                    <option value="semi-monthly">Semi-monthly (15th and 30th)</option>
-                                    <option value="monthly">Monthly</option>
+                                    <option value="employee">Employee (Default)</option>
+                                    <option value="hr">HR Manager</option>
+                                    <option value="admin">Administrator</option>
                                 </select>
                             </div>
-                            {{-- Daily Rate (Auto) --}}
                             <div>
-                                <label for="daily_rate_modal" class="block text-sm font-medium text-gray-700 mb-1">Daily Rate (Auto)</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="daily_rate" id="daily_rate_modal" required readonly 
-                                        class="w-full pl-8 pr-3 py-2 border border-dashed border-gray-400 rounded-md shadow-inner bg-gray-100 text-gray-700 cursor-not-allowed" step="0.01" value="0.00">
-                                </div>
-                            </div>
-                            {{-- Hourly Rate (Auto) --}}
-                            <div>
-                                <label for="hourly_rate_modal" class="block text-sm font-medium text-gray-700 mb-1">Hourly Rate (Auto)</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="hourly_rate" id="hourly_rate_modal" required readonly 
-                                        class="w-full pl-8 pr-3 py-2 border border-dashed border-gray-400 rounded-md shadow-inner bg-gray-100 text-gray-700 cursor-not-allowed" step="0.01" value="0.00">
-                                </div>
+                                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                <input type="date" name="start_date" id="start_date" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
                     </div>
-
-                    {{-- Schedule --}}
-                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
-                        <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
-                            <i class="fas fa-clock mr-2 text-lg"></i> Work Schedule
-                        </h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="work_start" class="block text-sm font-medium text-gray-700 mb-1">Work Start Time</label>
-                                <input type="time" name="work_start" id="work_start" required 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="09:00">
+                    
+                    {{-- Salary and Schedule Information --}}
+                    <div class="space-y-6">
+                        {{-- Salary --}}
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
+                            <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
+                                <i class="fas fa-money-bill-wave mr-2 text-lg"></i> Payroll Details
+                            </h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="basic_salary_modal" class="block text-sm font-medium text-gray-700 mb-1">Monthly Basic Salary</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
+                                        <input type="number" name="basic_salary" id="basic_salary_modal" required 
+                                            class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="pay_period_modal" class="block text-sm font-medium text-gray-700 mb-1">Pay Period</label>
+                                    <select name="pay_period" id="pay_period_modal" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                        <option value="">Select pay period</option>
+                                        <option value="semi-monthly">Semi-monthly (15th and 30th)</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                                {{-- Daily Rate (Auto) --}}
+                                <div>
+                                    <label for="daily_rate_modal" class="block text-sm font-medium text-gray-700 mb-1">Daily Rate (Auto)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
+                                        <input type="number" name="daily_rate" id="daily_rate_modal" required readonly 
+                                            class="w-full pl-8 pr-3 py-2 border border-dashed border-gray-400 rounded-md shadow-inner bg-gray-100 text-gray-700 cursor-not-allowed" step="0.01" value="0.00">
+                                    </div>
+                                </div>
+                                {{-- Hourly Rate (Auto) --}}
+                                <div>
+                                    <label for="hourly_rate_modal" class="block text-sm font-medium text-gray-700 mb-1">Hourly Rate (Auto)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
+                                        <input type="number" name="hourly_rate" id="hourly_rate_modal" required readonly 
+                                            class="w-full pl-8 pr-3 py-2 border border-dashed border-gray-400 rounded-md shadow-inner bg-gray-100 text-gray-700 cursor-not-allowed" step="0.01" value="0.00">
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label for="work_end" class="block text-sm font-medium text-gray-700 mb-1">Work End Time</label>
-                                <input type="time" name="work_end" id="work_end" required 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="18:00">
+                        </div>
+
+                        {{-- Schedule --}}
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
+                            <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
+                                <i class="fas fa-clock mr-2 text-lg"></i> Work Schedule
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="work_start" class="block text-sm font-medium text-gray-700 mb-1">Work Start Time</label>
+                                    <input type="time" name="work_start" id="work_start" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="09:00">
+                                </div>
+                                <div>
+                                    <label for="work_end" class="block text-sm font-medium text-gray-700 mb-1">Work End Time</label>
+                                    <input type="time" name="work_end" id="work_end" required 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" value="18:00">
+                                </div>
+                            </div>
+                            <div class="mt-4" x-data="{ open: false, selectedDays: [], days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
+                                <div class="relative">
+                                    <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        <span x-text="selectedDays.length ? selectedDays.join(', ') : 'Select working days'" class="block truncate"></span>
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </button>
+                                    <ul x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-40 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-y-auto scroll-smooth focus:outline-none sm:text-sm list-none" tabindex="-1" role="listbox" aria-labelledby="listbox-label">
+                                        <template x-for="(day, index) in days" :key="index">
+                                            <li class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white" :id="`day-option-${index}`" role="option">
+                                                <div class="flex items-center space-x-2">
+                                                    <input type="checkbox" name="working_days[]" :value="day" x-model="selectedDays" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                    <span class="block font-normal" x-text="day"></span>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -338,6 +368,14 @@
                 document.getElementById('pay_period_modal').value = employee.pay_period;
                 document.getElementById('work_start').value = employee.work_start.substring(0, 5);
                 document.getElementById('work_end').value = employee.work_end.substring(0, 5);
+                document.getElementById('start_date').value = employee.start_date; // Populate start_date
+
+                // Populate working days multi-select
+                // Access the Alpine.js component and set its selectedDays
+                const workingDaysDropdown = document.querySelector('[x-data*="selectedDays"]');
+                if (workingDaysDropdown && workingDaysDropdown.__alpine) {
+                    workingDaysDropdown.__alpine.data.selectedDays = employee.working_days || [];
+                }
 
                 // Hide password fields for edit mode (password changes can be a separate flow if needed)
                 passwordFields.classList.add('hidden');
@@ -359,6 +397,12 @@
                 passwordConfirmationField.classList.remove('hidden');
                 passwordInput.setAttribute('required', 'required');
                 passwordConfirmationInput.setAttribute('required', 'required');
+
+                // Reset working days multi-select
+                const workingDaysDropdown = document.querySelector('[x-data*="selectedDays"]');
+                if (workingDaysDropdown && workingDaysDropdown.__alpine) {
+                    workingDaysDropdown.__alpine.data.selectedDays = [];
+                }
 
                 // Initialize calculated rates on open for add mode
                 basicSalaryInputModal.value = ''; // Ensure rates start at 0.00

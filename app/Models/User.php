@@ -32,6 +32,9 @@ class User extends Authenticatable
         'leave_balance',
         'shift_id',
         'rest_days',
+        'department_id',
+        'start_date',
+        'working_days',
     ];
 
     /**
@@ -58,6 +61,7 @@ class User extends Authenticatable
         'daily_rate' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
         'rest_days' => 'array',
+        'working_days' => 'array',
     ];
 
     public function isAdmin(): bool
@@ -103,6 +107,9 @@ class User extends Authenticatable
         return $this->hasMany(ChangeRestdayRequest::class);
     }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     public function noBioRequests()
     {
         return $this->hasMany(NoBioRequest::class);
