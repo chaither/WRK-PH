@@ -99,9 +99,9 @@
                 <!-- End Attendance Dropdown -->
 
                 @if(auth()->user()->role === 'admin')
-                <a href="{{ route('employees.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('employees.*') ? 'bg-blue-700' : '' }}">
-                    <i class="fas fa-users text-xl"></i>
-                    <span class="ml-3">Employees</span>
+                <a href="{{ route('department.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('department.*') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-building text-xl"></i>
+                    <span class="ml-3">Department</span>
                 </a>
                 @endif
                 

@@ -14,12 +14,19 @@ class EmployeeController extends Controller
         // Removed middleware. Now handled by route groups only.
     }
 
-    public function index()
+    public function index(Request $request)
     {
         if (Auth::user()->role !== 'admin') {
             abort(403, 'Unauthorized access.');
         }
-        $employees = User::where('role', 'employee')->get();
+
+        $query = User::query()->where('role', 'employee');
+
+        if ($request->has('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+        
+        $employees = $query->get();
         return view('employees.index', compact('employees'));
     }
 
@@ -38,6 +45,8 @@ class EmployeeController extends Controller
             'pay_period' => 'required|in:semi-monthly,monthly',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
+            'start_date' => 'required|date',
+            'working_days' => 'nullable|array',
         ]);
 
         // Handle password separately: only hash if provided
@@ -58,6 +67,7 @@ class EmployeeController extends Controller
         $validated['hourly_rate'] = round($hourlyRate, 2);
 
         $validated['role'] = 'employee';
+        $validated['working_days'] = $request->input('working_days', []);
         
         User::create($validated);
 
@@ -79,6 +89,8 @@ class EmployeeController extends Controller
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
             'role' => 'required|in:employee,hr,admin', // Include role in validation
+            'start_date' => 'required|date',
+            'working_days' => 'nullable|array',
         ]);
 
         // Handle password separately: only hash if provided and not empty
@@ -96,8 +108,21 @@ class EmployeeController extends Controller
         $validated['daily_rate'] = round($dailyRate, 2);
         $validated['hourly_rate'] = round($hourlyRate, 2);
 
+        $validated['working_days'] = $request->input('working_days', []);
+
         $employee->update($validated);
 
         return redirect()->route('employees.index')->with('success', 'Employee updated successfully');
+    }
+
+    public function destroy(User $employee)
+    {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $employee->delete();
+
+        return redirect()->route('employees.index')->with('success', 'Employee deleted successfully');
     }
 }

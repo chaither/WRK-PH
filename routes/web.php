@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DTRController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\ChangeShiftController;
@@ -30,7 +31,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
 });
 
-Route::resource('employees', EmployeeController::class);
+Route::resource('department', DepartmentController::class);
+
+Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show'); // Assuming you have a show method
+Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+
+// Department Employee Routes
+Route::get('department/{department}/employees', [DepartmentController::class, 'showEmployees'])->name('department.employees');
+Route::post('department/{department}/employees', [DepartmentController::class, 'addEmployee'])->name('department.employees.store');
+Route::delete('department/{department}/employees/{employee}', [DepartmentController::class, 'removeEmployee'])->name('department.employees.remove');
+
 // Payroll Routes
 Route::prefix('payroll')->name('payroll.')->group(function() {
     Route::get('/', [PayrollController::class, 'index'])->name('index');
