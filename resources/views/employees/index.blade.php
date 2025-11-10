@@ -165,6 +165,18 @@
                                     <option value="admin">Administrator</option>
                                 </select>
                             </div>
+                            <div>
+                                <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                                <select name="department" id="department" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Select Department</option>
+                                    <option value="hr">Human Resources</option>
+                                    <option value="it">Information Technology</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="sales">Sales</option>
+                                </select>
+                            </div>
                            
                         </div>
                     </div>
@@ -180,6 +192,15 @@
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         
+                        <div class="mt-4">
+                                <label for="shift" class="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+                                <select name="shift" id="shift" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="morning">Morning Shift</option>
+                                    <option value="night">Night Shift</option>
+                                </select>
+                            </div>
+
                         <div class="mt-4" x-data="{ open: false, selectedDays: [], days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
                             <div class="relative">
@@ -195,7 +216,7 @@
                                     <template x-for="(day, index) in days" :key="index">
                                         <li class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white" :id="`day-option-${index}`" role="option">
                                             <div class="flex items-center space-x-2">
-                                                <input type="checkbox" name="working_days[]" :value="day" x-model="selectedDays" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                <input type="checkbox" name="working_days[]" :value="day" x-model="selectedDays" @change="Alpine.nextTick(() => calculateRatesModal())" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                                 <span class="block font-normal" x-text="day"></span>
                                             </div>
                                         </li>
@@ -282,7 +303,8 @@
         const basicSalaryInputModal = document.getElementById('basic_salary_modal');
         const dailyRateInputModal = document.getElementById('daily_rate_modal');
         const hourlyRateInputModal = document.getElementById('hourly_rate_modal');
-        const payPeriodSelectModal = document.getElementById('pay_period_modal'); // Renamed ID for clarity
+        const payPeriodSelectModal = document.getElementById('pay_period_modal');
+
         const employeeForm = document.getElementById('employeeForm');
         const modalTitle = document.getElementById('modalTitle');
         const methodField = document.getElementById('_methodField');
@@ -297,40 +319,42 @@
          * Note: This calculation is dynamic but assumes current month and a fixed Mon-Sat schedule.
          * For a robust system, this should ideally be handled on the server side based on pay frequency and fixed working days.
          */
-        function getWorkingDaysInMonth() {
+        window.getWorkingDaysInMonth = function(selectedWorkingDaysArr) {
             const today = new Date();
             const year = today.getFullYear();
             const month = today.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            let workingDays = 0;
+            let actualWorkingDays = 0;
+
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
                 const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-                if (dayOfWeek >= 1 && dayOfWeek <= 6) { 
-                    workingDays++;
+                const currentDayName = dayNames[dayOfWeek];
+                
+                if (selectedWorkingDaysArr.includes(currentDayName)) {
+                    actualWorkingDays++;
                 }
             }
-            return workingDays;
+            return actualWorkingDays;
         }
 
-        function calculateRatesModal() {
+        window.calculateRatesModal = function() {
             const basicSalary = parseFloat(basicSalaryInputModal.value) || 0;
             const WORKING_HOURS_PER_DAY = 8;
             
-            // Fallback: Use the fixed 22 days if the calculation logic fails or if a simple factor is preferred
-            const DEFAULT_WORKING_DAYS = 22; 
+            // Get selected working days directly from checked checkboxes
+            const selectedWorkingDayElements = document.querySelectorAll('input[name="working_days[]"]:checked');
+            const selectedWorkingDaysArray = Array.from(selectedWorkingDayElements).map(el => el.value);
             
-            // Use server-side value if available, otherwise use a safe default
-            // Since this is client-side JS, we'll use a simplified factor of 22/8 
-            // for consistency, as the date loop in the original code is overly complex for UI-side estimation.
-
+            const actualWorkingDaysInMonth = getWorkingDaysInMonth(selectedWorkingDaysArray);
+            
             let dailyRate = 0;
             let hourlyRate = 0;
             
-            if (basicSalary > 0) {
-                // Simplified estimate: Monthly Salary / 22 working days
-                dailyRate = basicSalary / DEFAULT_WORKING_DAYS;
+            if (basicSalary > 0 && actualWorkingDaysInMonth > 0) {
+                dailyRate = basicSalary / actualWorkingDaysInMonth;
                 hourlyRate = dailyRate / WORKING_HOURS_PER_DAY;
             }
 
@@ -362,11 +386,13 @@
                 document.getElementById('email').value = employee.email;
                 document.getElementById('position').value = employee.position;
                 document.getElementById('role').value = employee.role;
+                document.getElementById('department').value = employee.department; // Populate department
                 document.getElementById('basic_salary_modal').value = employee.basic_salary;
                 document.getElementById('pay_period_modal').value = employee.pay_period;
                 document.getElementById('work_start').value = employee.work_start.substring(0, 5);
                 document.getElementById('work_end').value = employee.work_end.substring(0, 5);
                 document.getElementById('start_date').value = employee.start_date; // Populate start_date
+                document.getElementById('shift').value = employee.shift; // Populate shift
 
                 // Populate working days multi-select
                 // Access the Alpine.js component and set its selectedDays
@@ -395,6 +421,8 @@
                 passwordConfirmationField.classList.remove('hidden');
                 passwordInput.setAttribute('required', 'required');
                 passwordConfirmationInput.setAttribute('required', 'required');
+                document.getElementById('shift').value = 'morning'; // Set default shift for new employee
+                document.getElementById('department').value = ''; // Reset department for new employee
 
                 // Reset working days multi-select
                 const workingDaysDropdown = document.querySelector('[x-data*="selectedDays"]');
