@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('no_bio_requests', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->date('date');
+            $table->string('type');
+            $table->text('reason');
+            $table->string('status')->default('pending');
             $table->timestamps();
         });
     }
