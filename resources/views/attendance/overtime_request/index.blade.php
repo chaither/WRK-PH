@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-semibold text-gray-800 mb-4">My No Bio Requests</h1>
+    <h1 class="text-2xl font-semibold text-gray-800 mb-4">My Overtime Requests</h1>
 
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -21,21 +21,20 @@
     @endif
 
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Submit New No Bio Request</h2>
-        <form action="{{ route('attendance.no-bio-request.store') }}" method="POST">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Submit New Overtime Request</h2>
+        <form action="{{ route('attendance.overtime-request.store') }}" method="POST">
             @csrf
             <div class="mb-4">
                 <label for="date" class="block text-gray-700 text-sm font-bold mb-2">Date</label>
                 <input type="date" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="date" name="date" value="{{ old('date') }}" required>
             </div>
             <div class="mb-4">
-                <label for="type" class="block text-gray-700 text-sm font-bold mb-2">Type</label>
-                <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="type" name="type" required>
-                    <option value="">Select Type</option>
-                    <option value="time_in" {{ old('type') == 'time_in' ? 'selected' : '' }}>Time In</option>
-                    <option value="time_out" {{ old('type') == 'time_out' ? 'selected' : '' }}>Time Out</option>
-                    <option value="both" {{ old('type') == 'both' ? 'selected' : '' }}>Both</option>
-                </select>
+                <label for="start_time" class="block text-gray-700 text-sm font-bold mb-2">Start Time</label>
+                <input type="time" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="start_time" name="start_time" value="{{ old('start_time') }}" required>
+            </div>
+            <div class="mb-4">
+                <label for="end_time" class="block text-gray-700 text-sm font-bold mb-2">End Time</label>
+                <input type="time" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="end_time" name="end_time" value="{{ old('end_time') }}" required>
             </div>
             <div class="mb-6">
                 <label for="reason" class="block text-gray-700 text-sm font-bold mb-2">Reason</label>
@@ -50,24 +49,26 @@
     </div>
 
     <div class="bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">My Pending Requests</h2>
-        @if ($noBioRequests->isEmpty())
-            <p class="text-gray-600">No requests found.</p>
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">My Submitted Overtime Requests</h2>
+        @if ($overtimeRequests->isEmpty())
+            <p class="text-gray-600">No overtime requests found.</p>
         @else
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach ($noBioRequests as $request)
+                    @foreach ($overtimeRequests as $request)
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($request->date)->format('M d, Y') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst(str_replace('_', ' ', $request->type)) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($request->start_time)->format('h:i A') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($request->end_time)->format('h:i A') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($request->status) }}</td>
                     </tr>

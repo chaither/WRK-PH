@@ -13,7 +13,8 @@ class ChangeRestdayController extends Controller
         $user = Auth::user();
         $currentRestdays = $user->rest_days ? implode(', ', $user->rest_days) : 'N/A';
         $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        return view('attendance.change_restday.index', compact('currentRestdays', 'daysOfWeek'));
+        $changeRestdayRequests = $user->changeRestdayRequests()->latest()->get();
+        return view('attendance.change_restday.index', compact('currentRestdays', 'daysOfWeek', 'changeRestdayRequests'));
     }
 
     public function store(Request $request)

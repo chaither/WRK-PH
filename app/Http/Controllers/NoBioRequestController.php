@@ -10,7 +10,8 @@ class NoBioRequestController extends Controller
 {
     public function index()
     {
-        return view('attendance.no_bio_request.index');
+        $noBioRequests = Auth::user()->noBioRequests()->latest()->get();
+        return view('attendance.no_bio_request.index', compact('noBioRequests'));
     }
 
     public function store(Request $request)

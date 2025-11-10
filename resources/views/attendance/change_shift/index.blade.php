@@ -37,5 +37,33 @@
             </div>
         </form>
     </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6 mt-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">My Pending Shift Change Requests</h2>
+        @if ($changeShiftRequests->isEmpty())
+            <p class="text-gray-600">No pending change shift requests.</p>
+        @else
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Shift</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Shift</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach ($changeShiftRequests as $request)
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->currentShift->name }} ({{ \Carbon\Carbon::parse($request->currentShift->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($request->currentShift->end_time)->format('h:i A') }})</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->requestedShift->name }} ({{ \Carbon\Carbon::parse($request->requestedShift->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($request->requestedShift->end_time)->format('h:i A') }})</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($request->status) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    </div>
 </div>
 @endsection

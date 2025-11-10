@@ -14,7 +14,8 @@ class ChangeShiftController extends Controller
         $user = Auth::user();
         $currentShift = $user->shift ? $user->shift->name . ' (' . \Carbon\Carbon::parse($user->shift->start_time)->format('h:i A') . ' - ' . \Carbon\Carbon::parse($user->shift->end_time)->format('h:i A') . ')' : 'N/A';
         $shifts = Shift::all();
-        return view('attendance.change_shift.index', compact('currentShift', 'shifts'));
+        $changeShiftRequests = $user->changeShiftRequests()->latest()->get();
+        return view('attendance.change_shift.index', compact('currentShift', 'shifts', 'changeShiftRequests'));
     }
 
     public function store(Request $request)

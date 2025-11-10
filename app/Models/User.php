@@ -102,4 +102,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(ChangeRestdayRequest::class);
     }
+
+    public function noBioRequests()
+    {
+        return $this->hasMany(NoBioRequest::class);
+    }
+
+    public function overtimeRequests()
+    {
+        return $this->hasMany(OvertimeRequest::class);
+    }
 }
