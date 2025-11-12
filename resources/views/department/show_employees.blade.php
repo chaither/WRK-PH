@@ -53,10 +53,15 @@
                         <td class="px-6 py-4 whitespace-nowrap">{{ $employee->email }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $employee->position ?? 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <form action="{{ route('departments.remove_employee', ['department' => $department->id, 'employee' => $employee->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to remove this employee from the department?');">
+                            <button type="button" onclick="editEmployee({{ $employee->id }})" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Edit Employee">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form action="{{ route('departments.remove_employee', ['department' => $department->id, 'employee' => $employee->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to permanently delete this employee account?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-900 ml-2"><i class="fas fa-user-minus"></i> Remove</button>
+                                <button type="submit" class="text-red-600 hover:text-red-900 ml-2" title="Delete Employee">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -116,5 +121,31 @@
             modal.classList.add('hidden');
         }
     });
+
+    // Function to handle editing an employee
+    window.editEmployee = async function(employeeId) {
+        try {
+            const response = await fetch(`/employees/${employeeId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const employee = await response.json();
+            
+            // Assuming openEmployeeModal is available globally from department/index.blade.php
+            if (typeof openEmployeeModal === 'function') {
+                openEmployeeModal(employee);
+            } else {
+                console.error('openEmployeeModal function not found. Ensure department/index.blade.php scripts are loaded.');
+                alert('Error: Edit functionality not fully loaded. Please refresh the page.');
+            }
+        } catch (error) {
+            console.error('Error fetching employee data:', error);
+            alert('Failed to load employee data for editing.');
+        }
+    };
 </script>
+@endpush
+
+@push('modals')
+    @include('components.employee_modal', ['departments' => $departments, 'shifts' => $shifts])
 @endpush

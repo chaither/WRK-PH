@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Department;
 use App\Models\User;
+use App\Models\Shift; // Add this line
 use Illuminate\Support\Facades\Hash;
 
 class DepartmentController extends Controller
@@ -13,7 +14,8 @@ class DepartmentController extends Controller
     public function index()
     {
         $departments = Department::all();
-        return view('department.index', compact('departments'));
+        $shifts = Shift::all(); // Fetch all shifts
+        return view('department.index', compact('departments', 'shifts')); // Pass shifts to the view
     }
 
     public function store(Request $request)
@@ -41,7 +43,9 @@ class DepartmentController extends Controller
                                   ->where('role', 'employee')
                                   ->get();
                                   
-        return view('department.show_employees', compact('department', 'employees', 'availableEmployees'));
+        $departments = Department::all(); // Fetch all departments
+        $shifts = Shift::all(); // Fetch all shifts
+        return view('department.show_employees', compact('department', 'employees', 'availableEmployees', 'departments', 'shifts'));
     }
 
     public function addEmployeeToDepartment(Request $request, Department $department)
@@ -97,12 +101,11 @@ class DepartmentController extends Controller
     public function removeEmployeeFromDepartment(Department $department, User $employee)
     {
         if ($employee->department_id === $department->id) {
-            $employee->department_id = null;
-            $employee->save();
-            return redirect()->route('department.show_employees', $department->id)->with('success', 'Employee removed from department successfully.');
+            $employee->delete(); // Changed to delete the employee
+            return redirect()->route('employees.index')->with('success', 'Employee account permanently deleted.');
         }
 
-        return redirect()->route('department.show_employees', $department->id)->with('error', 'Employee not found in this department.');
+        return redirect()->route('departments.show_employees', $department->id)->with('error', 'Employee not found in this department.');
     }
 
     public function removeEmployee(Department $department, User $employee)

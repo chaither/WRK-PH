@@ -34,8 +34,8 @@
                     @foreach ($changeRestdayRequests as $request)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $request->user->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->current_restdays }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->requested_restdays }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ implode(', ', $request->current_restdays) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ implode(', ', $request->requested_restdays) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <form action="{{ route('admin.attendance.change-restday.approve', $request->id) }}" method="POST" class="inline-block">

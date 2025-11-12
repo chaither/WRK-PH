@@ -31,13 +31,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
 });
 
-Route::resource('department', DepartmentController::class);
+// Employee Management Routes (Protected)
+Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+});
 
-Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show'); // Assuming you have a show method
-Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
-Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+Route::resource('department', DepartmentController::class);
 
 // Department Employee Routes
 Route::get('/departments/{department}/employees', [DepartmentController::class, 'showEmployees'])->name('departments.show_employees');
