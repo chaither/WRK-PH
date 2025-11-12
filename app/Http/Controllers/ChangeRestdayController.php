@@ -20,7 +20,8 @@ class ChangeRestdayController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'requested_restdays' => 'required|string|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'requested_restdays' => 'required|array',
+            'requested_restdays.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'reason' => 'required|string|max:255',
         ]);
 
@@ -29,7 +30,7 @@ class ChangeRestdayController extends Controller
         ChangeRestdayRequest::create([
             'user_id' => $user->id,
             'current_restdays' => $user->rest_days,
-            'requested_restdays' => [$request->requested_restdays], // Store as an array for consistency
+            'requested_restdays' => $request->requested_restdays,
             'reason' => $request->reason,
             'status' => 'pending',
         ]);

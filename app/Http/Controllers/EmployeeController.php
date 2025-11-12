@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Shift; // Add this line
+use App\Models\Department; // Add this line
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -16,9 +18,7 @@ class EmployeeController extends Controller
 
     public function index(Request $request)
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        // Removed redundant role check, now handled by route middleware.
 
         $query = User::query()->where('role', 'employee');
 
@@ -27,14 +27,14 @@ class EmployeeController extends Controller
         }
         
         $employees = $query->get();
-        return view('employees.index', compact('employees'));
+        $shifts = Shift::all(); // Fetch all shifts
+        $departments = Department::all(); // Fetch all departments
+        return view('department.index', compact('employees', 'shifts', 'departments')); // Pass shifts and departments to the view
     }
 
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        // Removed redundant role check, now handled by route middleware.
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -47,7 +47,9 @@ class EmployeeController extends Controller
             'work_end' => 'required|date_format:H:i|after:work_start',
             'start_date' => 'required|date',
             'working_days' => 'nullable|array',
+            'rest_days' => 'nullable|array', // Add rest_days validation
             'department_id' => 'nullable|exists:departments,id',
+            'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
         ]);
 
         // Handle password separately: only hash if provided
@@ -69,17 +71,21 @@ class EmployeeController extends Controller
 
         $validated['role'] = 'employee';
         $validated['working_days'] = $request->input('working_days', []);
+        $validated['rest_days'] = $request->input('rest_days', []); // Save rest_days
         
         User::create($validated);
 
         return redirect()->route('department.index')->with('success', 'Employee created successfully');
     }
 
+    public function show(User $employee)
+    {
+        return response()->json($employee->load(['department', 'shift']));
+    }
+
     public function update(Request $request, User $employee)
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        // Removed redundant role check, now handled by route middleware.
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -92,6 +98,8 @@ class EmployeeController extends Controller
             'role' => 'required|in:employee,hr,admin', // Include role in validation
             'start_date' => 'required|date',
             'working_days' => 'nullable|array',
+            'rest_days' => 'nullable|array', // Add rest_days validation
+            'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
         ]);
 
         // Handle password separately: only hash if provided and not empty
@@ -110,6 +118,7 @@ class EmployeeController extends Controller
         $validated['hourly_rate'] = round($hourlyRate, 2);
 
         $validated['working_days'] = $request->input('working_days', []);
+        $validated['rest_days'] = $request->input('rest_days', []); // Save rest_days
 
         $employee->update($validated);
 
@@ -118,9 +127,7 @@ class EmployeeController extends Controller
 
     public function destroy(User $employee)
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        // Removed redundant role check, now handled by route middleware.
 
         $employee->delete();
 
