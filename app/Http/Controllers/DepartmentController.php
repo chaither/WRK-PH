@@ -22,9 +22,13 @@ class DepartmentController extends Controller
             'name' => 'required|unique:departments|max:255',
         ]);
 
-        Department::create([
+        $department = Department::create([
             'name' => $request->name,
         ]);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Department created successfully.', 'department' => $department]);
+        }
 
         return redirect()->route('department.index')->with('success', 'Department created successfully.');
     }
@@ -37,10 +41,27 @@ class DepartmentController extends Controller
                                   ->where('role', 'employee')
                                   ->get();
                                   
-        return view('department.employees', compact('department', 'employees', 'availableEmployees'));
+        return view('department.show_employees', compact('department', 'employees', 'availableEmployees'));
     }
 
-    public function addEmployee(Request $request, Department $department)
+    public function addEmployeeToDepartment(Request $request, Department $department)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:users,id',
+        ]);
+
+        $employee = User::find($request->employee_id);
+
+        if ($employee->department_id === null) {
+            $employee->department_id = $department->id;
+            $employee->save();
+            return redirect()->route('department.show_employees', $department->id)->with('success', 'Employee added to department successfully.');
+        }
+
+        return redirect()->route('department.show_employees', $department->id)->with('error', 'Employee is already assigned to a department.');
+    }
+
+    public function addEmployee(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -52,6 +73,7 @@ class DepartmentController extends Controller
             'pay_period' => 'required|string|in:semi-monthly,monthly',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
+            'department_id' => 'nullable|exists:departments,id', // Make department_id nullable and validate existence
         ]);
 
         User::create([
@@ -66,21 +88,28 @@ class DepartmentController extends Controller
             'hourly_rate' => ($request->basic_salary / 22) / 8, // Example calculation
             'work_start' => $request->work_start,
             'work_end' => $request->work_end,
-            'department_id' => $department->id, // Assign to the current department
+            'department_id' => $request->department_id, // Assign to the selected department from the request
         ]);
 
-        return redirect()->route('department.employees', $department->id)->with('success', 'Employee added to department successfully.');
+        return redirect()->route('department.index')->with('success', 'Employee created and assigned to department successfully.');
     }
 
-    public function removeEmployee(Department $department, User $employee)
+    public function removeEmployeeFromDepartment(Department $department, User $employee)
     {
         if ($employee->department_id === $department->id) {
             $employee->department_id = null;
             $employee->save();
-            return redirect()->route('department.employees', $department->id)->with('success', 'Employee removed from department successfully.');
+            return redirect()->route('department.show_employees', $department->id)->with('success', 'Employee removed from department successfully.');
         }
 
-        return redirect()->route('department.employees', $department->id)->with('error', 'Employee not found in this department.');
+        return redirect()->route('department.show_employees', $department->id)->with('error', 'Employee not found in this department.');
+    }
+
+    public function removeEmployee(Department $department, User $employee)
+    {
+        $employee->department_id = null;
+        $employee->save();
+        return redirect()->route('department.show_employees', $department->id)->with('success', 'Employee removed from department successfully.');
     }
 
     public function edit(Department $department)

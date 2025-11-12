@@ -40,9 +40,11 @@ Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name
 Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
 // Department Employee Routes
-Route::get('department/{department}/employees', [DepartmentController::class, 'showEmployees'])->name('department.employees');
+Route::get('/departments/{department}/employees', [DepartmentController::class, 'showEmployees'])->name('departments.show_employees');
 Route::post('department/{department}/employees', [DepartmentController::class, 'addEmployee'])->name('department.employees.store');
 Route::delete('department/{department}/employees/{employee}', [DepartmentController::class, 'removeEmployee'])->name('department.employees.remove');
+Route::post('/departments/{department}/employees/add', [DepartmentController::class, 'addEmployeeToDepartment'])->name('departments.add_employee');
+Route::delete('/departments/{department}/employees/{employee}/remove', [DepartmentController::class, 'removeEmployeeFromDepartment'])->name('departments.remove_employee');
 
 // Payroll Routes
 Route::prefix('payroll')->name('payroll.')->group(function() {

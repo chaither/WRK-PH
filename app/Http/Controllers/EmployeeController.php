@@ -47,6 +47,7 @@ class EmployeeController extends Controller
             'work_end' => 'required|date_format:H:i|after:work_start',
             'start_date' => 'required|date',
             'working_days' => 'nullable|array',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         // Handle password separately: only hash if provided
@@ -71,7 +72,7 @@ class EmployeeController extends Controller
         
         User::create($validated);
 
-        return redirect()->route('employees.index')->with('success', 'Employee created successfully');
+        return redirect()->route('department.index')->with('success', 'Employee created successfully');
     }
 
     public function update(Request $request, User $employee)
