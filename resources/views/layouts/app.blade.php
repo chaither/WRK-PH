@@ -124,11 +124,19 @@
                         <i class="fas fa-clipboard-list text-xl"></i>
                         <span class="ml-3">Leave Request Review</span>
                     </a>
+                    <a href="{{ route('holidays.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('holidays.*') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                        <span class="ml-3">Holiday Management</span>
+                    </a>
                 @endif
                 @if (Auth::user()->isEmployee())
                     <a href="{{ route('employee.leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-briefcase text-xl"></i>
                         <span class="ml-3">My Leave Requests</span>
+                    </a>
+                    <a href="{{ route('employee.payslips.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.payslips.index') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-money-check-alt text-xl"></i>
+                        <span class="ml-3">My Payslips</span>
                     </a>
                 @endif
 

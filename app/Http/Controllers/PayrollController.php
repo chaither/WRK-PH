@@ -10,72 +10,55 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PayrollService;
 
 class PayrollController extends Controller
 {
-    public function index(Request $request)
+    protected $payrollService;
+
+    public function __construct(PayrollService $payrollService)
+    {
+        $this->middleware(['auth']);
+        $this->middleware(\App\Http\Middleware\EnsureHrAdminRole::class)->except(['employeePayslips', 'showPayslip']); // Apply HR/Admin role to most methods, but allow all authenticated users for employeePayslips and showPayslip
+        $this->payrollService = $payrollService;
+    }
+
+    /**
+     * Display a listing of payslips for the authenticated employee.
+     */
+    public function employeePayslips()
     {
         $user = Auth::user();
-        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
-            abort(403, 'Unauthorized access.');
-        }
+        $payslips = Payslip::where('user_id', $user->id)
+            ->orderByDesc('pay_period_end')
+            ->get();
+        
+        return view('payroll.employee_payslips', compact('payslips'));
+    }
 
+    public function index(Request $request)
+    {
         $payPeriods = PayPeriod::orderBy('end_date', 'desc')->get();
-        $start = $request->input('start_date');
-        $end = $request->input('end_date');
+        $today = Carbon::today();
+        $start = $request->input('start_date', $today->copy()->startOfMonth()->format('Y-m-d'));
+        $end = $request->input('end_date', $today->copy()->endOfMonth()->format('Y-m-d'));
         $payrolls = collect();
         $currentPeriod = null;
-        $employees = collect();
-        if ($start && $end) {
-            // Determine if this is a whole month filter
-            $startDate = \Carbon\Carbon::parse($start);
-            $endDate = \Carbon\Carbon::parse($end);
-            $isWholeMonth = $startDate->isSameDay($startDate->copy()->startOfMonth()) && $endDate->isSameDay($endDate->copy()->endOfMonth());
-            if ($isWholeMonth) {
-                $employees = User::where('role', 'employee')->where('pay_period', 'monthly')->get();
-            } else {
-                $employees = User::where('role', 'employee')->where('pay_period', 'semi-monthly')->get();
-            }
 
-            $currentPeriod = PayPeriod::firstOrCreate([
-                'start_date' => $start,
-                'end_date' => $end
-            ], ['status' => 'draft']);
+        $currentPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
 
-            if ($currentPeriod) {
-                $payrolls = Payslip::with(['user', 'payPeriod'])
-                    ->where('pay_period_id', $currentPeriod->id)
-                    ->whereHas('user', function($q) use ($isWholeMonth) {
-                        $q->where('pay_period', $isWholeMonth ? 'monthly' : 'semi-monthly');
-                    })
-                    ->get();
-
-                // compute work_days (weekdays) and present_days for each payslip
-                $payrolls = $payrolls->map(function($p) {
-                    $start = \Carbon\Carbon::parse($p->payPeriod->start_date);
-                    $end = \Carbon\Carbon::parse($p->payPeriod->end_date);
-                    $workDays = 0;
-                    for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-                        if ($d->isWeekday()) $workDays++;
-                    }
-                    $presentDays = max(0, $workDays - ($p->absent_days ?? 0));
-                    $p->work_days = $workDays;
-                    $p->present_days = $presentDays;
-                    return $p;
-                });
-            }
-        } else {
-            // Default: show all employees (or leave empty)
-            $employees = User::where('role', 'employee')->get();
+        if ($currentPeriod) {
+            $payrolls = Payslip::with(['user', 'payPeriod'])
+                ->where('pay_period_id', $currentPeriod->id)
+                ->get();
         }
 
-        // (Generation moved to generateForRange route)
+        $totalEmployees = $payrolls->unique('user_id')->count();
+        $totalGrossPay = $payrolls->sum('gross_pay');
+        $totalDeductions = $payrolls->sum('deductions');
+        $totalNetPay = $payrolls->sum('net_pay');
 
-        $totalEmployees = $employees->count();
-        $totalHours = $payrolls->sum('total_hours_worked');
-        $totalPayroll = $payrolls->sum('net_pay');
-
-        return view('payroll.index', compact('payPeriods', 'currentPeriod', 'employees', 'payrolls', 'totalEmployees', 'totalHours', 'totalPayroll', 'start', 'end'));
+        return view('payroll.index', compact('payPeriods', 'currentPeriod', 'payrolls', 'totalEmployees', 'totalGrossPay', 'totalDeductions', 'totalNetPay', 'start', 'end'));
     }
 
     public function createPayPeriod(Request $request)
@@ -91,65 +74,12 @@ class PayrollController extends Controller
 
     public function generatePayslips(PayPeriod $payPeriod)
     {
-        $employees = User::where('role', 'employee')->get();
+        // Call the PayrollService to generate payslips
+        $this->payrollService->generatePayslipsForPeriod($payPeriod->start_date, $payPeriod->end_date);
 
-        foreach ($employees as $employee) {
-            $dtrRecords = DTRRecord::where('user_id', $employee->id)
-                ->whereBetween('date', [$payPeriod->start_date, $payPeriod->end_date])
-                ->get();
+        // Mark period as completed after creating payslips
+        $payPeriod->update(['status' => 'unpaid']); // Or 'processing' if there's another step
 
-            $totalHours = $dtrRecords->sum(function($record) {
-                return $record->calculateWorkHours();
-            });
-
-            $overtimeHours = $dtrRecords->sum(function($record) {
-                return $record->calculateOvertimeHours();
-            });
-
-            $lateMinutes = $dtrRecords->sum('late_minutes');
-            $absentDays = $this->calculateAbsentDays($employee, $payPeriod, $dtrRecords);
-
-            // Calculate pays and deductions
-            $basicPay = $totalHours * $employee->hourly_rate;
-            $overtimePay = $overtimeHours * ($employee->hourly_rate * 1.25); // 25% overtime premium
-            $lateDeductions = ($lateMinutes / 60) * $employee->hourly_rate;
-            $absenceDeductions = 0; // Set to 0 as requested
-
-            // Example government deduction formulas (replace with your actual logic)
-            $sss = $basicPay * 0.045; // 4.5% SSS
-            $gsis = $basicPay * 0.09; // 9% GSIS
-            $philhealth = $basicPay * 0.035; // 3.5% PhilHealth
-            $other_deductions = 0; // Reset on generation
-
-            $totalDeductions = $lateDeductions + $absenceDeductions + $sss + $gsis + $philhealth + $other_deductions;
-            $grossPay = $basicPay + $overtimePay;
-            $netPay = max(0, $grossPay - $totalDeductions);
-
-            Payslip::updateOrCreate(
-                [
-                    'user_id' => $employee->id,
-                    'pay_period_id' => $payPeriod->id
-                ],
-                [
-                    'basic_pay' => $basicPay,
-                    'overtime_pay' => $overtimePay,
-                    'late_deductions' => $lateDeductions,
-                    'absences_deductions' => $absenceDeductions,
-                    'sss' => $sss,
-                    'gsis' => $gsis,
-                    'philhealth' => $philhealth,
-                    'other_deductions' => $other_deductions,
-                    'net_pay' => $netPay,
-                    'total_hours_worked' => $totalHours,
-                    'overtime_hours' => $overtimeHours,
-                    'late_minutes' => $lateMinutes,
-                    'absent_days' => $absentDays
-                ]
-            );
-        }
-
-    // mark period as unpaid after creating payslips
-    $payPeriod->update(['status' => 'unpaid']);
         return redirect()->route('payroll.index')->with('success', 'Payslips generated successfully');
     }
 
@@ -222,84 +152,10 @@ class PayrollController extends Controller
         return redirect()->back()->with('success', 'Other Deduction updated successfully.');
     }
 
-    private function getCurrentPayPeriod()
-    {
-        $today = Carbon::today();
-        $day = $today->day;
-
-        // For semi-monthly: 1-15 and 16-end of month
-        if ($day <= 15) {
-            $startDate = $today->copy()->startOfMonth();
-            $endDate = $today->copy()->day(15);
-        } else {
-            $startDate = $today->copy()->day(16);
-            $endDate = $today->copy()->endOfMonth();
-        }
-
-        return PayPeriod::firstOrCreate(
-            [
-                'start_date' => $startDate,
-                'end_date' => $endDate
-            ],
-            ['status' => 'draft']
-        );
-    }
-
-    private function calculateAbsentDays($employee, $payPeriod, $dtrRecords)
-    {
-        $startDate = Carbon::parse($payPeriod->start_date);
-        $endDate = Carbon::parse($payPeriod->end_date);
-        $workingDays = 0;
-
-        // Count working days (Monday to Friday) in the pay period
-        for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
-            if ($date->isWeekday()) {
-                $workingDays++;
-            }
-        }
-
-        // Subtract approved leave days from working days
-        $approvedLeaveRequests = \App\Models\LeaveRequest::where('user_id', $employee->id)
-            ->where('status', 'approved')
-            ->where(function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate])
-                      ->orWhere(function ($query) use ($startDate, $endDate) {
-                          $query->where('start_date', '<=', $startDate)
-                                ->where('end_date', '>=', $endDate);
-                      });
-            })
-            ->get();
-
-        $approvedLeaveDays = 0;
-        foreach ($approvedLeaveRequests as $leave) {
-            $leaveStart = Carbon::parse($leave->start_date);
-            $leaveEnd = Carbon::parse($leave->end_date);
-
-            // Calculate intersection of leave period and pay period
-            $overlapStart = $leaveStart->greaterThan($startDate) ? $leaveStart : $startDate;
-            $overlapEnd = $leaveEnd->lessThan($endDate) ? $leaveEnd : $endDate;
-
-            for ($date = $overlapStart->copy(); $date->lte($overlapEnd); $date->addDay()) {
-                if ($date->isWeekday()) {
-                    $approvedLeaveDays++;
-                }
-            }
-        }
-
-        $effectiveWorkingDays = $workingDays - $approvedLeaveDays;
-
-        $presentDays = $dtrRecords->unique('date')->count();
-        return max(0, $effectiveWorkingDays - $presentDays);
-    }
-
     public function updateDeductions(Request $request, Payslip $payslip)
     {
         $request->validate([
-            'sss' => 'required|numeric|min:0',
-            'gsis' => 'required|numeric|min:0',
-            'philhealth' => 'required|numeric|min:0',
-            'other_deductions' => 'required|numeric|min:0',
+            'deductions' => 'required|numeric|min:0',
         ]);
 
         $user = Auth::user();
@@ -307,15 +163,10 @@ class PayrollController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $payslip->sss = $request->input('sss');
-        $payslip->gsis = $request->input('gsis');
-        $payslip->philhealth = $request->input('philhealth');
-        $payslip->other_deductions = $request->input('other_deductions');
-
+        $payslip->deductions = $request->input('deductions');
         // Recalculate net pay
-        $totalDeductions = $payslip->sss + $payslip->gsis + $payslip->philhealth + $payslip->other_deductions + $payslip->late_deductions + $payslip->absences_deductions;
-        $grossPay = $payslip->basic_pay + $payslip->overtime_pay;
-        $payslip->net_pay = $grossPay - $totalDeductions;
+        $grossPay = $payslip->gross_pay; // Use the gross_pay already calculated by PayrollService
+        $payslip->net_pay = $grossPay - $payslip->deductions;
 
         $payslip->save();
 
