@@ -20,15 +20,19 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('pay_period_id')->constrained()->onDelete('cascade');
-            $table->decimal('basic_pay', 10, 2);
+            $table->date('pay_period_start')->nullable();
+            $table->date('pay_period_end')->nullable();
+            $table->decimal('gross_pay', 10, 2)->nullable();
             $table->decimal('overtime_pay', 10, 2)->default(0);
             $table->decimal('late_deductions', 10, 2)->default(0);
             $table->decimal('absences_deductions', 10, 2)->default(0);
+            $table->decimal('deductions', 10, 2)->default(0.00);
             $table->decimal('net_pay', 10, 2);
             $table->integer('total_hours_worked');
             $table->integer('overtime_hours')->default(0);
             $table->integer('late_minutes')->default(0);
             $table->integer('absent_days')->default(0);
+            $table->json('details')->nullable();
             $table->timestamps();
         });
     }

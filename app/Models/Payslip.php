@@ -10,18 +10,24 @@ class Payslip extends Model
     protected $fillable = [
         'user_id',
         'pay_period_id',
-        'basic_pay',
+        'pay_period_start',
+        'pay_period_end',
+        'gross_pay',
         'overtime_pay',
         'late_deductions',
-        'sss',
-        'gsis',
-        'philhealth',
-        'other_deductions',
+        'deductions',
         'net_pay',
         'total_hours_worked',
         'overtime_hours',
         'late_minutes',
-        'absent_days'
+        'absent_days',
+        'details'
+    ];
+
+    protected $casts = [
+        'pay_period_start' => 'date',
+        'pay_period_end' => 'date',
+        'details' => 'array',
     ];
 
     public function user(): BelongsTo

@@ -18,6 +18,9 @@ use App\Http\Controllers\NoBioRequestController;
 use App\Http\Controllers\AdminNoBioRequestController;
 use App\Http\Controllers\OvertimeRequestController;
 use App\Http\Controllers\AdminOvertimeRequestController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\PayrollScheduleController;
+use App\Http\Controllers\GovernmentContributionController;
 
 // Auth Routes
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -29,6 +32,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
+    Route::get('/my-payslips', [PayrollController::class, 'employeePayslips'])->name('employee.payslips.index');
 });
 
 // Employee Management Routes (Protected)
@@ -41,6 +45,23 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
 });
 
 Route::resource('department', DepartmentController::class);
+
+// Holiday Management Routes (Protected)
+Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    Route::resource('holidays', HolidayController::class);
+    Route::resource('payroll-schedules', PayrollScheduleController::class)->except(['create', 'edit']);
+    Route::resource('government-contributions', GovernmentContributionController::class)->except(['create', 'edit']);
+});
+
+// API for fetching employees and departments (for modals, etc.)
+Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    Route::get('/api/employees', function () {
+        return response()->json(App\Models\User::where('role', 'employee')->select('id', 'name')->get());
+    })->name('api.employees');
+    Route::get('/api/departments', function () {
+        return response()->json(App\Models\Department::select('id', 'name')->get());
+    })->name('api.departments');
+});
 
 // Department Employee Routes
 Route::get('/departments/{department}/employees', [DepartmentController::class, 'showEmployees'])->name('departments.show_employees');

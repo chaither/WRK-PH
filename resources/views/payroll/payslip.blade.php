@@ -20,9 +20,10 @@
         </div>
         <div>
             <h2 class="text-lg font-semibold mb-2">Pay Information</h2>
-            <p><strong>Basic Salary:</strong> ₱{{ number_format($employee->basic_salary, 2) }}</p>
+            <p><strong>Monthly Effective Salary:</strong> ₱{{ number_format(optional(json_decode($payslip->details, true))['monthly_salary'], 2) }}</p>
             <p><strong>Pay Period Type:</strong> {{ ucfirst($employee->pay_period) }}</p>
-            <p><strong>Daily Rate:</strong> ₱{{ number_format($employee->daily_rate, 2) }}</p>
+            <p><strong>Daily Rate:</strong> ₱{{ number_format(optional(json_decode($payslip->details, true))['daily_rate'], 2) }}</p>
+            <p><strong>Hourly Rate:</strong> ₱{{ number_format(optional(json_decode($payslip->details, true))['hourly_rate'], 2) }}</p>
         </div>
     </div>
 
@@ -33,16 +34,28 @@
                 <h3 class="font-semibold mb-2">Earnings</h3>
                 <div class="space-y-2">
                     <div class="flex justify-between">
-                        <span>Basic Pay:</span>
-                        <span>₱{{ number_format($payslip->basic_pay, 2) }}</span>
+                        <span>Gross Pay (Before Deductions):</span>
+                        <span>₱{{ number_format($payslip->gross_pay, 2) }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span>Overtime Pay:</span>
                         <span>₱{{ number_format($payslip->overtime_pay, 2) }}</span>
                     </div>
+                    @if(optional(json_decode($payslip->details, true))['holiday_working_days']['regular'] > 0)
+                    <div class="flex justify-between text-green-700">
+                        <span>Regular Holiday Pay (x{{ optional(json_decode($payslip->details, true))['holiday_working_days']['regular'] }} days):</span>
+                        <span>₱{{ number_format(optional(json_decode($payslip->details, true))['holiday_working_days']['regular'] * optional(json_decode($payslip->details, true))['daily_rate'] * 2, 2) }}</span>
+                    </div>
+                    @endif
+                    @if(optional(json_decode($payslip->details, true))['holiday_working_days']['special_non_working'] > 0)
+                    <div class="flex justify-between text-yellow-700">
+                        <span>Special Non-Working Holiday Pay (x{{ optional(json_decode($payslip->details, true))['holiday_working_days']['special_non_working'] }} days):</span>
+                        <span>₱{{ number_format(optional(json_decode($payslip->details, true))['holiday_working_days']['special_non_working'] * optional(json_decode($payslip->details, true))['daily_rate'] * 1.3, 2) }}</span>
+                    </div>
+                    @endif
                     <div class="flex justify-between font-semibold">
-                        <span>Total Earnings:</span>
-                        <span>₱{{ number_format($payslip->basic_pay + $payslip->overtime_pay, 2) }}</span>
+                        <span>Total Gross Pay:</span>
+                        <span>₱{{ number_format($payslip->gross_pay, 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -53,25 +66,42 @@
                         <span>Late Deductions:</span>
                         <span>₱{{ number_format($payslip->late_deductions, 2) }}</span>
                     </div>
+                    @php
+                        $details = json_decode($payslip->details, true);
+                    @endphp
+                    @if(isset($details['sss_deduction']) && $details['sss_deduction'] > 0)
                     <div class="flex justify-between">
-                        <span>SSS:</span>
-                        <span>₱{{ number_format($payslip->sss, 2) }}</span>
+                        <span>SSS Contribution
+                            @if(isset($details['sss_is_percentage']) && $details['sss_is_percentage'])
+                                ({{ number_format($details['sss_employee_share_rate'], 2) }}%)
+                            @endif:
+                        </span>
+                        <span>₱{{ number_format($details['sss_deduction'], 2) }}</span>
                     </div>
+                    @endif
+                    @if(isset($details['philhealth_deduction']) && $details['philhealth_deduction'] > 0)
                     <div class="flex justify-between">
-                        <span>GSIS:</span>
-                        <span>₱{{ number_format($payslip->gsis, 2) }}</span>
+                        <span>PhilHealth Contribution
+                            @if(isset($details['philhealth_is_percentage']) && $details['philhealth_is_percentage'])
+                                ({{ number_format($details['philhealth_employee_share_rate'], 2) }}%)
+                            @endif:
+                        </span>
+                        <span>₱{{ number_format($details['philhealth_deduction'], 2) }}</span>
                     </div>
+                    @endif
+                    @if(isset($details['pagibig_deduction']) && $details['pagibig_deduction'] > 0)
                     <div class="flex justify-between">
-                        <span>PhilHealth:</span>
-                        <span>₱{{ number_format($payslip->philhealth, 2) }}</span>
+                        <span>Pag-IBIG Contribution
+                            @if(isset($details['pagibig_is_percentage']) && $details['pagibig_is_percentage'])
+                                ({{ number_format($details['pagibig_employee_share_rate'], 2) }}%)
+                            @endif:
+                        </span>
+                        <span>₱{{ number_format($details['pagibig_deduction'], 2) }}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span>Other Deductions:</span>
-                        <span>₱{{ number_format($payslip->other_deductions, 2) }}</span>
-                    </div>
+                    @endif
                     <div class="flex justify-between font-semibold border-t pt-2 mt-2">
                         <span>Total Deductions:</span>
-                        <span>₱{{ number_format($payslip->late_deductions + $payslip->sss + $payslip->gsis + $payslip->philhealth + $payslip->other_deductions, 2) }}</span>
+                        <span>₱{{ number_format($payslip->deductions, 2) }}</span>
                     </div>
                 </div>
             </div>

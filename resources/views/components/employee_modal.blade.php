@@ -129,7 +129,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Rest Days</label>
                             <div class="relative">
                                 <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <span x-text="selectedRestDays.length ? selectedRestDays.join(', ') : 'Select resgt days'" class="block truncate"></span>
+                                    <span x-text="selectedRestDays.length ? selectedRestDays.join(', ') : 'Select rest days'" class="block truncate"></span>
                                     <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                         <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -140,7 +140,7 @@
                                     <template x-for="(day, index) in days" :key="index">
                                         <li class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white" :id="`rest-day-option-${index}`" role="option">
                                             <div class="flex items-center space-x-2">
-                                                <input type="checkbox" name="rest_days[]" :value="day" x-model="selectedRestDays" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                <input type="checkbox" name="rest_days[]" :value="day" x-model="selectedRestDays" @change="Alpine.nextTick(() => calculateRatesModal())" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                                 <span class="block font-normal" x-text="day"></span>
                                             </div>
                                         </li>
@@ -170,14 +170,6 @@
                         </h4>
                         <div class="space-y-4">
                             <div>
-                                <label for="basic_salary_modal" class="block text-sm font-medium text-gray-700 mb-1">Monthly Basic Salary</label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="basic_salary" id="basic_salary_modal" required 
-                                        class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
-                                </div>
-                            </div>
-                            <div>
                                 <label for="pay_period_modal" class="block text-sm font-medium text-gray-700 mb-1">Pay Period</label>
                                 <select name="pay_period" id="pay_period_modal" required 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -186,6 +178,24 @@
                                         <option value="{{ $period }}">{{ ucfirst($period) }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            {{-- Monthly Salary Input (initially hidden) --}}
+                            <div id="monthlySalaryField" class="hidden">
+                                <label for="monthly_salary" class="block text-sm font-medium text-gray-700 mb-1">Monthly Salary</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
+                                    <input type="number" name="monthly_salary" id="monthly_salary" 
+                                        class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                            </div>
+                            {{-- Semi-Monthly Salary Input (initially hidden) --}}
+                            <div id="semiMonthlySalaryField" class="hidden">
+                                <label for="semi_monthly_salary" class="block text-sm font-medium text-gray-700 mb-1">Semi-Monthly Salary</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
+                                    <input type="number" name="semi_monthly_salary" id="semi_monthly_salary" 
+                                        class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
+                                </div>
                             </div>
                             {{-- Daily Rate (Auto) --}}
                             <div>
@@ -225,10 +235,13 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const basicSalaryInputModal = document.getElementById('basic_salary_modal');
         const dailyRateInputModal = document.getElementById('daily_rate_modal');
         const hourlyRateInputModal = document.getElementById('hourly_rate_modal');
         const payPeriodSelectModal = document.getElementById('pay_period_modal');
+        const monthlySalaryField = document.getElementById('monthlySalaryField');
+        const semiMonthlySalaryField = document.getElementById('semiMonthlySalaryField');
+        const monthlySalaryInput = document.getElementById('monthly_salary');
+        const semiMonthlySalaryInput = document.getElementById('semi_monthly_salary');
 
         const employeeForm = document.getElementById('employeeForm');
         const modalTitle = document.getElementById('modalTitle');
@@ -244,7 +257,7 @@
          * Note: This calculation is dynamic but assumes current month and a fixed Mon-Sat schedule.
          * For a robust system, this should ideally be handled on the server side based on pay frequency and fixed working days.
          */
-        window.getWorkingDaysInMonth = function(selectedWorkingDaysArr) {
+        window.getWorkingDaysInMonth = function(selectedWorkingDaysArr, selectedRestDaysArr) {
             const today = new Date();
             const year = today.getFullYear();
             const month = today.getMonth();
@@ -258,7 +271,7 @@
                 const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
                 const currentDayName = dayNames[dayOfWeek];
                 
-                if (selectedWorkingDaysArr.includes(currentDayName)) {
+                if (selectedWorkingDaysArr.includes(currentDayName) && !selectedRestDaysArr.includes(currentDayName)) {
                     actualWorkingDays++;
                 }
             }
@@ -266,21 +279,36 @@
         }
 
         window.calculateRatesModal = function() {
-            const basicSalary = parseFloat(basicSalaryInputModal.value) || 0;
+            // The value from here will be copied to either monthly_salary or semi_monthly_salary before submission.
+            // For calculation, we use the value from the currently visible input.
+            let basicSalary = 0;
+            if (payPeriodSelectModal.value === 'monthly') {
+                basicSalary = parseFloat(monthlySalaryInput.value) || 0;
+            } else if (payPeriodSelectModal.value === 'semi-monthly') {
+                basicSalary = parseFloat(semiMonthlySalaryInput.value) || 0;
+            }
+            
             const WORKING_HOURS_PER_DAY = 8;
             
             // Get selected working days directly from checked checkboxes
             const selectedWorkingDayElements = document.querySelectorAll('input[name="working_days[]"]:checked');
             const selectedWorkingDaysArray = Array.from(selectedWorkingDayElements).map(el => el.value);
+            const selectedRestDayElements = document.querySelectorAll('input[name="rest_days[]"]:checked');
+            const selectedRestDaysArray = Array.from(selectedRestDayElements).map(el => el.value);
             
-            const actualWorkingDaysInMonth = getWorkingDaysInMonth(selectedWorkingDaysArray);
+            const actualWorkingDaysInMonth = getWorkingDaysInMonth(selectedWorkingDaysArray, selectedRestDaysArray);
             
             let dailyRate = 0;
             let hourlyRate = 0;
             
             console.log('calculateRatesModal - Basic Salary:', basicSalary, 'Actual Working Days:', actualWorkingDaysInMonth);
             if (basicSalary > 0 && actualWorkingDaysInMonth > 0) {
-                dailyRate = basicSalary / actualWorkingDaysInMonth;
+                let effectiveMonthlySalary = basicSalary;
+                if (payPeriodSelectModal.value === 'semi-monthly') {
+                    effectiveMonthlySalary = basicSalary * 2; // Convert semi-monthly to monthly equivalent
+                }
+ 
+                dailyRate = effectiveMonthlySalary / actualWorkingDaysInMonth;
                 hourlyRate = dailyRate / WORKING_HOURS_PER_DAY;
             }
             console.log('calculateRatesModal - Calculated Daily Rate:', dailyRate, 'Calculated Hourly Rate:', hourlyRate);
@@ -289,12 +317,36 @@
             hourlyRateInputModal.value = hourlyRate.toFixed(2);
         }
 
+        function toggleSalaryInputs() {
+            const payPeriod = payPeriodSelectModal.value;
+            console.log('Pay period changed to:', payPeriod);
+            
+            // Hide all salary fields first
+            monthlySalaryField.classList.add('hidden');
+            semiMonthlySalaryField.classList.add('hidden');
+            // Remove 'required' from all to prevent conflicts
+            monthlySalaryInput.removeAttribute('required');
+            semiMonthlySalaryInput.removeAttribute('required');
+            
+            // Show and set 'required' for the relevant field
+            if (payPeriod === 'monthly') {
+                monthlySalaryField.classList.remove('hidden');
+                monthlySalaryInput.setAttribute('required', 'required');
+                // basicSalaryInputModal.value = monthlySalaryInput.value; // Sync with generic input if needed
+            } else if (payPeriod === 'semi-monthly') {
+                semiMonthlySalaryField.classList.remove('hidden');
+                semiMonthlySalaryInput.setAttribute('required', 'required');
+                // basicSalaryInputModal.value = semiMonthlySalaryInput.value; // Sync with generic input if needed
+            }
+            calculateRatesModal(); // Recalculate rates based on new visible input
+        }
+
         // --- Event Listeners and Modal Functions ---
         
         // Listeners for rate calculation
-        basicSalaryInputModal.addEventListener('input', calculateRatesModal);
-        // Pay period doesn't affect the Daily/Hourly rate calculation based on monthly salary (as simplified above)
-        // payPeriodSelectModal.addEventListener('change', calculateRatesModal); 
+        payPeriodSelectModal.addEventListener('change', toggleSalaryInputs);
+        monthlySalaryInput.addEventListener('input', calculateRatesModal);
+        semiMonthlySalaryInput.addEventListener('input', calculateRatesModal);
 
         // Open/Close Modal
         window.openEmployeeModal = function(employee = null) {
@@ -316,7 +368,7 @@
                 document.getElementById('position').value = employee.position;
                 document.getElementById('role').value = employee.role;
                 document.getElementById('department_id').value = employee.department_id; // Populate department_id
-                document.getElementById('basic_salary_modal').value = employee.basic_salary;
+                // document.getElementById('basic_salary_modal').value = employee.basic_salary; // This generic field is no longer used for direct input
                 document.getElementById('pay_period_modal').value = employee.pay_period;
                 
                 console.log('Employee Work Start (raw):', employee.work_start, 'Employee Work End (raw):', employee.work_end);
@@ -335,6 +387,14 @@
                 passwordConfirmationField.classList.add('hidden');
                 passwordInput.removeAttribute('required');
                 passwordConfirmationInput.removeAttribute('required');
+                
+                // Show the correct salary input based on pay period and populate it
+                toggleSalaryInputs(); // Call to initially set visibility and required attributes
+                if (employee.pay_period === 'monthly') {
+                    monthlySalaryInput.value = employee.basic_salary;
+                } else if (employee.pay_period === 'semi-monthly') {
+                    semiMonthlySalaryInput.value = employee.basic_salary;
+                }
                 
                 // Recalculate rates for the existing employee within Alpine.nextTick
                 Alpine.nextTick(() => {
@@ -383,8 +443,10 @@
                 }
 
                 // Initialize calculated rates on open for add mode
-                basicSalaryInputModal.value = ''; // Ensure rates start at 0.00
-                payPeriodSelectModal.value = 'semi-monthly'; // Set a default value
+                monthlySalaryInput.value = '';
+                semiMonthlySalaryInput.value = '';
+                payPeriodSelectModal.value = ''; // No default, force selection
+                toggleSalaryInputs(); // Ensure fields are hidden initially
                 calculateRatesModal();
             }
         };
@@ -422,6 +484,9 @@
             }
             }
         });
+
+        // Initial call to set correct visibility on page load or modal open
+        toggleSalaryInputs();
 
     });
 </script>

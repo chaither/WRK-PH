@@ -41,7 +41,8 @@ class EmployeeController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'position' => 'required|string|max:255',
-            'basic_salary' => 'required|numeric|min:0',
+            'monthly_salary' => 'nullable|numeric|min:0',
+            'semi_monthly_salary' => 'nullable|numeric|min:0',
             'pay_period' => 'required|in:semi-monthly,monthly',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
@@ -61,11 +62,35 @@ class EmployeeController extends Controller
             unset($validated['password']);
         }
 
-        // Calculate daily and hourly rates based on basic_salary
-        $basicSalary = (float) $validated['basic_salary'];
-        $dailyRate = $basicSalary / 22; // Assuming 22 working days per month
-        $hourlyRate = $dailyRate / 8; // Assuming 8 working hours per day
+        // Determine basic salary based on pay period
+        $basicSalary = 0;
+        if ($validated['pay_period'] === 'monthly') {
+            $basicSalary = (float) $validated['monthly_salary'];
+        } elseif ($validated['pay_period'] === 'semi-monthly') {
+            $basicSalary = (float) $validated['semi_monthly_salary'];
+        }
 
+        // Convert semi-monthly to monthly equivalent for consistent rate calculation
+        $effectiveMonthlySalary = $basicSalary;
+        if ($validated['pay_period'] === 'semi-monthly') {
+            $effectiveMonthlySalary = $basicSalary * 2;
+        }
+
+        // Calculate actual working days in month
+        $actualWorkingDaysInMonth = $this->getActualWorkingDaysInMonth(
+            $validated['working_days'], 
+            $validated['rest_days']
+        );
+
+        $dailyRate = 0;
+        $hourlyRate = 0;
+
+        if ($effectiveMonthlySalary > 0 && $actualWorkingDaysInMonth > 0) {
+            $dailyRate = $effectiveMonthlySalary / $actualWorkingDaysInMonth;
+        $hourlyRate = $dailyRate / 8; // Assuming 8 working hours per day
+        }
+
+        $validated['basic_salary'] = round($effectiveMonthlySalary, 2); // Store effective monthly salary
         $validated['daily_rate'] = round($dailyRate, 2);
         $validated['hourly_rate'] = round($hourlyRate, 2);
 
@@ -91,8 +116,9 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $employee->id,
             'position' => 'required|string|max:255',
-            'basic_salary' => 'required|numeric|min:0',
             'pay_period' => 'required|in:semi-monthly,monthly',
+            'monthly_salary' => 'nullable|numeric|min:0',
+            'semi_monthly_salary' => 'nullable|numeric|min:0',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
             'role' => 'required|in:employee,hr,admin', // Include role in validation
@@ -109,11 +135,35 @@ class EmployeeController extends Controller
             unset($validated['password']); // Remove password from validated data if not provided
         }
 
-        // Calculate daily and hourly rates based on basic_salary
-        $basicSalary = (float) $validated['basic_salary'];
-        $dailyRate = $basicSalary / 22; // Assuming 22 working days per month
-        $hourlyRate = $dailyRate / 8; // Assuming 8 working hours per day
+        // Determine basic salary based on pay period
+        $basicSalary = 0;
+        if ($validated['pay_period'] === 'monthly') {
+            $basicSalary = (float) $validated['monthly_salary'];
+        } elseif ($validated['pay_period'] === 'semi-monthly') {
+            $basicSalary = (float) $validated['semi_monthly_salary'];
+        }
 
+        // Convert semi-monthly to monthly equivalent for consistent rate calculation
+        $effectiveMonthlySalary = $basicSalary;
+        if ($validated['pay_period'] === 'semi-monthly') {
+            $effectiveMonthlySalary = $basicSalary * 2;
+        }
+
+        // Calculate actual working days in month
+        $actualWorkingDaysInMonth = $this->getActualWorkingDaysInMonth(
+            $validated['working_days'], 
+            $validated['rest_days']
+        );
+
+        $dailyRate = 0;
+        $hourlyRate = 0;
+
+        if ($effectiveMonthlySalary > 0 && $actualWorkingDaysInMonth > 0) {
+            $dailyRate = $effectiveMonthlySalary / $actualWorkingDaysInMonth;
+        $hourlyRate = $dailyRate / 8; // Assuming 8 working hours per day
+        }
+
+        $validated['basic_salary'] = round($effectiveMonthlySalary, 2); // Store effective monthly salary
         $validated['daily_rate'] = round($dailyRate, 2);
         $validated['hourly_rate'] = round($hourlyRate, 2);
 
@@ -132,5 +182,36 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return redirect()->route('employees.index')->with('success', 'Employee deleted successfully');
+    }
+
+    /**
+     * Calculates the number of actual working days in the current month,
+     * considering selected working days and rest days.
+     *
+     * @param array $selectedWorkingDaysArr
+     * @param array $selectedRestDaysArr
+     * @return int
+     */
+    private function getActualWorkingDaysInMonth(array $selectedWorkingDaysArr, array $selectedRestDaysArr): int
+    {
+        $today = now();
+        $year = $today->year;
+        $month = $today->month;
+        $daysInMonth = $today->daysInMonth;
+        $actualWorkingDays = 0;
+ 
+        $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+ 
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $date = \Carbon\Carbon::createFromDate($year, $month, $day);
+            $dayOfWeek = $date->dayOfWeek; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            $currentDayName = $dayNames[$dayOfWeek];
+ 
+            if (in_array($currentDayName, $selectedWorkingDaysArr) && !in_array($currentDayName, $selectedRestDaysArr)) {
+                $actualWorkingDays++;
+            }
+        }
+ 
+        return $actualWorkingDays;
     }
 }
