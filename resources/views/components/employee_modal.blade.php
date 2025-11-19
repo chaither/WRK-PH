@@ -369,7 +369,7 @@
                 document.getElementById('role').value = employee.role;
                 document.getElementById('department_id').value = employee.department_id; // Populate department_id
                 // document.getElementById('basic_salary_modal').value = employee.basic_salary; // This generic field is no longer used for direct input
-                document.getElementById('pay_period_modal').value = employee.pay_period;
+                document.getElementById('pay_period_modal').value = employee.pay_schedule;
                 
                 console.log('Employee Work Start (raw):', employee.work_start, 'Employee Work End (raw):', employee.work_end);
                 document.getElementById('work_start').value = employee.work_start ? employee.work_start.substring(0, 5) : '00:00';
@@ -390,9 +390,9 @@
                 
                 // Show the correct salary input based on pay period and populate it
                 toggleSalaryInputs(); // Call to initially set visibility and required attributes
-                if (employee.pay_period === 'monthly') {
+                if (employee.pay_schedule === 'monthly') {
                     monthlySalaryInput.value = employee.basic_salary;
-                } else if (employee.pay_period === 'semi-monthly') {
+                } else if (employee.pay_schedule === 'semi-monthly') {
                     semiMonthlySalaryInput.value = employee.basic_salary;
                 }
                 

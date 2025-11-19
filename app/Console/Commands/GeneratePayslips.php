@@ -84,7 +84,7 @@ class GeneratePayslips extends Command
 
                     if ($payPeriodStart && $payPeriodEnd) {
                         $this->info("Generating payslips for {$payPeriodType} period: {$payPeriodStart->toDateString()} to {$payPeriodEnd->toDateString()}");
-                        $this->payrollService->generatePayslipsForPeriod($payPeriodStart, $payPeriodEnd);
+                        $this->payrollService->generatePayslipsForPeriod($payPeriodStart, $payPeriodEnd, $schedule->pay_period_type);
                         $this->info('Payslips generated successfully!');
                     }
                 }

@@ -115,10 +115,9 @@
                     <th>Employee</th>
                     <th>Basic Pay</th>
                     <th>Overtime Pay</th>
-                    <th>Gross Pay</th>
                     <th>Late Deductions</th>
                     <th>SSS</th>
-                    <th>GSIS</th>
+                    <th>Pag-IBIG</th>
                     <th>PhilHealth</th>
                     <th>Other Deductions</th>
                     <th>Total Deductions</th>
@@ -129,16 +128,30 @@
                 @forelse($payrolls as $payslip)
                 <tr>
                     <td style="font-weight: bold;">{{ $payslip->user->name }}</td>
-                    <td>₱{{ number_format($payslip->basic_pay, 2) }}</td>
-                    <td>₱{{ number_format($payslip->overtime_pay, 2) }}</td>
-                    <td>₱{{ number_format($payslip->basic_pay + $payslip->overtime_pay, 2) }}</td>
-                    <td>₱{{ number_format($payslip->late_deductions, 2) }}</td>
-                    <td>₱{{ number_format($payslip->sss, 2) }}</td>
-                    <td>₱{{ number_format($payslip->gsis, 2) }}</td>
-                    <td>₱{{ number_format($payslip->philhealth, 2) }}</td>
-                    <td>₱{{ number_format($payslip->other_deductions, 2) }}</td>
-                    <td>₱{{ number_format($payslip->late_deductions + $payslip->sss + $payslip->gsis + $payslip->philhealth + $payslip->other_deductions, 2) }}</td>
-                    <td>₱{{ number_format($payslip->net_pay, 2) }}</td>
+                    <td>₱{{ number_format((($payslip->gross_pay ?? 0) - ($payslip->overtime_pay ?? 0)), 2) }}</td>
+                    <td>₱{{ number_format($payslip->overtime_pay ?? 0, 2) }}</td>
+                    <td>₱{{ number_format($payslip->late_deductions ?? 0, 2) }}</td>
+                    @php
+                        $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
+                        $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
+                        $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
+                        $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
+                        $otherDetails = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+
+                        // If the total deductions were manually updated (and stored in payslip->deductions),
+                        // show the remainder as "Other Deductions" so the PDF reflects what was actually deducted.
+                        $componentsSum = $sss + $phil + $pagibig + $otherDetails;
+                        $totalDeductions = $payslip->deductions ?? 0;
+                        $manualRemainder = max(0, $totalDeductions - $componentsSum);
+                        $otherShown = $otherDetails + $manualRemainder;
+                    @endphp
+
+                    <td>₱{{ number_format($sss, 2) }}</td>
+                    <td>₱{{ number_format($pagibig, 2) }}</td>
+                    <td>₱{{ number_format($phil, 2) }}</td>
+                    <td>₱{{ number_format($otherShown, 2) }}</td>
+                    <td>₱{{ number_format($totalDeductions, 2) }}</td>
+                    <td>₱{{ number_format($payslip->net_pay ?? 0, 2) }}</td>
                 </tr>
                 @empty
                 <tr>

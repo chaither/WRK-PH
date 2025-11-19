@@ -88,6 +88,7 @@ class DepartmentController extends Controller
             'position' => $request->position,
             'basic_salary' => $request->basic_salary,
             'pay_period' => $request->pay_period,
+            'pay_schedule' => $request->pay_period, // Ensure pay_schedule is set
             'daily_rate' => $request->basic_salary / 22, // Example calculation, adjust as needed
             'hourly_rate' => ($request->basic_salary / 22) / 8, // Example calculation
             'work_start' => $request->work_start,

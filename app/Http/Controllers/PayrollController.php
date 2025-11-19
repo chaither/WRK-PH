@@ -42,18 +42,22 @@ class PayrollController extends Controller
         $today = Carbon::today();
         $start = $request->input('start_date', $today->copy()->startOfMonth()->format('Y-m-d'));
         $end = $request->input('end_date', $today->copy()->endOfMonth()->format('Y-m-d'));
+
         $payrolls = collect();
         $currentPeriod = null;
 
         $currentPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
 
         if ($currentPeriod) {
-            $payrolls = Payslip::with(['user', 'payPeriod'])
-                ->where('pay_period_id', $currentPeriod->id)
-                ->get();
+            $payslipQuery = Payslip::with(['user', 'payPeriod'])
+                ->where('pay_period_id', $currentPeriod->id);
+
+            $payrolls = $payslipQuery->get();
         }
 
-        $totalEmployees = $payrolls->unique('user_id')->count();
+        // Get total employees directly from the User model, filtered by pay schedule if applicable
+        $totalEmployeesQuery = User::where('role', 'employee');
+        $totalEmployees = $totalEmployeesQuery->count();
         $totalGrossPay = $payrolls->sum('gross_pay');
         $totalDeductions = $payrolls->sum('deductions');
         $totalNetPay = $payrolls->sum('net_pay');
@@ -75,7 +79,17 @@ class PayrollController extends Controller
     public function generatePayslips(PayPeriod $payPeriod)
     {
         // Call the PayrollService to generate payslips
-        $this->payrollService->generatePayslipsForPeriod($payPeriod->start_date, $payPeriod->end_date);
+        // Determine pay schedule filter based on the pay period duration
+        $payScheduleFilter = null;
+        if ($payPeriod->start_date->day === 1 && $payPeriod->end_date->day === 15) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif ($payPeriod->start_date->day === 16 && $payPeriod->end_date->isSameDay($payPeriod->end_date->endOfMonth())) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif ($payPeriod->start_date->isSameDay($payPeriod->start_date->copy()->startOfMonth()) && $payPeriod->end_date->isSameDay($payPeriod->end_date->copy()->endOfMonth())) {
+            $payScheduleFilter = 'monthly';
+        }
+        
+        $this->payrollService->generatePayslipsForPeriod($payPeriod->start_date, $payPeriod->end_date, $payScheduleFilter);
 
         // Mark period as completed after creating payslips
         $payPeriod->update(['status' => 'unpaid']); // Or 'processing' if there's another step
@@ -110,7 +124,19 @@ class PayrollController extends Controller
         }
 
         // Call existing generator
-        $this->generatePayslips($payPeriod);
+        // Instead of calling generatePayslips directly, we determine the filter and pass it
+        $payScheduleFilter = null;
+        if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif (Carbon::parse($start)->day === 16 && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif (Carbon::parse($start)->isSameDay(Carbon::parse($start)->startOfMonth()) && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+            $payScheduleFilter = 'monthly';
+        }
+
+        $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter);
+
+        $payPeriod->update(['status' => 'unpaid']); // Update status after generation
 
         return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('success', 'Payroll generated for selected period.');
     }
@@ -193,13 +219,15 @@ class PayrollController extends Controller
             return redirect()->back()->with('error', 'No payroll period found for the selected dates.');
         }
 
-        $payrolls = Payslip::with(['user', 'payPeriod'])
-            ->where('pay_period_id', $payPeriod->id)
-            ->get();
+        $payslipQuery = Payslip::with(['user', 'payPeriod'])
+            ->where('pay_period_id', $payPeriod->id);
+
+        $payrolls = $payslipQuery->get();
 
         $data = [
             'payPeriod' => $payPeriod,
             'payrolls' => $payrolls,
+            'payScheduleFilter' => null, // Pass to view for potential display
         ];
 
         // Render both views to HTML

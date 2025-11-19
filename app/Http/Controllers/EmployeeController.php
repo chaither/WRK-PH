@@ -98,6 +98,9 @@ class EmployeeController extends Controller
         $validated['working_days'] = $request->input('working_days', []);
         $validated['rest_days'] = $request->input('rest_days', []); // Save rest_days
         
+        // Assign the pay_period input to the pay_schedule column
+        $validated['pay_schedule'] = $validated['pay_period'];
+
         User::create($validated);
 
         return redirect()->route('department.index')->with('success', 'Employee created successfully');
@@ -169,6 +172,9 @@ class EmployeeController extends Controller
 
         $validated['working_days'] = $request->input('working_days', []);
         $validated['rest_days'] = $request->input('rest_days', []); // Save rest_days
+
+        // Assign the pay_period input to the pay_schedule column
+        $validated['pay_schedule'] = $validated['pay_period'];
 
         $employee->update($validated);
 
