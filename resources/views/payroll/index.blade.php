@@ -39,13 +39,13 @@
                 $secondHalfStart = $now->copy()->day(16)->format('Y-m-d');
                 $secondHalfEnd = $now->copy()->endOfMonth()->format('Y-m-d');
             @endphp
-            <a href="?start_date={{ $firstHalfStart }}&end_date={{ $firstHalfEnd }}" class="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 font-medium rounded-md hover:bg-indigo-200 transition duration-150 border border-indigo-200">
+            <a href="?start_date={{ $firstHalfStart }}&end_date={{ $firstHalfEnd }}" class="px-3 py-1.5 text-sm bg-indigo-100 text-indigo-700 font-medium rounded-md hover:bg-indigo-200 transition duration-150 border border-indigo-200 {{ request()->input('start_date') === $firstHalfStart && request()->input('end_date') === $firstHalfEnd ? 'bg-indigo-200' : '' }}">
                 1st–15th ({{ $now->format('F Y') }})
             </a>
-            <a href="?start_date={{ $secondHalfStart }}&end_date={{ $secondHalfEnd }}" class="px-3 py-1.5 text-sm bg-green-100 text-green-700 font-medium rounded-md hover:bg-green-200 transition duration-150 border border-green-200">
+            <a href="?start_date={{ $secondHalfStart }}&end_date={{ $secondHalfEnd }}" class="px-3 py-1.5 text-sm bg-green-100 text-green-700 font-medium rounded-md hover:bg-green-200 transition duration-150 border border-green-200 {{ request()->input('start_date') === $secondHalfStart && request()->input('end_date') === $secondHalfEnd ? 'bg-green-200' : '' }}">
                 16th–End ({{ $now->format('F Y') }})
             </a>
-            <a href="?start_date={{ $now->copy()->startOfMonth()->format('Y-m-d') }}&end_date={{ $now->copy()->endOfMonth()->format('Y-m-d') }}" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition duration-150 border border-gray-200">
+            <a href="?start_date={{ $now->copy()->startOfMonth()->format('Y-m-d') }}&end_date={{ $now->copy()->endOfMonth()->format('Y-m-d') }}" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition duration-150 border border-gray-200 {{ request()->input('start_date') === $now->copy()->startOfMonth()->format('Y-m-d') && request()->input('end_date') === $now->copy()->endOfMonth()->format('Y-m-d') ? 'bg-gray-200' : '' }}">
                 Whole Month ({{ $now->format('F Y') }})
             </a>
         </div>
@@ -147,7 +147,34 @@
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱{{ number_format(json_decode($payslip->details)->hourly_rate_computed ?? 0, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱{{ number_format($payslip->gross_pay, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-red-600">₱{{ number_format($payslip->deductions, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm">
+                                @php
+                                    $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
+                                    $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
+                                    $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
+                                    $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
+                                    $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+                                    $componentsTotal = $sss + $phil + $pagibig + $other;
+                                @endphp
+
+                                @if($componentsTotal > 0)
+                                    @if($sss > 0)
+                                        <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
+                                    @endif
+                                    @if($phil > 0)
+                                        <div class="text-xs text-gray-700">PhilHealth: <span class="text-red-600">₱{{ number_format($phil, 2) }}</span></div>
+                                    @endif
+                                    @if($pagibig > 0)
+                                        <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
+                                    @endif
+                                    @if($other > 0)
+                                        <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
+                                    @endif
+                                    <div class="text-xs font-semibold mt-1">Total: <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></div>
+                                @else
+                                    <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700">₱{{ number_format($payslip->net_pay, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-center">
                                 <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">

@@ -8,6 +8,7 @@ use App\Models\Payslip;
 use App\Models\PayPeriod;
 use Carbon\Carbon;
 use App\Models\GovernmentContribution;
+use Illuminate\Support\Facades\Log;
 
 class PayrollService
 {
@@ -26,20 +27,75 @@ class PayrollService
      * @param Carbon $payPeriodEnd
      * @return void
      */
-    public function generatePayslipsForPeriod(Carbon $payPeriodStart, Carbon $payPeriodEnd): void
+    public function generatePayslipsForPeriod(Carbon $payPeriodStart, Carbon $payPeriodEnd, string $payScheduleFilter = null): void
     {
         $payPeriod = PayPeriod::firstOrCreate(
             ['start_date' => $payPeriodStart, 'end_date' => $payPeriodEnd],
             ['status' => 'processing']
         );
 
-        $employees = User::where('role', 'employee')->get();
+        $employeesQuery = User::where('role', 'employee');
+        if ($payScheduleFilter) {
+            $employeesQuery->where('pay_schedule', $payScheduleFilter);
+        }
+
+        $employees = $employeesQuery->get();
         $holidays = Holiday::whereBetween('date', [$payPeriodStart, $payPeriodEnd])->get()->keyBy('date');
         $governmentContributions = GovernmentContribution::all()->groupBy('type');
 
         foreach ($employees as $employee) {
-            $this->generateEmployeePayslip($employee, $payPeriod, $payPeriodStart, $payPeriodEnd, $holidays, $governmentContributions);
+            $payPeriodDates = $this->getPayPeriodDates($employee->pay_schedule, $payPeriodStart, $payPeriodEnd, $payScheduleFilter);
+
+            foreach ($payPeriodDates as $period) {
+                $this->generateEmployeePayslip($employee, $payPeriod, $period['start'], $period['end'], $holidays, $governmentContributions);
+            }
         }
+    }
+
+    /**
+     * Determines the actual pay period start and end dates based on the employee's pay schedule.
+     *
+     * @param string $paySchedule
+     * @param Carbon $monthStart
+     * @param Carbon $monthEnd
+     * @return array
+     */
+    private function getPayPeriodDates(string $paySchedule, Carbon $monthStart, Carbon $monthEnd, string $payScheduleFilter = null): array
+    {
+        $periods = [];
+
+        if ($paySchedule === 'semi-monthly') {
+            // First half of the month (1st to 15th)
+            $firstHalfEnd = $monthStart->copy()->day(15);
+
+            if ((!$payScheduleFilter || ($payScheduleFilter === 'semi-monthly' && $monthEnd->day < 16)) && $firstHalfEnd->gte($monthStart)) { // Ensure the first half is within the requested month
+                $periods[] = [
+                    'start' => $monthStart->copy(),
+                    'end' => $firstHalfEnd,
+                ];
+            }
+
+            // Second half of the month (16th to end of month)
+            $secondHalfStart = $monthStart->copy()->day(16);
+            $secondHalfEnd = $monthEnd->copy();
+
+            if ((!$payScheduleFilter || ($payScheduleFilter === 'semi-monthly' && $monthStart->day >= 16)) && $secondHalfStart->lte($monthEnd)) { // Ensure the second half is within the requested month
+                $periods[] = [
+                    'start' => $secondHalfStart,
+                    'end' => $secondHalfEnd,
+                ];
+            }
+        } else {
+            // Default to monthly if not semi-monthly or other specific schedules
+            if (!$payScheduleFilter || $payScheduleFilter === $paySchedule) {
+                $periods[] = [
+                    'start' => $monthStart->copy(),
+                    'end' => $monthEnd->copy(),
+                ];
+            }
+        }
+
+        return $periods;
     }
 
     /**
@@ -56,7 +112,7 @@ class PayrollService
     {
         // Determine the actual days in the pay period
         $currentDate = $payPeriodStart->copy();
-        $totalWorkingDaysInPeriod = 0;
+        $totalWorkingDaysInPeriod = $this->getActualWorkingDaysInMonth($employee->working_days, $employee->rest_days, $payPeriodStart, $payPeriodEnd);
         $totalHolidayWorkingDays = [
             'regular' => ['count' => 0, 'multiplier' => 1.00],
             'special_non_working' => ['count' => 0, 'multiplier' => 1.00],
@@ -74,7 +130,12 @@ class PayrollService
             $dayName = $currentDate->format('l'); // e.g., 'Monday'
             $isWorkingDay = in_array($dayName, $workingDays) && !in_array($dayName, $restDays);
             $isHoliday = $holidays->has($currentDate->toDateString());
-            $dtrForDay = $dtrRecords->where('date', $currentDate->toDateString())->first();
+            // Find DTR for the current day using a more robust comparison
+            $dtrForDay = $dtrRecords->first(function ($dtr) use ($currentDate) {
+                return $dtr->date->toDateString() === $currentDate->toDateString();
+            });
+
+            Log::info('Processing date: ' . $currentDate->toDateString() . ', isWorkingDay: ' . ($isWorkingDay ? 'true' : 'false') . ', dtrForDay exists: ' . ($dtrForDay ? 'true' : 'false') . ', time_in: ' . ($dtrForDay && $dtrForDay->time_in ? $dtrForDay->time_in->toDateTimeString() : 'NULL') . ', time_in_2: ' . ($dtrForDay && $dtrForDay->time_in_2 ? $dtrForDay->time_in_2->toDateTimeString() : 'NULL'));
 
             if ($isWorkingDay) {
                 if ($dtrForDay && ($dtrForDay->time_in || $dtrForDay->time_in_2)) {
@@ -105,83 +166,90 @@ class PayrollService
 
         // Get employee's effective monthly salary
         $effectiveMonthlySalary = $employee->basic_salary;
-        $payPeriodValue = $employee->pay_period;
         $daysInMonth = $payPeriodStart->daysInMonth;
         $workingHoursPerDay = 8; // Assuming 8 working hours per day
 
-        $actualWorkingDaysInMonth = $this->getActualWorkingDaysInMonth($employee->working_days, $employee->rest_days);
+        $actualWorkingDaysInPeriod = $this->getActualWorkingDaysInMonth($employee->working_days, $employee->rest_days, $payPeriodStart, $payPeriodEnd);
 
-        if ($payPeriodValue === 'semi-monthly') {
-            // If pay period is semi-monthly, the basic_salary is already the effective monthly salary (converted in EmployeeController)
-            // So, for a semi-monthly period, we divide the effective monthly salary by 2.
-            $basicSalaryForPeriod = $effectiveMonthlySalary / 2;
-        } else {
-            $basicSalaryForPeriod = $effectiveMonthlySalary;
+        // Adjust effective salary based on pay schedule for the current period
+        $effectivePeriodSalary = $effectiveMonthlySalary;
+        if ($employee->pay_schedule === 'semi-monthly') {
+            $daysInCurrentPayPeriod = $this->getDaysInPayPeriod($payPeriodStart, $payPeriodEnd);
+            $effectivePeriodSalary = ($effectiveMonthlySalary / $daysInMonth) * $daysInCurrentPayPeriod;
         }
 
-        $dailyRate = ($actualWorkingDaysInMonth > 0) ? $effectiveMonthlySalary / $actualWorkingDaysInMonth : 0;
+        $dailyRate = ($actualWorkingDaysInPeriod > 0) ? $effectivePeriodSalary / $actualWorkingDaysInPeriod : 0;
         $hourlyRate = ($dailyRate > 0) ? $dailyRate / $workingHoursPerDay : 0;
 
-        $grossPay = ($presentDays * $dailyRate) + 
+        $grossPay = ($totalActualWorkHours * $hourlyRate) +
                     ($totalHolidayWorkingDays['regular']['count'] * $dailyRate * $totalHolidayWorkingDays['regular']['multiplier']) + // Regular Holiday
                     ($totalHolidayWorkingDays['special_non_working']['count'] * $dailyRate * $totalHolidayWorkingDays['special_non_working']['multiplier']); // Special Non-Working Holiday
 
         // Calculate Government Contributions
-        $sssDeduction = $this->calculateContribution('sss', $effectiveMonthlySalary, $governmentContributions, $employee);
-        $philhealthDeduction = $this->calculateContribution('philhealth', $effectiveMonthlySalary, $governmentContributions, $employee);
-        $pagibigDeduction = $this->calculateContribution('pagibig', $effectiveMonthlySalary, $governmentContributions, $employee);
+        $sssDeduction = $this->calculateContribution('sss', $effectivePeriodSalary, $governmentContributions, $employee);
+        $philhealthDeduction = $this->calculateContribution('philhealth', $effectivePeriodSalary, $governmentContributions, $employee);
+        $pagibigDeduction = $this->calculateContribution('pagibig', $effectivePeriodSalary, $governmentContributions, $employee);
 
         // Total deductions from government contributions
         $governmentDeductions = $sssDeduction + $philhealthDeduction + $pagibigDeduction;
-
-        // Adjust government deductions based on pay period type
-        if ($employee->pay_period === 'semi-monthly') {
-            $sssDeduction /= 2;
-            $philhealthDeduction /= 2;
-            $pagibigDeduction /= 2;
-            $governmentDeductions /= 2;
-        }
 
         // Deductions (simplified for now)
         $deductions = $governmentDeductions; // Start with government deductions
 
         $netPay = $grossPay - $deductions;
 
-        Payslip::create([
-            'user_id' => $employee->id,
-            'pay_period_id' => $payPeriod->id,
-            'pay_period_start' => $payPeriodStart,
-            'pay_period_end' => $payPeriodEnd,
-            'gross_pay' => round($grossPay, 2),
-            'deductions' => round($deductions, 2),
-            'net_pay' => round($netPay, 2),
-            'overtime_pay' => 0, // Placeholder
-            'late_deductions' => 0, // Placeholder
-            'absences_deductions' => 0, // Placeholder
-            'total_hours_worked' => round($totalActualWorkHours, 2), // Use actual accumulated work hours
-            'overtime_hours' => 0, // Placeholder
-            'late_minutes' => 0, // Placeholder
-            'absent_days' => ($totalWorkingDaysInPeriod - $presentDays), // Calculate absent days
-            'details' => json_encode([
-                'monthly_salary' => $effectiveMonthlySalary,
-                'daily_rate' => $dailyRate,
-                'hourly_rate' => $hourlyRate,
-                'expected_working_days_in_period' => $totalWorkingDaysInPeriod,
-                'present_days' => $presentDays,
-                'holiday_working_days' => $totalHolidayWorkingDays,
-                'pay_period_type' => $payPeriodValue,
-                'sss_deduction' => round($sssDeduction, 2),
-                'sss_is_percentage' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
-                'sss_employee_share_rate' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
-                'philhealth_deduction' => round($philhealthDeduction, 2),
-                'philhealth_is_percentage' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
-                'philhealth_employee_share_rate' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
-                'pagibig_deduction' => round($pagibigDeduction, 2),
-                'pagibig_is_percentage' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
-                'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
-                'hourly_rate_computed' => $hourlyRate,
-            ]),
-        ]);
+        Payslip::updateOrCreate(
+            [
+                'user_id' => $employee->id,
+                'pay_period_id' => $payPeriod->id,
+            ],
+            [
+                'pay_period_start' => $payPeriodStart,
+                'pay_period_end' => $payPeriodEnd,
+                'gross_pay' => round($grossPay, 2),
+                'deductions' => round($deductions, 2),
+                'net_pay' => round($netPay, 2),
+                'overtime_pay' => 0, // Placeholder
+                'late_deductions' => 0, // Placeholder
+                'absences_deductions' => 0, // Placeholder
+                'total_hours_worked' => round($totalActualWorkHours, 2), // Use actual accumulated work hours
+                'overtime_hours' => 0, // Placeholder
+                'late_minutes' => 0, // Placeholder
+                'absent_days' => ($actualWorkingDaysInPeriod - $presentDays), // Calculate absent days
+                'details' => json_encode([
+                    'monthly_salary' => $effectiveMonthlySalary,
+                    'daily_rate' => $dailyRate,
+                    'hourly_rate' => $hourlyRate,
+                    'expected_working_days_in_period' => $actualWorkingDaysInPeriod,
+                    'present_days' => $presentDays,
+                    'holiday_working_days' => $totalHolidayWorkingDays,
+                    'pay_period_type' => $employee->pay_schedule,
+                    'sss_deduction' => round($sssDeduction, 2),
+                    'sss_is_percentage' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
+                    'sss_employee_share_rate' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
+                    'philhealth_deduction' => round($philhealthDeduction, 2),
+                    'philhealth_is_percentage' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
+                    'philhealth_employee_share_rate' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
+                    'pagibig_deduction' => round($pagibigDeduction, 2),
+                    'pagibig_is_percentage' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
+                    'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
+                    'hourly_rate_computed' => $hourlyRate,
+                    'pay_period_days_count' => $this->getDaysInPayPeriod($payPeriodStart, $payPeriodEnd),
+                ]),
+            ]
+        );
+    }
+
+    /**
+     * Calculates the number of days in a given pay period.
+     *
+     * @param Carbon $payPeriodStart
+     * @param Carbon $payPeriodEnd
+     * @return int
+     */
+    private function getDaysInPayPeriod(Carbon $payPeriodStart, Carbon $payPeriodEnd): int
+    {
+        return $payPeriodStart->diffInDays($payPeriodEnd) + 1;
     }
 
     /**
@@ -279,31 +347,30 @@ class PayrollService
     }
 
     /**
-     * Calculates the number of actual working days in the current month,
+     * Calculates the number of actual working days in the given pay period,
      * considering selected working days and rest days.
      *
      * @param array $selectedWorkingDaysArr
      * @param array $selectedRestDaysArr
+     * @param Carbon $payPeriodStart
+     * @param Carbon $payPeriodEnd
      * @return int
      */
-    private function getActualWorkingDaysInMonth(array $selectedWorkingDaysArr, array $selectedRestDaysArr): int
+    private function getActualWorkingDaysInMonth(array $selectedWorkingDaysArr, array $selectedRestDaysArr, Carbon $payPeriodStart, Carbon $payPeriodEnd): int
     {
-        $today = now(); // Use now() to get current date
-        $year = $today->year;
-        $month = $today->month;
-        $daysInMonth = $today->daysInMonth;
         $actualWorkingDays = 0;
+        $currentDate = $payPeriodStart->copy();
 
         $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $date = Carbon::createFromDate($year, $month, $day);
-            $dayOfWeek = $date->dayOfWeek; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        while ($currentDate->lte($payPeriodEnd)) {
+            $dayOfWeek = $currentDate->dayOfWeek; // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
             $currentDayName = $dayNames[$dayOfWeek];
 
             if (in_array($currentDayName, $selectedWorkingDaysArr) && !in_array($currentDayName, $selectedRestDaysArr)) {
                 $actualWorkingDays++;
             }
+            $currentDate->addDay();
         }
 
         return $actualWorkingDays;

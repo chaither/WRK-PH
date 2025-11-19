@@ -24,7 +24,6 @@ class User extends Authenticatable
         'role',
         'position',
         'basic_salary',
-        'pay_period',
         'daily_rate',
         'hourly_rate',
         'work_start',
@@ -35,6 +34,7 @@ class User extends Authenticatable
         'department_id',
         'start_date',
         'working_days',
+        'pay_schedule',
     ];
 
     /**
