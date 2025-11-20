@@ -1,5 +1,5 @@
 <div id="governmentContributionModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4" x-data="governmentContributionData()" x-init="fetchContributions()">
-    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full transform transition-all duration-300 scale-100">
+    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-5xl w-full transform transition-all duration-300 scale-100">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h2 class="text-xl font-bold text-gray-800">📊 Manage Government Contributions</h2>
             <button type="button" @click="closeGovernmentContributionModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
@@ -7,153 +7,241 @@
             </button>
         </div>
 
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Contributions</h3>
-            <template x-if="contributions.length === 0">
-                <p class="text-gray-600">No government contributions configured yet.</p>
-            </template>
-            <template x-for="contribution in contributions" :key="contribution.id">
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex items-center justify-between">
-                    <div>
-                        <p class="font-medium text-gray-800" x-text="formatContributionType(contribution.type)"></p>
-                        <p class="text-sm text-gray-600">
-                            Salary Range: <span x-text="formatSalaryRange(contribution.min_salary, contribution.max_salary)"></span>
-                        </p>
-                        <p class="text-sm text-gray-600">
-                            Employee Share: <span x-text="formatCurrency(contribution.employee_share)"></span>
-                            <template x-if="contribution.employer_share !== null">
-                                <span> | Employer Share: <span x-text="formatCurrency(contribution.employer_share)"></span></span>
-                            </template>
-                        </p>
-                        <template x-if="contribution.is_percentage">
-                            <span class="text-xs text-blue-500">(Percentage)</span>
-                        </template>
-                        <template x-if="contribution.target_type !== 'all' && contribution.applies_to && contribution.applies_to.length > 0">
-                            <span class="text-xs text-purple-500" x-text="`(${formatTargetType(contribution.target_type)}: ${contribution.applies_to.join(', ')})`"></span>
-                        </template>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button type="button" @click="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
-                            <i class="fas fa-edit text-base"></i>
-                        </button>
-                        <button type="button" @click="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
-                            <i class="fas fa-trash-alt text-base"></i>
-                        </button>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Left Column: Current Contributions -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Contributions</h3>
+                <div class="max-h-96 overflow-y-auto pr-2">
+                    <template x-if="contributions.length === 0">
+                        <p class="text-gray-600">No government contributions configured yet.</p>
+                    </template>
+                    <template x-for="contribution in contributions" :key="contribution.id">
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-gray-800" x-text="formatContributionType(contribution.type)"></p>
+                                <p class="text-sm text-gray-600">
+                                    Salary Range: <span x-text="formatSalaryRange(contribution.min_salary, contribution.max_salary)"></span>
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    Employee Share: <span x-text="formatCurrency(contribution.employee_share)"></span>
+                                    <template x-if="contribution.employer_share !== null">
+                                        <span> | Employer Share: <span x-text="formatCurrency(contribution.employer_share)"></span></span>
+                                    </template>
+                                </p>
+                                <template x-if="contribution.is_percentage === 1">
+                                    <span class="text-xs text-blue-500">(Percentage)</span>
+                                </template>
+                                <template x-if="contribution.is_percentage === 0">
+                                    <span class="text-xs text-green-500">(Fixed Amount)</span>
+                                </template>
+                                <template x-if="contribution.target_type !== 'all' && contribution.applies_to && contribution.applies_to.length > 0">
+                                    <span class="text-xs text-purple-500" x-text="`(${formatTargetType(contribution.target_type)}: ${contribution.applies_to.join(', ')})`"></span>
+                                </template>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button type="button" @click="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
+                                    <i class="fas fa-edit text-base"></i>
+                                </button>
+                                <button type="button" @click="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
+                                    <i class="fas fa-trash-alt text-base"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
-            </template>
-        </div>
+            </div>
 
-        <div class="border-t pt-4 mt-4">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Contribution' : 'Add New Contribution'"></h3>
-            <form @submit.prevent="isEditMode ? updateContribution() : addContribution()" class="space-y-4">
-                <div>
-                    <label for="contribution_type" class="block text-sm font-medium text-gray-700 mb-1">Contribution Type</label>
-                    <select id="contribution_type" x-model="form.type" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
-                        <option value="" disabled>Select Type</option>
-                        <option value="sss">SSS</option>
-                        <option value="philhealth">PhilHealth</option>
-                        <option value="pagibig">Pag-IBIG</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
+            <!-- Right Column: Add/Edit Contribution Form -->
+            <div class="border-t md:border-t-0 md:border-l md:pl-6 pt-4 md:pt-0 mt-4 md:mt-0">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Contribution' : 'Add New Contribution'"></h3>
+                <form @submit.prevent="isEditMode ? updateContribution() : addContribution()" class="space-y-4">
                     <div>
-                        <label for="min_salary" class="block text-sm font-medium text-gray-700 mb-1">Min. Salary (Optional)</label>
-                        <input type="number" min="0" step="0.01" id="min_salary" x-model="form.min_salary"
+                        <label for="contribution_type" class="block text-sm font-medium text-gray-700 mb-1">Contribution Type</label>
+                        <select id="contribution_type" x-model="form.type" required
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                            <option value="" disabled>Select Type</option>
+                            <option value="sss">SSS</option>
+                            <option value="philhealth">PhilHealth</option>
+                            <option value="pagibig">Pag-IBIG</option>
+                        </select>
                     </div>
-                    <div>
-                        <label for="max_salary" class="block text-sm font-medium text-gray-700 mb-1">Max. Salary (Optional)</label>
-                        <input type="number" min="0" step="0.01" id="max_salary" x-model="form.max_salary"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="min_salary" class="block text-sm font-medium text-gray-700 mb-1">Min. Salary (Optional)</label>
+                            <input type="number" min="0" step="0.01" id="min_salary" x-model="form.min_salary"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                        </div>
+                        <div>
+                            <label for="max_salary" class="block text-sm font-medium text-gray-700 mb-1">Max. Salary (Optional)</label>
+                            <input type="number" min="0" step="0.01" id="max_salary" x-model="form.max_salary"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                        </div>
                     </div>
-                </div>
 
-                <div class="mt-2">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" x-model="form.is_percentage" @change="form.target_type = 'all'; form.applies_to = []" class="form-checkbox h-5 w-5 text-blue-600 rounded-md">
-                        <span class="ml-2 text-gray-700">Is Percentage-based?</span>
-                    </label>
-                </div>
-
-                <template x-if="!form.is_percentage">
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Apply To:</label>
+                    <div class="mt-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount Type</label>
                         <div class="flex space-x-4">
                             <label class="inline-flex items-center">
-                                <input type="radio" value="all" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600">
-                                <span class="ml-2 text-gray-700">All Employees</span>
+                                <input type="radio" value="percentage" x-model="form.amount_type" @change="form.target_type = 'all'; form.applies_to = []" class="form-radio h-5 w-5 text-blue-600" aria-label="Percentage Based">
+                                <span class="ml-2 text-gray-700">Percentage Based</span>
                             </label>
                             <label class="inline-flex items-center">
-                                <input type="radio" value="employees" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600">
-                                <span class="ml-2 text-gray-700">Specific Employees</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" value="departments" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600">
-                                <span class="ml-2 text-gray-700">Specific Departments</span>
+                                <input type="radio" value="fixed" x-model="form.amount_type" class="form-radio h-5 w-5 text-blue-600" aria-label="Fixed Amount (Non-percentage Based)">
+                                <span class="ml-2 text-gray-700">Fixed Amount</span>
                             </label>
                         </div>
                     </div>
 
-                    <template x-if="form.target_type === 'employees'">
-                        <div class="mt-4">
-                            <label for="select_employees" class="block text-sm font-medium text-gray-700 mb-1">Select Employees:</label>
-                            <select id="select_employees" x-model="form.applies_to" multiple
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
-                                <template x-if="allEmployees.length === 0">
-                                    <option disabled>No employees found</option>
-                                </template>
-                                <template x-if="allEmployees.length > 0">
-                                    <template x-for="employee in allEmployees" :key="employee.id">
-                                        <option :value="employee.id" x-text="employee.name"></option>
-                                    </template>
-                                </template>
-                            </select>
+                    <template x-if="form.amount_type === 'fixed'">
+                        <div x-show="form.amount_type === 'fixed'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90">
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Apply To:</label>
+                                <div class="flex flex-col space-y-2 pl-6"> <!-- Added pl-6 for 24px indentation -->
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" value="all" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600" aria-label="All Employees" :disabled="form.amount_type === 'percentage'">
+                                        <span class="ml-2 text-gray-700">All Employees</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" value="employees" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600" aria-label="Specific Employees" :disabled="form.amount_type === 'percentage'">
+                                        <span class="ml-2 text-gray-700">Specific Employees</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" value="departments" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600" aria-label="Specific Departments" :disabled="form.amount_type === 'percentage'">
+                                        <span class="ml-2 text-gray-700">Specific Departments</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <template x-if="form.target_type === 'employees'">
+                                <div x-show="form.target_type === 'employees'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-4 pl-6"> <!-- Added pl-6 for 24px indentation -->
+                                    <label for="select_employees" class="block text-sm font-medium text-gray-700 mb-1">Select Employees:</label>
+                                    <div class="relative" x-data="{ open: false, search: '', selectedEmployees: [] }" x-init="selectedEmployees = form.applies_to" @keydown.escape.stop="open = false" @keydown.tab="open = false">
+                                        <button type="button" @click="open = !open" @click.away="open = false" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'" aria-labelledby="listbox-label-employees">
+                                            <span class="block truncate" x-text="selectedEmployees.length ? `${selectedEmployees.length} employee(s) selected` : 'Select employees'"></span>
+                                            <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </button>
+
+                                        <ul x-show="open" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" role="listbox" aria-labelledby="listbox-label-employees">
+                                            <div class="px-2 py-1">
+                                                <input type="text" x-model="search" placeholder="Search employees..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search employees">
+                                            </div>
+                                            <template x-for="employee in allEmployees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))" :key="employee.id">
+                                                <li @click="event => {
+                                                        const employeeId = employee.id;
+                                                        const index = selectedEmployees.indexOf(employeeId);
+                                                        if (index > -1) {
+                                                            selectedEmployees.splice(index, 1);
+                                                        } else {
+                                                            selectedEmployees.push(employeeId);
+                                                        }
+                                                        form.applies_to = selectedEmployees;
+                                                        $dispatch('input', form.applies_to); // Notify Alpine of change
+                                                    }"
+                                                    class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
+                                                    :class="{ 'bg-blue-600 text-white': selectedEmployees.includes(employee.id) }"
+                                                    id="employee-option-" role="option" :aria-selected="selectedEmployees.includes(employee.id)">
+                                                    <div class="flex items-center">
+                                                        <input type="checkbox" :checked="selectedEmployees.includes(employee.id)" class="form-checkbox h-4 w-4 text-blue-600 pointer-events-none" aria-hidden="true">
+                                                        <span class="font-normal ml-3 block truncate" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="employee.name"></span>
+                                                    </div>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap gap-2" x-show="selectedEmployees.length > 0" role="list" aria-label="Selected employees">
+                                        <template x-for="employeeId in selectedEmployees" :key="employeeId">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" role="listitem">
+                                                <span x-text="allEmployees.find(e => e.id === employeeId)?.name"></span>
+                                                <button type="button" @click="event => {
+                                                    const index = selectedEmployees.indexOf(employeeId);
+                                                    if (index > -1) {
+                                                        selectedEmployees.splice(index, 1);
+                                                    }
+                                                    form.applies_to = selectedEmployees;
+                                                    $dispatch('input', form.applies_to);
+                                                }" class="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${allEmployees.find(e => e.id === employeeId)?.name}`">
+                                                    <span class="sr-only">Remove employee</span>
+                                                    <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                                                        <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
+                                                    </svg>
+                                                </button>
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <p x-show="form.target_type === 'employees' && selectedEmployees.length === 0 && form.amount_type === 'fixed'" class="text-red-500 text-sm mt-1" id="employee-selection-error">Please select at least one employee.</p>
+                                </div>
+                            </template>
+
+                            <template x-if="form.target_type === 'departments'">
+                                <div x-show="form.target_type === 'departments'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-4 pl-6"> <!-- Added pl-6 for 24px indentation -->
+                                    <label for="select_departments" class="block text-sm font-medium text-gray-700 mb-1">Select Department:</label>
+                                    <div class="relative" x-data="{ open: false, search: '', selectedDepartment: null }" x-init="selectedDepartment = form.applies_to[0] || null" @keydown.escape.stop="open = false" @keydown.tab="open = false">
+                                        <button type="button" @click="open = !open" @click.away="open = false" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'" aria-labelledby="listbox-label-departments">
+                                            <span class="block truncate" x-text="selectedDepartment ? allDepartments.find(d => d.id === selectedDepartment)?.name : 'Select a department'"></span>
+                                            <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </button>
+
+                                        <ul x-show="open" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" role="listbox" aria-labelledby="listbox-label-departments">
+                                            <div class="px-2 py-1">
+                                                <input type="text" x-model="search" placeholder="Search departments..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search departments">
+                                            </div>
+                                            <template x-for="department in allDepartments.filter(d => d.name.toLowerCase().includes(search.toLowerCase()))" :key="department.id">
+                                                <li @click="event => {
+                                                        selectedDepartment = department.id;
+                                                        form.applies_to = [department.id];
+                                                        open = false;
+                                                        $dispatch('input', form.applies_to);
+                                                    }"
+                                                    class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
+                                                    :class="{ 'bg-blue-600 text-white': selectedDepartment === department.id }"
+                                                    id="department-option-" role="option" :aria-selected="selectedDepartment === department.id">
+                                                    <span class="font-normal block truncate" :class="{ 'font-semibold': selectedDepartment === department.id, 'font-normal': selectedDepartment !== department.id }" x-text="department.name"></span>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                    <p x-show="form.target_type === 'departments' && !selectedDepartment && form.amount_type === 'fixed'" class="text-red-500 text-sm mt-1" id="department-selection-error">Please select a department.</p>
+                                </div>
+                            </template>
                         </div>
                     </template>
 
-                    <template x-if="form.target_type === 'departments'">
-                        <div class="mt-4">
-                            <label for="select_departments" class="block text-sm font-medium text-gray-700 mb-1">Select Departments:</label>
-                            <select id="select_departments" x-model="form.applies_to" multiple
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
-                                <template x-if="allDepartments.length === 0">
-                                    <option disabled>No departments found</option>
-                                </template>
-                                <template x-if="allDepartments.length > 0">
-                                    <template x-for="department in allDepartments" :key="department.id">
-                                        <option :value="department.id" x-text="department.name"></option>
-                                    </template>
-                                </template>
-                            </select>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="employee_share" class="block text-sm font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employee Share (%)' : 'Employee Share (₱)'"></label>
+                            <input type="number" min="0" :max="form.amount_type === 'percentage' ? '100' : null" step="0.01" id="employee_share" x-model.number="form.employee_share" required
+                                :placeholder="form.amount_type === 'percentage' ? 'e.g., 5.5' : 'e.g., 500.00'"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employee-share-percentage-label' : 'employee-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employee-share-percentage-error' : null">
+                            <p x-show="form.amount_type === 'percentage' && (form.employee_share < 0 || form.employee_share > 100)" class="text-red-500 text-sm mt-1" id="employee-share-percentage-error">Employee share must be between 0 and 100 for percentage-based contributions.</p>
                         </div>
-                    </template>
-                </template>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="employee_share" class="block text-sm font-medium text-gray-700 mb-1" x-text="form.is_percentage ? 'Employee Share (%)' : 'Employee Share (₱)'"></label>
-                        <input type="number" min="0" step="0.01" id="employee_share" x-model="form.employee_share" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                        <div>
+                            <label for="employer_share" class="block text-sm font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employer Share (%)' : 'Employer Share (₱)'"></label>
+                            <input type="number" min="0" :max="form.amount_type === 'percentage' ? '100' : null" step="0.01" id="employer_share" x-model.number="form.employer_share"
+                                :placeholder="form.amount_type === 'percentage' ? 'e.g., 5.5' : 'e.g., 500.00'"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employer-share-percentage-label' : 'employer-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employer-share-percentage-error' : null">
+                            <p x-show="form.amount_type === 'percentage' && (form.employer_share !== null && (form.employer_share < 0 || form.employer_share > 100))" class="text-red-500 text-sm mt-1" id="employer-share-percentage-error">Employer share must be between 0 and 100 for percentage-based contributions.</p>
+                        </div>
                     </div>
-                    <div>
-                        <label for="employer_share" class="block text-sm font-medium text-gray-700 mb-1" x-text="form.is_percentage ? 'Employer Share (%) (Optional)' : 'Employer Share (₱) (Optional)'"></label>
-                        <input type="number" min="0" step="0.01" id="employer_share" x-model="form.employer_share"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
-                    </div>
-                </div>
 
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" @click="closeGovernmentContributionModal()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
-                        <i class="fas fa-save mr-1"></i> <span x-text="isEditMode ? 'Update Contribution' : 'Save Contribution'"></span>
-                    </button>
-                </div>
-            </form>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="closeGovernmentContributionModal()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
+                            <i class="fas fa-save mr-1"></i> <span x-text="isEditMode ? 'Update Contribution' : 'Save Contribution'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -181,7 +269,7 @@
                 type: '',
                 min_salary: '',
                 max_salary: '',
-                is_percentage: false,
+                amount_type: 'percentage', // Default to percentage based
                 employee_share: '',
                 employer_share: '',
                 target_type: 'all',
@@ -193,6 +281,13 @@
                 this.fetchEmployees();
                 this.fetchDepartments();
                 this.fetchContributions();
+                // Watch for changes in amount_type to reset targeting if switched to percentage
+                this.$watch('form.amount_type', (value) => {
+                    if (value === 'percentage') {
+                        this.form.target_type = 'all';
+                        this.form.applies_to = [];
+                    }
+                });
             },
 
             resetForm() {
@@ -201,7 +296,7 @@
                     type: '',
                     min_salary: '',
                     max_salary: '',
-                    is_percentage: false,
+                    amount_type: 'percentage',
                     employee_share: '',
                     employer_share: '',
                     target_type: 'all',
@@ -253,14 +348,36 @@
             },
 
             async addContribution() {
+                // Validation for employee_share based on amount_type
+                if (this.form.amount_type === 'percentage' && (this.form.employee_share < 0 || this.form.employee_share > 100)) {
+                    alert('Employee share must be between 0 and 100 for percentage-based contributions.');
+                    return;
+                }
+                if (this.form.amount_type === 'fixed' && this.form.target_type === 'employees' && this.form.applies_to.length === 0) {
+                    alert('Please select at least one employee for specific employee targeting.');
+                    return;
+                }
+                if (this.form.amount_type === 'fixed' && this.form.target_type === 'departments' && this.form.applies_to.length === 0) {
+                    alert('Please select a department for specific department targeting.');
+                    return;
+                }
+
                 try {
+                    const payload = {
+                        ...this.form,
+                        is_percentage: this.form.amount_type === 'percentage' ? 1 : 0, // Convert to backend format
+                        // Ensure targeting fields are only sent if amount_type is fixed
+                        target_type: this.form.amount_type === 'fixed' ? this.form.target_type : 'all',
+                        applies_to: this.form.amount_type === 'fixed' ? this.form.applies_to : [],
+                    };
+
                     const response = await fetch('/government-contributions', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         },
-                        body: JSON.stringify(this.form),
+                        body: JSON.stringify(payload),
                     });
                     if (!response.ok) throw new Error('Failed to add contribution');
                     Alpine.nextTick(() => this.fetchContributions());
@@ -277,7 +394,8 @@
                 this.form.type = contribution.type;
                 this.form.min_salary = contribution.min_salary;
                 this.form.max_salary = contribution.max_salary;
-                this.form.is_percentage = contribution.is_percentage === 1; // Convert to boolean
+                // Set amount_type based on is_percentage from backend
+                this.form.amount_type = contribution.is_percentage === 1 ? 'percentage' : 'fixed';
                 this.form.target_type = contribution.target_type || 'all';
                 this.form.applies_to = contribution.applies_to || [];
                 this.form.employee_share = contribution.employee_share;
@@ -288,14 +406,36 @@
             },
 
             async updateContribution() {
+                // Validation for employee_share based on amount_type
+                if (this.form.amount_type === 'percentage' && (this.form.employee_share < 0 || this.form.employee_share > 100)) {
+                    alert('Employee share must be between 0 and 100 for percentage-based contributions.');
+                    return;
+                }
+                if (this.form.amount_type === 'fixed' && this.form.target_type === 'employees' && this.form.applies_to.length === 0) {
+                    alert('Please select at least one employee for specific employee targeting.');
+                    return;
+                }
+                if (this.form.amount_type === 'fixed' && this.form.target_type === 'departments' && this.form.applies_to.length === 0) {
+                    alert('Please select a department for specific department targeting.');
+                    return;
+                }
+
                 try {
+                    const payload = {
+                        ...this.form,
+                        is_percentage: this.form.amount_type === 'percentage' ? 1 : 0, // Convert to backend format
+                        // Ensure targeting fields are only sent if amount_type is fixed
+                        target_type: this.form.amount_type === 'fixed' ? this.form.target_type : 'all',
+                        applies_to: this.form.amount_type === 'fixed' ? this.form.applies_to : [],
+                    };
+
                     const response = await fetch(`/government-contributions/${this.form.id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         },
-                        body: JSON.stringify(this.form),
+                        body: JSON.stringify(payload),
                     });
                     if (!response.ok) throw new Error('Failed to update contribution');
                     Alpine.nextTick(() => this.fetchContributions());
