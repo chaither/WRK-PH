@@ -26,33 +26,44 @@
                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Name
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden sm:table-cell">
                         Type
                     </th>
                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Rate Multiplier
                     </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden sm:table-cell">
                         Actions
                     </th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($holidays as $holiday)
-                <tr>
+                <tr x-data="{ open: false }" class="mobile-accordion hover:bg-gray-50 transition-colors duration-150">
                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        {{ $holiday->date->format('M d, Y') }}
+                        <button @click="open = !open" class="flex justify-between items-center w-full focus:outline-none sm:cursor-default py-2">
+                            <div>
+                                <div class="font-medium text-gray-900">{{ $holiday->date->format('M d, Y') }}</div>
+                                <div class="text-xs text-gray-500">{{ $holiday->name }}</div>
+                            </div>
+                            <svg x-show="!open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                            <svg x-show="open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
                     </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm hidden sm:table-cell">
                         {{ $holiday->name }}
                     </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm hidden sm:table-cell">
                         {{ ucfirst(str_replace('_', ' ', $holiday->type)) }}
                     </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm hidden sm:table-cell">
                         {{ $holiday->rate_multiplier }}x
                     </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm hidden sm:table-cell">
                         <button onclick="openEditHolidayModal({{ $holiday->id }})" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
                         <form action="{{ route('holidays.destroy', $holiday->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this holiday?');" class="inline-block">
                             @csrf

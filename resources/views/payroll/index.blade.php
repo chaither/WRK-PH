@@ -141,22 +141,31 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @forelse($payrolls as $payslip)
-                        <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
-                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ $payslip->user->name }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ json_decode($payslip->details)->present_days ?? 0 }} / {{ json_decode($payslip->details)->expected_working_days_in_period ?? 0 }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱{{ number_format(json_decode($payslip->details)->hourly_rate_computed ?? 0, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱{{ number_format($payslip->gross_pay, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm">
-                                @php
-                                    $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
-                                    $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
-                                    $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
-                                    $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
-                                    $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
-                                    $componentsTotal = $sss + $phil + $pagibig + $other;
-                                @endphp
-
+                        @php
+                            $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
+                            $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
+                            $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
+                            $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
+                            $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+                            $componentsTotal = $sss + $phil + $pagibig + $other;
+                        @endphp
+                        <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif" x-data="{ open: false }">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <button @click="open = !open" class="flex justify-between items-center w-full focus:outline-none sm:cursor-default">
+                                    <span>{{ $payslip->user->name }}</span>
+                                    <svg x-show="!open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <svg x-show="open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm hidden sm:table-cell">
                                 @if($componentsTotal > 0)
                                     @if($sss > 0)
                                         <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
@@ -175,14 +184,52 @@
                                     <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700">₱{{ number_format($payslip->net_pay, 2) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-center hidden sm:table-cell">
                                 <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
                                     <i class="fas fa-eye text-base"></i>
                                 </a>
                                 <button onclick="openEditDeductionsModal({{ $payslip->id }}, {{ $payslip->deductions }})" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
                                     <i class="fas fa-coins text-base"></i>
                                 </button>
+                            </td>
+                        </tr>
+                        <tr x-show="open" x-transition:enter="transition-all ease-in-out duration-300" x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-xl" x-transition:leave="transition-all ease-in-out duration-300" x-transition:leave-start="opacity-100 max-h-xl" x-transition:leave-end="opacity-0 max-h-0" class="sm:hidden">
+                            <td colspan="8" class="p-4">
+                                <div class="space-y-2 text-sm text-gray-700">
+                                    <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
+                                    <p><span class="font-medium">Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                    <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
+                                    <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
+                                    <p><span class="font-medium">Deductions:</span>
+                                        @if($componentsTotal > 0)
+                                            @if($sss > 0)
+                                                <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
+                                            @endif
+                                            @if($phil > 0)
+                                                <div class="text-xs text-gray-700">PhilHealth: <span class="text-red-600">₱{{ number_format($phil, 2) }}</span></div>
+                                            @endif
+                                            @if($pagibig > 0)
+                                                <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
+                                            @endif
+                                            @if($other > 0)
+                                                <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
+                                            @endif
+                                            <div class="text-xs font-semibold mt-1">Total: <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></div>
+                                        @else
+                                            <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
+                                        @endif
+                                    </p>
+                                    <p class="font-bold mt-2">Net Pay: ₱{{ number_format($payslip->net_pay, 2) }}</p>
+                                    <div class="flex justify-end mt-4">
+                                        <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
+                                            <i class="fas fa-eye text-base"></i> View Payslip
+                                        </a>
+                                        <button onclick="openEditDeductionsModal({{ $payslip->id }}, {{ $payslip->deductions }})" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                            <i class="fas fa-coins text-base"></i> Set Deductions
+                                        </button>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @empty

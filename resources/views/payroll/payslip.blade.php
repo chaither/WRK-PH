@@ -20,16 +20,19 @@
         </div>
         <div>
             <h2 class="text-lg font-semibold mb-2">Pay Information</h2>
-            <p><strong>Monthly Effective Salary:</strong> ₱{{ number_format(optional(json_decode($payslip->details, true))['monthly_salary'], 2) }}</p>
+            @php
+                $details = json_decode($payslip->details, true);
+            @endphp
+            <p><strong>Monthly Effective Salary:</strong> ₱{{ number_format(optional($details)['monthly_salary'], 2) }}</p>
             <p><strong>Pay Period Type:</strong> {{ ucfirst($employee->pay_period) }}</p>
-            <p><strong>Daily Rate:</strong> ₱{{ number_format(optional(json_decode($payslip->details, true))['daily_rate'], 2) }}</p>
-            <p><strong>Hourly Rate:</strong> ₱{{ number_format(optional(json_decode($payslip->details, true))['hourly_rate'], 2) }}</p>
+            <p><strong>Daily Rate:</strong> ₱{{ number_format(optional($details)['daily_rate'], 2) }}</p>
+            <p><strong>Hourly Rate:</strong> ₱{{ number_format(optional($details)['hourly_rate'], 2) }}</p>
         </div>
     </div>
 
     <div class="border-t pt-6">
         <h2 class="text-lg font-semibold mb-4">Earnings & Deductions</h2>
-        <div class="grid grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
                 <h3 class="font-semibold mb-2">Earnings</h3>
                 <div class="space-y-2">
@@ -41,16 +44,16 @@
                         <span>Overtime Pay:</span>
                         <span>₱{{ number_format($payslip->overtime_pay, 2) }}</span>
                     </div>
-                    @if(optional(json_decode($payslip->details, true))['holiday_working_days']['regular'] > 0)
+                    @if(optional($details)['holiday_working_days']['regular'] > 0)
                     <div class="flex justify-between text-green-700">
-                        <span>Regular Holiday Pay (x{{ optional(json_decode($payslip->details, true))['holiday_working_days']['regular'] }} days):</span>
-                        <span>₱{{ number_format(optional(json_decode($payslip->details, true))['holiday_working_days']['regular'] * optional(json_decode($payslip->details, true))['daily_rate'] * 2, 2) }}</span>
+                        <span>Regular Holiday Pay (x{{ optional($details)['holiday_working_days']['regular'] }} days):</span>
+                        <span>₱{{ number_format(optional($details)['holiday_working_days']['regular'] * optional($details)['daily_rate'] * 2, 2) }}</span>
                     </div>
                     @endif
-                    @if(optional(json_decode($payslip->details, true))['holiday_working_days']['special_non_working'] > 0)
+                    @if(optional($details)['holiday_working_days']['special_non_working'] > 0)
                     <div class="flex justify-between text-yellow-700">
-                        <span>Special Non-Working Holiday Pay (x{{ optional(json_decode($payslip->details, true))['holiday_working_days']['special_non_working'] }} days):</span>
-                        <span>₱{{ number_format(optional(json_decode($payslip->details, true))['holiday_working_days']['special_non_working'] * optional(json_decode($payslip->details, true))['daily_rate'] * 1.3, 2) }}</span>
+                        <span>Special Non-Working Holiday Pay (x{{ optional($details)['holiday_working_days']['special_non_working'] }} days):</span>
+                        <span>₱{{ number_format(optional($details)['holiday_working_days']['special_non_working'] * optional($details)['daily_rate'] * 1.3, 2) }}</span>
                     </div>
                     @endif
                     <div class="flex justify-between font-semibold">
@@ -66,9 +69,6 @@
                         <span>Late Deductions:</span>
                         <span>₱{{ number_format($payslip->late_deductions, 2) }}</span>
                     </div>
-                    @php
-                        $details = json_decode($payslip->details, true);
-                    @endphp
                     @if(isset($details['sss_deduction']) && $details['sss_deduction'] > 0)
                     <div class="flex justify-between">
                         <span>SSS Contribution
@@ -117,7 +117,7 @@
 
     <div class="border-t mt-6 pt-6">
         <h2 class="text-lg font-semibold mb-4">Attendance Summary</h2>
-        <div class="grid grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
                 <p><strong>Total Hours Worked:</strong> {{ $payslip->total_hours_worked }}</p>
                 <p><strong>Overtime Hours:</strong> {{ $payslip->overtime_hours }}</p>
