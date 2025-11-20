@@ -16,6 +16,11 @@
                 <!-- Vite manifest not found. Assets not built. -->
                 <!-- Build assets with `npm run build` or `npm run dev` to enable app.js. -->
             @endif
+            <style>
+                #sidebar.sidebar-collapsed .sidebar-dropdown-text {
+                    display: none !important;
+                }
+            </style>
 </head>
 <body class="bg-gray-100">
     <div class="flex">
@@ -31,7 +36,7 @@
             <nav>
                 <a href="{{ route('dashboard') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dashboard') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-home text-xl"></i>
-                    <span class="ml-3">Dashboard</span>
+                    <span class="ml-3 sidebar-text">Dashboard</span>
                 </a>
 
                 <!-- Attendance Dropdown -->
@@ -40,7 +45,7 @@
                         :aria-expanded="open ? 'true' : 'false'">
                         <span class="inline-flex items-center">
                             <i class="fas fa-clock text-xl mr-3"></i>
-                            <span class="ml-3">Attendance</span>
+                            <span class="ml-3 sidebar-text">Attendance</span>
                         </span>
                         <svg id="attendanceDropdownArrow" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -56,50 +61,50 @@
                             class="p-2 mt-2 space-y-2 overflow-hidden text-sm font-medium text-white bg-blue-700 rounded-md shadow-inner"
                             aria-label="submenu">
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ Auth::user()->isEmployee() ? route('dtr.index') : route('dtr.admin') }}">
-                                    Daily Time Record
+                                <a class="w-full inline-flex items-center" href="{{ Auth::user()->isEmployee() ? route('dtr.index') : route('dtr.admin') }}">
+                                    <i class="fas fa-calendar-day mr-2"></i><span class="sidebar-dropdown-text">Daily Time Record</span>
                                 </a>
                             </li>
                             @if (Auth::user()->hasRole(['admin', 'hr']))
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('admin.attendance.change-shift.review') }}">
-                                    Shift Approval
+                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-shift.review') }}">
+                                    <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Shift Approval</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('admin.attendance.change-restday.review') }}">
-                                    Restday Approval
+                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-restday.review') }}">
+                                    <i class="fas fa-house-chimney mr-2"></i><span class="sidebar-dropdown-text">Restday Approval</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('admin.attendance.no-bio-request.review') }}">
-                                    No Bio Request Approval
+                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.no-bio-request.review') }}">
+                                    <i class="fas fa-fingerprint mr-2"></i><span class="sidebar-dropdown-text">No Bio Request Approval</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('admin.attendance.overtime-request.review') }}">
-                                    Overtime Approval
+                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.overtime-request.review') }}">
+                                    <i class="fas fa-business-time mr-2"></i><span class="sidebar-dropdown-text">Overtime Approval</span>
                                 </a>
                             </li>
                             @else
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('attendance.change-shift.index') }}">
-                                    Change Shift
+                                <a class="w-full inline-flex items-center" href="{{ route('attendance.change-shift.index') }}">
+                                    <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Change Shift</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('attendance.change-restday.index') }}">
-                                    Change Restday
+                                <a class="w-full inline-flex items-center" href="{{ route('attendance.change-restday.index') }}">
+                                    <i class="fas fa-house-chimney mr-2"></i><span class="sidebar-dropdown-text">Change Restday</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('attendance.no-bio-request.index') }}">
-                                    No Bio Request
+                                <a class="w-full inline-flex items-center" href="{{ route('attendance.no-bio-request.index') }}">
+                                    <i class="fas fa-fingerprint mr-2"></i><span class="sidebar-dropdown-text">No Bio Request</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full" href="{{ route('attendance.overtime-request.index') }}">
-                                    Apply for Overtime
+                                <a class="w-full inline-flex items-center" href="{{ route('attendance.overtime-request.index') }}">
+                                    <i class="fas fa-business-time mr-2"></i><span class="sidebar-dropdown-text">Apply for Overtime</span>
                                 </a>
                             </li>
                             @endif
@@ -111,39 +116,39 @@
                 @if(auth()->user()->role === 'admin')
                 <a href="{{ route('department.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('department.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-building text-xl"></i>
-                    <span class="ml-3">Department</span>
+                    <span class="ml-3 sidebar-text">Department</span>
                 </a>
                 @endif
                 
                 @if (Auth::user()->hasRole(['admin', 'hr']))
                     <a href="{{ route('leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-calendar-alt text-xl"></i>
-                        <span class="ml-3">Leave Management</span>
+                        <span class="ml-3 sidebar-text">Leave Management</span>
                     </a>
                     <a href="{{ route('leave.review') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('leave.review') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-clipboard-list text-xl"></i>
-                        <span class="ml-3">Leave Request Review</span>
+                        <span class="ml-3 sidebar-text">Leave Request Review</span>
                     </a>
                     <a href="{{ route('holidays.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('holidays.*') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-calendar-check text-xl"></i>
-                        <span class="ml-3">Holiday Management</span>
+                        <span class="ml-3 sidebar-text">Holiday Management</span>
                     </a>
                 @endif
                 @if (Auth::user()->isEmployee())
                     <a href="{{ route('employee.leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-briefcase text-xl"></i>
-                        <span class="ml-3">My Leave Requests</span>
+                        <span class="ml-3 sidebar-text">My Leave Requests</span>
                     </a>
                     <a href="{{ route('employee.payslips.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.payslips.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-money-check-alt text-xl"></i>
-                        <span class="ml-3">My Payslips</span>
+                        <span class="ml-3 sidebar-text">My Payslips</span>
                     </a>
                 @endif
 
                 @if(in_array(auth()->user()->role, ['admin', 'hr']))
                 <a href="{{ route('payroll.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('payroll.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-money-bill text-xl"></i>
-                    <span class="ml-3">Payroll</span>
+                    <span class="ml-3 sidebar-text">Payroll</span>
                 </a>
                 @endif
             </nav>
@@ -207,7 +212,8 @@
             const sidebar = document.getElementById('sidebar');
             const sidebarTitle = document.getElementById('sidebarTitle');
             const content = document.getElementById('content');
-            const navSpans = document.querySelectorAll('#sidebar nav span');
+            const navSpans = document.querySelectorAll('#sidebar .sidebar-text');
+            const dropdownSpans = document.querySelectorAll('#sidebar .sidebar-dropdown-text');
             const mobileOverlay = document.getElementById('mobile-overlay');
 
             // Function to set sidebar state
@@ -217,6 +223,7 @@
                 sidebarTitle.style.transition = 'none';
                 content.style.transition = 'none';
                 navSpans.forEach(span => span.style.transition = 'none');
+                dropdownSpans.forEach(span => span.style.transition = 'none'); // Re-enabled
 
                 const sidebarOpen = localStorage.getItem('sidebarOpen');
 
@@ -224,18 +231,22 @@
                     // Sidebar is open/expanded
                     sidebar.classList.remove('w-16');
                     sidebar.classList.add('w-64');
+                    sidebar.classList.remove('sidebar-collapsed');
                     sidebarTitle.classList.remove('hidden');
                     content.classList.remove('ml-16');
                     content.classList.add('ml-64');
                     navSpans.forEach(span => span.classList.remove('hidden'));
+                    dropdownSpans.forEach(span => span.classList.remove('hidden')); // Re-enabled
                 } else {
                     // Sidebar is closed/collapsed
                     sidebar.classList.remove('w-64');
                     sidebar.classList.add('w-16');
+                    sidebar.classList.add('sidebar-collapsed');
                     sidebarTitle.classList.add('hidden');
                     content.classList.remove('ml-64');
                     content.classList.add('ml-16');
                     navSpans.forEach(span => span.classList.add('hidden'));
+                    dropdownSpans.forEach(span => span.classList.add('hidden')); // Re-enabled
                 }
 
                 // Re-enable transitions after a short delay
@@ -244,6 +255,7 @@
                     sidebarTitle.style.transition = ''; // Resets to CSS-defined transition
                     content.style.transition = ''; // Resets to CSS-defined transition
                     navSpans.forEach(span => span.style.transition = '');
+                    dropdownSpans.forEach(span => span.style.transition = ''); // Re-enabled
                 }, 50);
             }
 
@@ -258,18 +270,22 @@
                 if (sidebar.classList.contains('w-16')) {
                     sidebar.classList.remove('w-16');
                     sidebar.classList.add('w-64');
+                    sidebar.classList.remove('sidebar-collapsed');
                     sidebarTitle.classList.remove('hidden');
                     content.classList.remove('ml-16');
                     content.classList.add('ml-64');
                     navSpans.forEach(span => span.classList.remove('hidden'));
+                    dropdownSpans.forEach(span => span.classList.remove('hidden')); // Re-enabled
                     localStorage.setItem('sidebarOpen', 'true');
                 } else {
                     sidebar.classList.remove('w-64');
                     sidebar.classList.add('w-16');
+                    sidebar.classList.add('sidebar-collapsed');
                     sidebarTitle.classList.add('hidden');
                     content.classList.remove('ml-64');
                     content.classList.add('ml-16');
                     navSpans.forEach(span => span.classList.add('hidden'));
+                    dropdownSpans.forEach(span => span.classList.add('hidden')); // Re-enabled
                     localStorage.setItem('sidebarOpen', 'false');
                 }
             });
