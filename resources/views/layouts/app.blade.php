@@ -18,14 +18,14 @@
             @endif
 </head>
 <body class="bg-gray-100">
-    <div class="min-h-screen flex">
+    <div class="flex">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-blue-800 text-white w-16 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
+        <div id="sidebar" class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transition-all duration-300 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
                 <button id="sidebarToggle" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
-                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap hidden md:block">HRIS SYSTEM</span>
+                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap">HRIS SYSTEM</span>
             </div>
             
             <nav>
@@ -42,7 +42,7 @@
                             <i class="fas fa-clock text-xl mr-3"></i>
                             <span class="ml-3">Attendance</span>
                         </span>
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <svg id="attendanceDropdownArrow" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                         </svg>
                     </button>
@@ -146,7 +146,7 @@
         </div>
 
         <!-- Content -->
-        <div id="content" class="flex-1 md:ml-16 transition-all duration-300 ease-in-out">
+        <div id="content" class="flex-1 transition-all duration-300 ease-in-out h-screen overflow-y-auto">
             <!-- Top Nav -->
             <nav class="bg-blue-800 text-white p-4">
                 <div class="flex items-center px-4">
@@ -171,7 +171,7 @@
             </nav>
 
             <!-- Main Content -->
-            <main class="p-6">
+            <main class="p-6 overflow-auto">
                 @yield('content')
             </main>
         </div>
@@ -196,11 +196,11 @@
                 }
             });
 
-            const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarTitle = document.getElementById('sidebarTitle');
             const content = document.getElementById('content');
             const navSpans = document.querySelectorAll('#sidebar nav span');
+            const mobileOverlay = document.getElementById('mobile-overlay');
 
             // Function to set sidebar state
             function setSidebarState() {
@@ -211,19 +211,22 @@
                 navSpans.forEach(span => span.style.transition = 'none');
 
                 const sidebarOpen = localStorage.getItem('sidebarOpen');
-                const isDesktop = window.innerWidth >= 768; // md breakpoint
 
-                if (sidebarOpen === 'true' || (sidebarOpen === null && isDesktop)) {
+                if (sidebarOpen === 'true' || sidebarOpen === null) {
+                    // Sidebar is open/expanded
                     sidebar.classList.remove('w-16');
                     sidebar.classList.add('w-64');
-                    content.classList.remove('md:ml-16');
-                    content.classList.add('md:ml-64');
+                    sidebarTitle.classList.remove('hidden');
+                    content.classList.remove('ml-16');
+                    content.classList.add('ml-64');
                     navSpans.forEach(span => span.classList.remove('hidden'));
                 } else {
+                    // Sidebar is closed/collapsed
                     sidebar.classList.remove('w-64');
                     sidebar.classList.add('w-16');
-                    content.classList.remove('md:ml-64');
-                    content.classList.add('md:ml-16');
+                    sidebarTitle.classList.add('hidden');
+                    content.classList.remove('ml-64');
+                    content.classList.add('ml-16');
                     navSpans.forEach(span => span.classList.add('hidden'));
                 }
 
@@ -242,19 +245,22 @@
             // Adjust state on resize
             window.addEventListener('resize', setSidebarState);
 
+            // Sidebar toggle
             sidebarToggle.addEventListener('click', function() {
                 if (sidebar.classList.contains('w-16')) {
                     sidebar.classList.remove('w-16');
                     sidebar.classList.add('w-64');
-                    content.classList.remove('md:ml-16');
-                    content.classList.add('md:ml-64');
+                    sidebarTitle.classList.remove('hidden');
+                    content.classList.remove('ml-16');
+                    content.classList.add('ml-64');
                     navSpans.forEach(span => span.classList.remove('hidden'));
                     localStorage.setItem('sidebarOpen', 'true');
                 } else {
                     sidebar.classList.remove('w-64');
                     sidebar.classList.add('w-16');
-                    content.classList.remove('md:ml-64');
-                    content.classList.add('md:ml-16');
+                    sidebarTitle.classList.add('hidden');
+                    content.classList.remove('ml-64');
+                    content.classList.add('ml-16');
                     navSpans.forEach(span => span.classList.add('hidden'));
                     localStorage.setItem('sidebarOpen', 'false');
                 }

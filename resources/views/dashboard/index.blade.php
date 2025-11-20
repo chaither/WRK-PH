@@ -39,7 +39,7 @@
                     <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
                     Attendance Type
                 </h3>
-                <div class="h-80">
+                <div class="">
                     <canvas id="attendanceTypeChart"></canvas>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                     <i class="fas fa-chart-bar text-purple-600 mr-3"></i>
                     Leave Reasons
                 </h3>
-                <div class="h-80">
+                <div class="">
                     <canvas id="terminationReasonChart"></canvas>
                 </div>
             </div>
@@ -61,7 +61,7 @@
     </div>
 
     <!-- Top 10 Departments Section -->
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mx-6 mb-8 hover:shadow-2xl transition-all duration-500">
+    <div class="container mx-auto px-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mx-6 mb-8 hover:shadow-2xl transition-all duration-500">
         <div class="flex flex-wrap justify-between items-center mb-6">
             <h2 class="text-3xl font-bold text-gray-800">Daily Update</h2>
             <div class="flex items-center space-x-4">
