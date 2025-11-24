@@ -36,13 +36,23 @@ class EmployeeController extends Controller
     {
         // Removed redundant role check, now handled by route middleware.
 
+        // Sanitize salary inputs to accept comma-separated or currency-formatted values
+        if ($request->filled('monthly_salary')) {
+            $clean = preg_replace('/[^0-9.\-]/', '', $request->input('monthly_salary'));
+            $request->merge(['monthly_salary' => $clean]);
+        }
+        if ($request->filled('semi_monthly_salary')) {
+            $clean = preg_replace('/[^0-9.\-]/', '', $request->input('semi_monthly_salary'));
+            $request->merge(['semi_monthly_salary' => $clean]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'position' => 'required|string|max:255',
-            'monthly_salary' => 'nullable|numeric|min:0',
-            'semi_monthly_salary' => 'nullable|numeric|min:0',
+            'monthly_salary' => 'required_if:pay_period,monthly|nullable|numeric|min:0',
+            'semi_monthly_salary' => 'required_if:pay_period,semi-monthly|nullable|numeric|min:0',
             'pay_period' => 'required|in:semi-monthly,monthly',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
@@ -115,13 +125,23 @@ class EmployeeController extends Controller
     {
         // Removed redundant role check, now handled by route middleware.
 
+        // Sanitize salary inputs to accept comma-separated or currency-formatted values
+        if ($request->filled('monthly_salary')) {
+            $clean = preg_replace('/[^0-9.\-]/', '', $request->input('monthly_salary'));
+            $request->merge(['monthly_salary' => $clean]);
+        }
+        if ($request->filled('semi_monthly_salary')) {
+            $clean = preg_replace('/[^0-9.\-]/', '', $request->input('semi_monthly_salary'));
+            $request->merge(['semi_monthly_salary' => $clean]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $employee->id,
             'position' => 'required|string|max:255',
             'pay_period' => 'required|in:semi-monthly,monthly',
-            'monthly_salary' => 'nullable|numeric|min:0',
-            'semi_monthly_salary' => 'nullable|numeric|min:0',
+            'monthly_salary' => 'required_if:pay_period,monthly|nullable|numeric|min:0',
+            'semi_monthly_salary' => 'required_if:pay_period,semi-monthly|nullable|numeric|min:0',
             'work_start' => 'required|date_format:H:i',
             'work_end' => 'required|date_format:H:i|after:work_start',
             'role' => 'required|in:employee,hr,admin', // Include role in validation

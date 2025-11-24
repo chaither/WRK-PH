@@ -28,6 +28,10 @@ class DTRController extends Controller
         }
         
         $user = Auth::user();
+        // If employee hasn't registered face, redirect them to one-time face registration
+        if ($user->isEmployee() && empty($user->face_embedding)) {
+            return redirect()->route('face.register')->with('info', 'Please register your face before accessing Daily Time Record.');
+        }
         $today = Carbon::today();
         
         $dtrRecord = DTRRecord::where('user_id', $user->id)
@@ -43,9 +47,51 @@ class DTRController extends Controller
         return view('dtr.index', compact('dtrRecord', 'monthlyRecords'));
     }
 
-    public function clockIn()
+    public function clockIn(Request $request)
     {
         $user = Auth::user();
+        // Require face registration
+        if (empty($user->face_embedding)) {
+            return back()->with('error', 'Face not registered. Please register your face before clocking in.')->with('show_face_register', true);
+        }
+
+        $probe = $request->input('face_descriptor');
+        // Accept both JSON string or array for the face descriptor coming from the client
+        if (is_string($probe)) {
+            $decoded = json_decode($probe, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $probe = $decoded;
+            }
+        }
+        if (!$probe || !is_array($probe)) {
+            return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
+        }
+
+        // Normalise probe: accept { samples: [...], average: [...] } or a flat descriptor array
+        if (isset($probe['average']) && is_array($probe['average'])) {
+            $probe = $probe['average'];
+        } elseif (isset($probe['samples']) && is_array($probe['samples']) && count($probe['samples'])>0) {
+            $samples = $probe['samples'];
+            $count = count($samples);
+            $len = count($samples[0]);
+            $avg = array_fill(0, $len, 0.0);
+            foreach ($samples as $s) {
+                for ($i = 0; $i < $len; $i++) {
+                    $avg[$i] += (float) ($s[$i] ?? 0);
+                }
+            }
+            for ($i = 0; $i < $len; $i++) $avg[$i] = $avg[$i] / $count;
+            $probe = $avg;
+        }
+
+        $stored = json_decode($user->face_embedding, true);
+        $threshold = config('face.threshold', 0.5);
+        $distance = \App\Services\FaceRecognitionService::minDistance($stored, $probe);
+        Log::info('Face match distance for user ' . $user->id . ': ' . $distance);
+        if (!\App\Services\FaceRecognitionService::matches($stored, $probe, $threshold)) {
+            Log::warning("Face verification failed for user {$user->id}. Distance {$distance} > threshold {$threshold}");
+            return back()->with('error', 'Face verification failed.');
+        }
         $now = Carbon::now('Asia/Manila'); // Explicitly set timezone for clock-in
         $today = $now->toDateString();
         
@@ -116,9 +162,51 @@ class DTRController extends Controller
         return back()->with('error', 'You have already clocked in twice today.');
     }
 
-    public function clockOut()
+    public function clockOut(Request $request)
     {
         $user = Auth::user();
+        // Require face registration
+        if (empty($user->face_embedding)) {
+            return back()->with('error', 'Face not registered. Please register your face before clocking out.')->with('show_face_register', true);
+        }
+
+        $probe = $request->input('face_descriptor');
+        // Accept both JSON string or array for the face descriptor coming from the client
+        if (is_string($probe)) {
+            $decoded = json_decode($probe, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $probe = $decoded;
+            }
+        }
+        if (!$probe || !is_array($probe)) {
+            return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
+        }
+
+        // Normalise probe: accept { samples: [...], average: [...] } or a flat descriptor array
+        if (isset($probe['average']) && is_array($probe['average'])) {
+            $probe = $probe['average'];
+        } elseif (isset($probe['samples']) && is_array($probe['samples']) && count($probe['samples'])>0) {
+            $samples = $probe['samples'];
+            $count = count($samples);
+            $len = count($samples[0]);
+            $avg = array_fill(0, $len, 0.0);
+            foreach ($samples as $s) {
+                for ($i = 0; $i < $len; $i++) {
+                    $avg[$i] += (float) ($s[$i] ?? 0);
+                }
+            }
+            for ($i = 0; $i < $len; $i++) $avg[$i] = $avg[$i] / $count;
+            $probe = $avg;
+        }
+
+        $stored = json_decode($user->face_embedding, true);
+        $threshold = config('face.threshold', 0.5);
+        $distance = \App\Services\FaceRecognitionService::minDistance($stored, $probe);
+        Log::info('Face match distance for user ' . $user->id . ': ' . $distance);
+        if (!\App\Services\FaceRecognitionService::matches($stored, $probe, $threshold)) {
+            Log::warning("Face verification failed for user {$user->id}. Distance {$distance} > threshold {$threshold}");
+            return back()->with('error', 'Face verification failed.');
+        }
         $now = Carbon::now('Asia/Manila');
         $today = $now->toDateString();
 

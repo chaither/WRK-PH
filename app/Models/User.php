@@ -35,6 +35,7 @@ class User extends Authenticatable
         'start_date',
         'working_days',
         'pay_schedule',
+        'face_embedding',
     ];
 
     /**
@@ -62,6 +63,7 @@ class User extends Authenticatable
         'hourly_rate' => 'decimal:2',
         'rest_days' => 'array',
         'working_days' => 'array',
+        'face_embedding' => 'array',
     ];
 
     public function isAdmin(): bool

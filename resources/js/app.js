@@ -32,12 +32,24 @@ function initEmployeeModal() {
 
 	if (form) {
 		form.addEventListener('submit', function(e) {
-			const basic = parseFloat(document.getElementById('basic_salary')?.value || 0);
-			const d = parseFloat(document.getElementById('daily_rate')?.value || 0);
-			const h = parseFloat(document.getElementById('hourly_rate')?.value || 0);
-			if (basic <= 0 || d <= 0 || h <= 0) {
-				e.preventDefault();
-				alert('Please ensure all salary amounts are greater than zero.');
+			// Find candidate salary inputs (supporting old and modal IDs)
+			const basicEl = document.getElementById('basic_salary') || document.getElementById('monthly_salary') || document.getElementById('semi_monthly_salary');
+			const dailyEl = document.getElementById('daily_rate') || document.getElementById('daily_rate_modal');
+			const hourlyEl = document.getElementById('hourly_rate') || document.getElementById('hourly_rate_modal');
+
+			// Only validate fields that are present on the current form
+			const checks = [];
+			if (basicEl) checks.push({ name: 'basic salary', value: parseFloat(basicEl.value || 0) });
+			if (dailyEl) checks.push({ name: 'daily rate', value: parseFloat(dailyEl.value || 0) });
+			if (hourlyEl) checks.push({ name: 'hourly rate', value: parseFloat(hourlyEl.value || 0) });
+
+			if (checks.length > 0) {
+				const invalid = checks.filter(c => isNaN(c.value) || c.value <= 0);
+				if (invalid.length > 0) {
+					e.preventDefault();
+					const fields = invalid.map(i => i.name).join(', ');
+					alert('Please ensure all salary amounts are greater than zero. Invalid: ' + fields);
+				}
 			}
 		});
 	}
