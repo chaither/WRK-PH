@@ -15,6 +15,7 @@
                             <div style="width:100%;height:100%;border-radius:9999px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;">
                                 <video id="video" autoplay muted playsinline class="w-full h-full object-cover bg-black"></video>
                                 <canvas id="overlay" style="position:absolute; left:0; top:0; pointer-events:none;"></canvas>
+                                <!-- floating face tracker removed per user preference (overlay box is used) -->
                                 <!-- Arrow indicator placed inside the circle -->
                                 <div id="arrowOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-200">
                                     <div id="arrowInnerOverlay" class="w-24 h-6 flex items-center justify-center"></div>
@@ -76,6 +77,12 @@ const statusEl = document.getElementById('registerStatus');
 const progressEl = document.getElementById('registerProgress');
 const arrowOverlay = document.getElementById('arrowOverlay');
 const arrowInnerOverlay = document.getElementById('arrowInnerOverlay');
+// floating face tracker element removed; keep a placeholder variable for compatibility
+const faceTracker = null;
+// Mirror preview so on-screen left/right behave like a mirror (physical left -> on-screen left)
+const mirrorPreview = true;
+// When preview is mirrored we should flip the head-turn sign so validators match physical movement
+const flipHeadSign = mirrorPreview;
 
 // Load models (CDN first then local)
 async function loadModels() {
@@ -97,16 +104,35 @@ async function startVideo() {
         video.srcObject = stream;
         await video.play();
 
+        // If we want a mirror-like preview, apply horizontal flip to video/overlay/tracker
+        if (mirrorPreview) {
+            try {
+                video.style.transform = 'scaleX(-1)';
+                const overlay = document.getElementById('overlay'); if (overlay) overlay.style.transform = 'scaleX(-1)';
+                if (faceTracker) faceTracker.style.transform = 'scaleX(-1)';
+            } catch (e) { console.warn('Could not apply mirror transform', e); }
+        }
+
         const canvas = document.getElementById('overlay');
         function resizeOverlay() {
             if (!canvas || !video) return;
             const w = video.clientWidth;
             const h = video.clientHeight;
-            if (canvas.width !== w || canvas.height !== h) {
-                canvas.width = w;
-                canvas.height = h;
+            // Use the video's native resolution for the canvas backing store for accurate face-api coordinates,
+            // but keep the CSS size equal to the displayed video size so the circle/viewport remains unchanged.
+            const backingW = video.videoWidth || w;
+            const backingH = video.videoHeight || h;
+            if (canvas.width !== backingW || canvas.height !== backingH) {
+                canvas.width = backingW;
+                canvas.height = backingH;
                 canvas.style.width = w + 'px';
                 canvas.style.height = h + 'px';
+                // Keep tracker size reasonable relative to video dimensions
+                if (faceTracker) {
+                    const t = Math.min(w, h) * 0.36;
+                    faceTracker.style.width = Math.round(t) + 'px';
+                    faceTracker.style.height = Math.round(t) + 'px';
+                }
             }
         }
         resizeOverlay();
@@ -137,6 +163,11 @@ function headTurnNormalized(detection) {
     return delta;
 }
 
+function normalizedHead(detection) {
+    const raw = headTurnNormalized(detection);
+    return flipHeadSign ? -raw : raw;
+}
+
 function drawGuidelines(ctx, detection) {
     if (!detection) return;
     const pts = detection.landmarks.positions;
@@ -145,6 +176,21 @@ function drawGuidelines(ctx, detection) {
     poly([...Array(17).keys()]); poly([17,18,19,20,21]); poly([22,23,24,25,26]); poly([27,28,29,30,31,32,33,34,35]); poly([36,37,38,39,40,41], true); poly([42,43,44,45,46,47], true); poly([48,49,50,51,52,53,54,55,56,57,58,59], true); poly([60,61,62,63,64,65,66,67], true);
     ctx.restore();
 }
+
+// Smooth tracker follow state
+// floating face tracker removed — overlay box is used for visuals
+
+// Descriptor distance helper (Euclidean)
+function descriptorDistance(a, b) {
+    if (!a || !b || a.length !== b.length) return Number.POSITIVE_INFINITY;
+    let sum = 0.0;
+    for (let i = 0; i < a.length; i++) {
+        const d = a[i] - b[i];
+        sum += d * d;
+    }
+    return Math.sqrt(sum);
+}
+
 
 // Arrow animation helpers
 function showArrow(direction) {
@@ -171,14 +217,19 @@ function hideArrow() {
 }
 
 async function performGuidedRegistration() {
+    if (window.__isRegistering) return; // prevent duplicate runs
+    window.__isRegistering = true;
     captureBtn.disabled = true;
     const steps = [
-        {key:'center', prompt:'Look straight at the camera', validator: (d)=> Math.abs(headTurnNormalized(d)) < 0.06},
-        {key:'left', prompt:'Turn your head LEFT', validator: (d)=> headTurnNormalized(d) < -0.12},
-        {key:'right', prompt:'Turn your head RIGHT', validator: (d)=> headTurnNormalized(d) > 0.12},
+        {key:'center', prompt:'Look straight at the camera', validator: (d)=> Math.abs(normalizedHead(d)) < 0.06},
+        {key:'left', prompt:'Turn your head LEFT', validator: (d)=> normalizedHead(d) < -0.12},
+        {key:'right', prompt:'Turn your head RIGHT', validator: (d)=> normalizedHead(d) > 0.12},
     ];
 
     const capturedDescriptors = [];
+    // keep the first accepted face as the reference to ensure all steps are from same person
+    let referenceDescriptor = null;
+    const referenceThreshold = 0.58; // euclidean distance threshold to consider same person
     for (let si=0; si<steps.length; si++) {
         const step = steps[si];
         statusEl.textContent = step.prompt;
@@ -188,30 +239,78 @@ async function performGuidedRegistration() {
         while (Date.now() - start < timeout) {
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
             if (detection) {
-                const head = headTurnNormalized(detection);
                 const canvas = document.getElementById('overlay');
-                if (canvas) {
-                    const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
-                    const box = detection.detection.box; ctx.strokeStyle='#00b894'; ctx.lineWidth=2; ctx.strokeRect(box.x,box.y,box.width,box.height);
-                    drawGuidelines(ctx, detection);
+                const ctx = canvas ? canvas.getContext('2d') : null;
+                // resize detection results to the canvas/display size so coordinates map correctly
+                const displaySize = { width: canvas.width, height: canvas.height };
+                const resized = faceapi.resizeResults(detection, displaySize);
+                const head = headTurnNormalized(resized);
+                if (ctx) {
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    const box = resized.detection.box; ctx.strokeStyle='#00b894'; ctx.lineWidth=2; ctx.strokeRect(box.x,box.y,box.width,box.height);
+                    drawGuidelines(ctx, resized);
+                    // rely on overlay drawing instead
+                }
+                // verify same-person consistency if we already have a reference descriptor
+                if (referenceDescriptor) {
+                    const dist = descriptorDistance(referenceDescriptor, Array.from(detection.descriptor));
+                    if (dist > referenceThreshold) {
+                        // different person detected — show hint and do not count toward consecutive
+                        statusEl.textContent = 'Different face detected — please ensure only you are in the frame.';
+                        if (faceTracker) faceTracker.style.borderColor = '#ff6b6b';
+                        // reset consecutive so user must present the reference face
+                        consecutive = 0;
+                        await new Promise(r=>setTimeout(r,200));
+                        continue;
+                    } else {
+                        // same person — ensure tracker border is green
+                        if (faceTracker) faceTracker.style.borderColor = '#10B981';
+                    }
                 }
                 // show arrow animation according to step
                 if (step.key === 'left') showArrow('left');
                 else if (step.key === 'right') showArrow('right');
                 else showArrow('center');
 
-                if (step.validator(detection)) consecutive++; else consecutive = 0;
+                // use the resized detection for validation where appropriate
+                if (step.validator(resized)) consecutive++; else consecutive = 0;
                 if (consecutive >= needConsecutive) { passed = true; if (detection && detection.descriptor) capturedDescriptors.push(Array.from(detection.descriptor)); break; }
             } else { const canvas = document.getElementById('overlay'); if (canvas) canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); }
             await new Promise(r=>setTimeout(r,120));
         }
-        if (!passed) { statusEl.textContent = 'Step failed: ' + step.prompt + '. Please try again.'; captureBtn.disabled = false; progressEl.textContent = '0%'; return; }
+        if (!passed) {
+            // Immediate automatic retry: clear UI hints, small pause, then restart
+            console.debug('Registration step failed:', step.key, step.prompt);
+            progressEl.textContent = '0%';
+            updateFaceTracker(null, true);
+            hideArrow();
+            statusEl.textContent = 'Step failed: ' + step.prompt + '. Restarting...';
+            // ensure any previous registering flag is cleared so the restart can run
+            window.__isRegistering = false;
+            // short pause to allow UI to update and avoid tight recursion
+            setTimeout(() => {
+                try {
+                    performGuidedRegistration();
+                } catch (err) {
+                    console.error('Auto-restart failed', err);
+                }
+            }, 500);
+            return;
+        }
+        // If this step passed and we do not yet have a reference, set it using this step's descriptor
+        if (passed && !referenceDescriptor && capturedDescriptors.length > 0) {
+            referenceDescriptor = capturedDescriptors[capturedDescriptors.length - 1];
+            console.debug('Reference descriptor set for registration.');
+        }
         progressEl.textContent = Math.round(((si+1)/steps.length)*100) + '% complete';
         // small success flash
         showArrow('center');
         await new Promise(r=>setTimeout(r,600));
         hideArrow();
     }
+
+    // reset tracker after finishing
+        // rely on overlay drawing instead
 
     // Submit the raw captured descriptors (one per successful step). Also include an averaged descriptor for compatibility.
     if (capturedDescriptors.length === 0) {
