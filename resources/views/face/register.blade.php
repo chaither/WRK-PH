@@ -184,7 +184,7 @@ async function performGuidedRegistration() {
         statusEl.textContent = step.prompt;
         for (let c=3;c>0;c--) { statusEl.textContent = step.prompt + ' — starting in ' + c + '...'; await new Promise(r=>setTimeout(r,600)); }
 
-        let passed = false; const start = Date.now(); const timeout = 7000; let consecutive = 0; const needConsecutive = 3;
+        let passed = false; const start = Date.now(); const timeout = 12000; let consecutive = 0; const needConsecutive = 3;
         while (Date.now() - start < timeout) {
             const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
             if (detection) {
@@ -213,16 +213,18 @@ async function performGuidedRegistration() {
         hideArrow();
     }
 
+    // Submit the raw captured descriptors (one per successful step). Also include an averaged descriptor for compatibility.
     if (capturedDescriptors.length === 0) {
         statusEl.textContent = 'Capturing descriptors...'; const samples = [];
-        for (let i=0;i<3;i++) {
+        for (let i=0;i<5;i++) {
             const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
             if (!d) { statusEl.textContent = 'Failed to capture face. Please retry.'; captureBtn.disabled=false; progressEl.textContent='0%'; return; }
-            samples.push(Array.from(d.descriptor)); progressEl.textContent = Math.round(((i+1)/3)*100) + '% capturing'; await new Promise(r=>setTimeout(r,400));
+            samples.push(Array.from(d.descriptor)); progressEl.textContent = Math.round(((i+1)/5)*100) + '% capturing'; await new Promise(r=>setTimeout(r,400));
         }
-        faceInput.value = JSON.stringify(avgDescriptors(samples));
+        // Store both samples and an average for server compatibility
+        faceInput.value = JSON.stringify({ samples: samples, average: avgDescriptors(samples) });
     } else {
-        faceInput.value = JSON.stringify(avgDescriptors(capturedDescriptors));
+        faceInput.value = JSON.stringify({ samples: capturedDescriptors, average: avgDescriptors(capturedDescriptors) });
     }
 
     statusEl.textContent = 'Submitting registration...'; progressEl.textContent = 'Finalizing...'; faceForm.submit();

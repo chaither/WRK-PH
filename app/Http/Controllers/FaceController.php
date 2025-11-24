@@ -31,13 +31,37 @@ class FaceController extends Controller
             return back()->with('error', 'Face already registered. If you need to re-register, please contact HR.');
         }
 
-        $descriptor = json_decode($request->input('face_descriptor'), true);
-        if (!is_array($descriptor) || count($descriptor) === 0) {
+        $raw = json_decode($request->input('face_descriptor'), true);
+        if (!$raw) {
             return back()->with('error', 'Invalid face descriptor. Please try again.');
         }
 
-        // Store as JSON string
-        $user->face_embedding = json_encode($descriptor);
+        // Accept either:
+        // - flat descriptor: [0.12, ...]
+        // - object with { samples: [[...],[...]], average: [...] }
+        // Prefer storing `samples` (array of descriptors) for robustness; fall back to average or flat.
+        $toStore = null;
+        if (is_array($raw) && isset($raw['samples']) && is_array($raw['samples']) && count($raw['samples']) > 0) {
+            $toStore = array_values($raw['samples']);
+        } elseif (is_array($raw) && isset($raw['average']) && is_array($raw['average'])) {
+            $toStore = $raw['average'];
+        } elseif (is_array($raw)) {
+            // Could be a flat descriptor or an array-of-arrays submitted directly
+            // Detect array-of-arrays
+            $first = reset($raw);
+            if (is_array($first)) {
+                $toStore = array_values($raw);
+            } else {
+                $toStore = array_values($raw);
+            }
+        }
+
+        if (!$toStore || (is_array($toStore) && count($toStore) === 0)) {
+            return back()->with('error', 'Invalid face descriptor. Please try again.');
+        }
+
+        // Store as JSON string (User model casts this field to array)
+        $user->face_embedding = json_encode($toStore);
         $user->save();
 
         // After successful one-time registration, redirect the user to Daily Time Record

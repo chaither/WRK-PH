@@ -67,11 +67,28 @@ class DTRController extends Controller
             return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
         }
 
+        // Normalise probe: accept { samples: [...], average: [...] } or a flat descriptor array
+        if (isset($probe['average']) && is_array($probe['average'])) {
+            $probe = $probe['average'];
+        } elseif (isset($probe['samples']) && is_array($probe['samples']) && count($probe['samples'])>0) {
+            $samples = $probe['samples'];
+            $count = count($samples);
+            $len = count($samples[0]);
+            $avg = array_fill(0, $len, 0.0);
+            foreach ($samples as $s) {
+                for ($i = 0; $i < $len; $i++) {
+                    $avg[$i] += (float) ($s[$i] ?? 0);
+                }
+            }
+            for ($i = 0; $i < $len; $i++) $avg[$i] = $avg[$i] / $count;
+            $probe = $avg;
+        }
+
         $stored = json_decode($user->face_embedding, true);
         $threshold = config('face.threshold', 0.5);
-        $distance = \App\Services\FaceRecognitionService::distance($stored, $probe);
+        $distance = \App\Services\FaceRecognitionService::minDistance($stored, $probe);
         Log::info('Face match distance for user ' . $user->id . ': ' . $distance);
-        if ($distance > $threshold) {
+        if (!\App\Services\FaceRecognitionService::matches($stored, $probe, $threshold)) {
             Log::warning("Face verification failed for user {$user->id}. Distance {$distance} > threshold {$threshold}");
             return back()->with('error', 'Face verification failed.');
         }
@@ -165,11 +182,28 @@ class DTRController extends Controller
             return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
         }
 
+        // Normalise probe: accept { samples: [...], average: [...] } or a flat descriptor array
+        if (isset($probe['average']) && is_array($probe['average'])) {
+            $probe = $probe['average'];
+        } elseif (isset($probe['samples']) && is_array($probe['samples']) && count($probe['samples'])>0) {
+            $samples = $probe['samples'];
+            $count = count($samples);
+            $len = count($samples[0]);
+            $avg = array_fill(0, $len, 0.0);
+            foreach ($samples as $s) {
+                for ($i = 0; $i < $len; $i++) {
+                    $avg[$i] += (float) ($s[$i] ?? 0);
+                }
+            }
+            for ($i = 0; $i < $len; $i++) $avg[$i] = $avg[$i] / $count;
+            $probe = $avg;
+        }
+
         $stored = json_decode($user->face_embedding, true);
         $threshold = config('face.threshold', 0.5);
-        $distance = \App\Services\FaceRecognitionService::distance($stored, $probe);
+        $distance = \App\Services\FaceRecognitionService::minDistance($stored, $probe);
         Log::info('Face match distance for user ' . $user->id . ': ' . $distance);
-        if ($distance > $threshold) {
+        if (!\App\Services\FaceRecognitionService::matches($stored, $probe, $threshold)) {
             Log::warning("Face verification failed for user {$user->id}. Distance {$distance} > threshold {$threshold}");
             return back()->with('error', 'Face verification failed.');
         }

@@ -308,7 +308,8 @@ modalCaptureBtn.addEventListener('click', async function () {
             await new Promise(res => setTimeout(res, 300));
         }
         const averaged = avgDescriptors(descriptors);
-        document.getElementById(currentInputId).value = JSON.stringify(averaged);
+        // Submit both raw samples and the averaged descriptor for server-side robustness
+        document.getElementById(currentInputId).value = JSON.stringify({ samples: descriptors, average: averaged });
         document.getElementById(currentFormId).submit();
     } catch (err) {
         modalStatus.textContent = 'Capture failed: ' + err.message;

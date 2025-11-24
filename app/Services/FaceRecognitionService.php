@@ -10,13 +10,25 @@ class FaceRecognitionService
      */
     public static function matches(array $storedDescriptor, array $probeDescriptor, float $threshold = 0.6): bool
     {
-        if (count($storedDescriptor) !== count($probeDescriptor) || count($storedDescriptor) === 0) {
+        // Support both a single descriptor (flat array) or an array of descriptors (array of arrays)
+        if (empty($storedDescriptor)) {
             return false;
         }
 
-        $distance = self::distance($storedDescriptor, $probeDescriptor);
+        // If stored descriptor appears to be a single flat descriptor (same length as probe and numeric), compare directly
+        if (self::isFlatDescriptor($storedDescriptor, $probeDescriptor)) {
+            $distance = self::distance($storedDescriptor, $probeDescriptor);
+            return $distance <= $threshold;
+        }
 
-        return $distance <= $threshold;
+        // Otherwise, treat storedDescriptor as an array of descriptors and return true if any match under threshold
+        foreach ($storedDescriptor as $sd) {
+            if (!is_array($sd)) continue;
+            if (count($sd) !== count($probeDescriptor)) continue;
+            $distance = self::distance($sd, $probeDescriptor);
+            if ($distance <= $threshold) return true;
+        }
+        return false;
     }
 
     /**
@@ -32,5 +44,34 @@ class FaceRecognitionService
             $sum += $diff * $diff;
         }
         return sqrt($sum);
+    }
+
+    /**
+     * Return the minimum Euclidean distance between the probe and stored descriptors.
+     * Accepts stored descriptor as either a single flat descriptor or an array of descriptors.
+     */
+    public static function minDistance(array $storedDescriptor, array $probeDescriptor): float
+    {
+        if (empty($storedDescriptor)) return PHP_FLOAT_MAX;
+        if (self::isFlatDescriptor($storedDescriptor, $probeDescriptor)) {
+            return self::distance($storedDescriptor, $probeDescriptor);
+        }
+        $min = PHP_FLOAT_MAX;
+        foreach ($storedDescriptor as $sd) {
+            if (!is_array($sd) || count($sd) !== count($probeDescriptor)) continue;
+            $d = self::distance($sd, $probeDescriptor);
+            if ($d < $min) $min = $d;
+        }
+        return $min;
+    }
+
+    private static function isFlatDescriptor(array $stored, array $probe): bool
+    {
+        // Heuristic: if counts match and elements are scalar numeric
+        if (count($stored) !== count($probe)) return false;
+        foreach ($stored as $v) {
+            if (!is_numeric($v)) return false;
+        }
+        return true;
     }
 }
