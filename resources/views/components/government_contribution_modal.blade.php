@@ -245,7 +245,6 @@
         </div>
     </div>
 </div>
-
 <script>
     function openGovernmentContributionModal() {
         document.getElementById('governmentContributionModal').classList.remove('hidden');
@@ -493,3 +492,4 @@
         }));
     });
 </script>
+

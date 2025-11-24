@@ -112,6 +112,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/overtime-request', [OvertimeRequestController::class, 'index'])->name('overtime-request.index');
         Route::post('/overtime-request', [OvertimeRequestController::class, 'store'])->name('overtime-request.store');
     });
+    // Face registration (employee)
+    Route::get('/face/register', [\App\Http\Controllers\FaceController::class, 'showRegistration'])->name('face.register');
+    Route::post('/face/register', [\App\Http\Controllers\FaceController::class, 'storeRegistration'])->name('face.register.store');
 });
 
 // Admin Attendance Routes

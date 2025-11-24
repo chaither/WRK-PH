@@ -43,9 +43,23 @@ class DTRController extends Controller
         return view('dtr.index', compact('dtrRecord', 'monthlyRecords'));
     }
 
-    public function clockIn()
+    public function clockIn(Request $request)
     {
         $user = Auth::user();
+        // Require face registration
+        if (empty($user->face_embedding)) {
+            return back()->with('error', 'Face not registered. Please register your face before clocking in.')->with('show_face_register', true);
+        }
+
+        $probe = $request->input('face_descriptor');
+        if (!$probe || !is_array($probe)) {
+            return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
+        }
+
+        $stored = json_decode($user->face_embedding, true);
+        if (!\App\Services\FaceRecognitionService::matches($stored, $probe)) {
+            return back()->with('error', 'Face verification failed.');
+        }
         $now = Carbon::now('Asia/Manila'); // Explicitly set timezone for clock-in
         $today = $now->toDateString();
         
@@ -116,9 +130,23 @@ class DTRController extends Controller
         return back()->with('error', 'You have already clocked in twice today.');
     }
 
-    public function clockOut()
+    public function clockOut(Request $request)
     {
         $user = Auth::user();
+        // Require face registration
+        if (empty($user->face_embedding)) {
+            return back()->with('error', 'Face not registered. Please register your face before clocking out.')->with('show_face_register', true);
+        }
+
+        $probe = $request->input('face_descriptor');
+        if (!$probe || !is_array($probe)) {
+            return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
+        }
+
+        $stored = json_decode($user->face_embedding, true);
+        if (!\App\Services\FaceRecognitionService::matches($stored, $probe)) {
+            return back()->with('error', 'Face verification failed.');
+        }
         $now = Carbon::now('Asia/Manila');
         $today = $now->toDateString();
 
