@@ -40,6 +40,7 @@ class FaceController extends Controller
         $user->face_embedding = json_encode($descriptor);
         $user->save();
 
-        return back()->with('success', 'Face registration saved successfully.');
+        // After successful one-time registration, redirect the user to Daily Time Record
+        return redirect()->route('dtr.index')->with('success', 'Face registration saved successfully. You can now use Face Verification to clock in/out.');
     }
 }

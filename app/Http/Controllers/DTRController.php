@@ -28,6 +28,10 @@ class DTRController extends Controller
         }
         
         $user = Auth::user();
+        // If employee hasn't registered face, redirect them to one-time face registration
+        if ($user->isEmployee() && empty($user->face_embedding)) {
+            return redirect()->route('face.register')->with('info', 'Please register your face before accessing Daily Time Record.');
+        }
         $today = Carbon::today();
         
         $dtrRecord = DTRRecord::where('user_id', $user->id)
@@ -52,12 +56,23 @@ class DTRController extends Controller
         }
 
         $probe = $request->input('face_descriptor');
+        // Accept both JSON string or array for the face descriptor coming from the client
+        if (is_string($probe)) {
+            $decoded = json_decode($probe, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $probe = $decoded;
+            }
+        }
         if (!$probe || !is_array($probe)) {
             return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
         }
 
         $stored = json_decode($user->face_embedding, true);
-        if (!\App\Services\FaceRecognitionService::matches($stored, $probe)) {
+        $threshold = config('face.threshold', 0.5);
+        $distance = \App\Services\FaceRecognitionService::distance($stored, $probe);
+        Log::info('Face match distance for user ' . $user->id . ': ' . $distance);
+        if ($distance > $threshold) {
+            Log::warning("Face verification failed for user {$user->id}. Distance {$distance} > threshold {$threshold}");
             return back()->with('error', 'Face verification failed.');
         }
         $now = Carbon::now('Asia/Manila'); // Explicitly set timezone for clock-in
@@ -139,12 +154,23 @@ class DTRController extends Controller
         }
 
         $probe = $request->input('face_descriptor');
+        // Accept both JSON string or array for the face descriptor coming from the client
+        if (is_string($probe)) {
+            $decoded = json_decode($probe, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $probe = $decoded;
+            }
+        }
         if (!$probe || !is_array($probe)) {
             return back()->with('error', 'Face descriptor missing. Make sure your camera is enabled and try again.');
         }
 
         $stored = json_decode($user->face_embedding, true);
-        if (!\App\Services\FaceRecognitionService::matches($stored, $probe)) {
+        $threshold = config('face.threshold', 0.5);
+        $distance = \App\Services\FaceRecognitionService::distance($stored, $probe);
+        Log::info('Face match distance for user ' . $user->id . ': ' . $distance);
+        if ($distance > $threshold) {
+            Log::warning("Face verification failed for user {$user->id}. Distance {$distance} > threshold {$threshold}");
             return back()->with('error', 'Face verification failed.');
         }
         $now = Carbon::now('Asia/Manila');
