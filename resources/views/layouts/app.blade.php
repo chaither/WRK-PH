@@ -25,7 +25,7 @@
 <body class="bg-gray-100">
     <div class="flex">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
+        <div id="sidebar" class="bg-[#0B1432] text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
                 <button id="sidebarToggle" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
