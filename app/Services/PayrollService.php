@@ -31,7 +31,7 @@ class PayrollService
     {
         $payPeriod = PayPeriod::firstOrCreate(
             ['start_date' => $payPeriodStart, 'end_date' => $payPeriodEnd],
-            ['status' => 'processing']
+            ['status' => 'processing', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']
         );
 
         $employeesQuery = User::where('role', 'employee');

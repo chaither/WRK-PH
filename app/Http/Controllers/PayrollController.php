@@ -108,10 +108,19 @@ class PayrollController extends Controller
         $start = $request->input('start_date');
         $end = $request->input('end_date');
 
+        $payScheduleFilter = null;
+        if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif (Carbon::parse($start)->day === 16 && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif (Carbon::parse($start)->isSameDay(Carbon::parse($start)->startOfMonth()) && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+            $payScheduleFilter = 'monthly';
+        }
+
         $payPeriod = PayPeriod::firstOrCreate([
             'start_date' => $start,
             'end_date' => $end
-        ], ['status' => 'draft']);
+        ], ['status' => 'draft', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']);
 
         // Do not regenerate if already generated/unpaid or paid
         if (in_array($payPeriod->status, ['unpaid', 'paid']) && !$request->has('force_regenerate')) {
@@ -125,15 +134,6 @@ class PayrollController extends Controller
 
         // Call existing generator
         // Instead of calling generatePayslips directly, we determine the filter and pass it
-        $payScheduleFilter = null;
-        if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
-            $payScheduleFilter = 'semi-monthly';
-        } elseif (Carbon::parse($start)->day === 16 && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
-            $payScheduleFilter = 'semi-monthly';
-        } elseif (Carbon::parse($start)->isSameDay(Carbon::parse($start)->startOfMonth()) && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
-            $payScheduleFilter = 'monthly';
-        }
-
         $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter);
 
         $payPeriod->update(['status' => 'unpaid']); // Update status after generation

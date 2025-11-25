@@ -18,60 +18,71 @@
                     <p class="text-gray-500">Please check back after your next payroll generation.</p>
                 </div>
             @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pay Period</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Gross Pay</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Deductions</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider">Net Pay</th>
-                                <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
-                            @foreach($payslips as $payslip)
-                                <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif" x-data="{ open: false }">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <button @click="open = !open" class="flex justify-between items-center w-full focus:outline-none sm:cursor-default">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
-                                                <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type ?? 'N/A') }}</div>
-                                            </div>
-                                            <svg x-show="!open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                            </svg>
-                                            <svg x-show="open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
-                                            </svg>
-                                        </button>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 hidden sm:table-cell">₱{{ number_format($payslip->deductions, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">₱{{ number_format($payslip->net_pay, 2) }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium hidden sm:table-cell">
-                                        <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-2 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip" target="_blank">
-                                            <i class="fas fa-eye text-base"></i>
+                <!-- Desktop View -->
+                <div class="hidden sm:block">
+                    <div class="">
+                        <table class="divide-y divide-gray-200 w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pay Period</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Gross Pay</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Deductions</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider">Net Pay</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                @foreach($payslips as $payslip)
+                                    <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
+                                            <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type) }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">₱{{ number_format($payslip->gross_pay, 2) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">₱{{ number_format($payslip->deductions, 2) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-700">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                            <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-2 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip" target="_blank">
+                                                <i class="fas fa-eye text-base"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mobile View -->
+                <div class="sm:hidden">
+                    @foreach($payslips as $payslip)
+                        <div x-data="{ open: false }" class="mb-4 bg-white rounded-lg shadow-md overflow-hidden">
+                            <button @click="open = !open; console.log('Mobile Button clicked, open state:', open)" class="flex justify-between items-center w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 focus:outline-none">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
+                                    <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type) }}</div>
+                                </div>
+                                <svg x-show="!open" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                                <svg x-show="open" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                            <div x-bind:style="open ? 'display: block;' : 'display: none;'" x-transition:enter="transition-all ease-in-out duration-300" x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-xl" x-transition:leave="transition-all ease-in-out duration-300" x-transition:leave-start="opacity-100 max-h-xl" x-transition:leave-end="opacity-0 max-h-0" class="p-4 border-t border-gray-200">
+                                <div class="space-y-3 text-sm text-gray-700">
+                                    <p class="flex justify-between items-center"><span class="font-medium text-gray-800">Gross Pay:</span> <span class="text-gray-700">₱{{ number_format($payslip->gross_pay, 2) }}</span></p>
+                                    <p class="flex justify-between items-center"><span class="font-medium text-gray-800">Deductions:</span> <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></p>
+                                    <p class="flex justify-between items-center text-lg font-bold text-indigo-700"><span>Net Pay:</span> <span>₱{{ number_format($payslip->net_pay, 2) }}</span></p>
+                                    <div class="pt-3 border-t border-gray-200 flex justify-center">
+                                        <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" title="View Payslip" target="_blank">
+                                            <i class="fas fa-eye mr-2"></i> View Payslip
                                         </a>
-                                    </td>
-                                </tr>
-                                <tr x-show="open" x-transition:enter="transition-all ease-in-out duration-300" x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-xl" x-transition:leave="transition-all ease-in-out duration-300" x-transition:leave-start="opacity-100 max-h-xl" x-transition:leave-end="opacity-0 max-h-0" class="sm:hidden">
-                                    <td colspan="5" class="px-6 py-4">
-                                        <div class="space-y-2 text-sm text-gray-700">
-                                            <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
-                                            <p><span class="font-medium">Deductions:</span> <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></p>
-                                            <p class="font-bold">Net Pay: ₱{{ number_format($payslip->net_pay, 2) }}</p>
-                                            <div class="flex justify-end mt-4">
-                                                <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-2 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip" target="_blank">
-                                                    <i class="fas fa-eye text-base"></i> View Payslip
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             @endif
         </div>
