@@ -1,28 +1,28 @@
-<div id="governmentContributionModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4" x-data="governmentContributionData()" x-init="fetchContributions()">
-    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-5xl w-full transform transition-all duration-300 scale-100">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="text-xl font-bold text-gray-800">📊 Manage Government Contributions</h2>
+<div id="governmentContributionModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-2" x-data="governmentContributionData()" x-init="fetchContributions()">
+    <div class="bg-white rounded-xl shadow-2xl p-4 max-w-xl sm:max-w-4xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100">
+        <div class="flex justify-between items-center mb-3 border-b pb-2">
+            <h2 class="text-lg font-bold text-gray-800">📊 Manage Government Contributions</h2>
             <button type="button" @click="closeGovernmentContributionModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
-                <i class="fas fa-times text-lg"></i>
+                <i class="fas fa-times text-base"></i>
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Left Column: Current Contributions -->
             <div>
-                <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Contributions</h3>
-                <div class="max-h-96 overflow-y-auto pr-2">
+                <h3 class="text-base font-semibold text-gray-700 mb-2">Current Contributions</h3>
+                <div class="max-h-80 overflow-y-auto pr-1">
                     <template x-if="contributions.length === 0">
-                        <p class="text-gray-600">No government contributions configured yet.</p>
+                        <p class="text-gray-600 text-sm">No government contributions configured yet.</p>
                     </template>
                     <template x-for="contribution in contributions" :key="contribution.id">
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex items-center justify-between">
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                             <div>
-                                <p class="font-medium text-gray-800" x-text="formatContributionType(contribution.type)"></p>
-                                <p class="text-sm text-gray-600">
+                                <p class="font-medium text-gray-800 text-sm" x-text="formatContributionType(contribution.type)"></p>
+                                <p class="text-xs text-gray-600">
                                     Salary Range: <span x-text="formatSalaryRange(contribution.min_salary, contribution.max_salary)"></span>
                                 </p>
-                                <p class="text-sm text-gray-600">
+                                <p class="text-xs text-gray-600">
                                     Employee Share: <span x-text="formatCurrency(contribution.employee_share)"></span>
                                     <template x-if="contribution.employer_share !== null">
                                         <span> | Employer Share: <span x-text="formatCurrency(contribution.employer_share)"></span></span>
@@ -38,12 +38,12 @@
                                     <span class="text-xs text-purple-500" x-text="`(${formatTargetType(contribution.target_type)}: ${contribution.applies_to.join(', ')})`"></span>
                                 </template>
                             </div>
-                            <div class="flex space-x-2">
-                                <button type="button" @click="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
-                                    <i class="fas fa-edit text-base"></i>
+                            <div class="flex space-x-2 mt-2 sm:mt-0">
+                                <button type="button" @click="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
+                                    <i class="fas fa-edit text-sm"></i>
                                 </button>
-                                <button type="button" @click="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
-                                    <i class="fas fa-trash-alt text-base"></i>
+                                <button type="button" @click="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
+                                    <i class="fas fa-trash-alt text-sm"></i>
                                 </button>
                             </div>
                         </div>
@@ -52,13 +52,13 @@
             </div>
 
             <!-- Right Column: Add/Edit Contribution Form -->
-            <div class="border-t md:border-t-0 md:border-l md:pl-6 pt-4 md:pt-0 mt-4 md:mt-0">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Contribution' : 'Add New Contribution'"></h3>
-                <form @submit.prevent="isEditMode ? updateContribution() : addContribution()" class="space-y-4">
+            <div class="border-t md:border-t-0 md:border-l md:pl-4 pt-4 md:pt-0 mt-4 md:mt-0">
+                <h3 class="text-base font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Contribution' : 'Add New Contribution'"></h3>
+                <form @submit.prevent="isEditMode ? updateContribution() : addContribution()" class="space-y-3">
                     <div>
-                        <label for="contribution_type" class="block text-sm font-medium text-gray-700 mb-1">Contribution Type</label>
+                        <label for="contribution_type" class="block text-xs font-medium text-gray-700 mb-1">Contribution Type</label>
                         <select id="contribution_type" x-model="form.type" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200">
                             <option value="" disabled>Select Type</option>
                             <option value="sss">SSS</option>
                             <option value="philhealth">PhilHealth</option>
@@ -66,28 +66,28 @@
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label for="min_salary" class="block text-sm font-medium text-gray-700 mb-1">Min. Salary (Optional)</label>
+                            <label for="min_salary" class="block text-xs font-medium text-gray-700 mb-1">Min. Salary (Optional)</label>
                             <input type="number" min="0" step="0.01" id="min_salary" x-model="form.min_salary"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                                class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200">
                         </div>
                         <div>
-                            <label for="max_salary" class="block text-sm font-medium text-gray-700 mb-1">Max. Salary (Optional)</label>
+                            <label for="max_salary" class="block text-xs font-medium text-gray-700 mb-1">Max. Salary (Optional)</label>
                             <input type="number" min="0" step="0.01" id="max_salary" x-model="form.max_salary"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                                class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200">
                         </div>
                     </div>
 
                     <div class="mt-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount Type</label>
-                        <div class="flex space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" value="percentage" x-model="form.amount_type" @change="form.target_type = 'all'; form.applies_to = []" class="form-radio h-5 w-5 text-blue-600" aria-label="Percentage Based">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Amount Type</label>
+                        <div class="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
+                            <label class="inline-flex items-center text-sm">
+                                <input type="radio" value="percentage" x-model="form.amount_type" @change="form.target_type = 'all'; form.applies_to = []" class="form-radio h-4 w-4 text-blue-600" aria-label="Percentage Based">
                                 <span class="ml-2 text-gray-700">Percentage Based</span>
                             </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" value="fixed" x-model="form.amount_type" class="form-radio h-5 w-5 text-blue-600" aria-label="Fixed Amount (Non-percentage Based)">
+                            <label class="inline-flex items-center text-sm">
+                                <input type="radio" value="fixed" x-model="form.amount_type" class="form-radio h-4 w-4 text-blue-600" aria-label="Fixed Amount (Non-percentage Based)">
                                 <span class="ml-2 text-gray-700">Fixed Amount</span>
                             </label>
                         </div>
@@ -95,40 +95,40 @@
 
                     <template x-if="form.amount_type === 'fixed'">
                         <div x-show="form.amount_type === 'fixed'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90">
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Apply To:</label>
-                                <div class="flex flex-col space-y-2 pl-6"> <!-- Added pl-6 for 24px indentation -->
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" value="all" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600" aria-label="All Employees" :disabled="form.amount_type === 'percentage'">
+                            <div class="mt-3">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Apply To:</label>
+                                <div class="flex flex-col space-y-2 pl-4">
+                                    <label class="inline-flex items-center text-sm">
+                                        <input type="radio" value="all" x-model="form.target_type" class="form-radio h-4 w-4 text-blue-600" aria-label="All Employees" :disabled="form.amount_type === 'percentage'">
                                         <span class="ml-2 text-gray-700">All Employees</span>
                                     </label>
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" value="employees" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600" aria-label="Specific Employees" :disabled="form.amount_type === 'percentage'">
+                                    <label class="inline-flex items-center text-sm">
+                                        <input type="radio" value="employees" x-model="form.target_type" class="form-radio h-4 w-4 text-blue-600" aria-label="Specific Employees" :disabled="form.amount_type === 'percentage'">
                                         <span class="ml-2 text-gray-700">Specific Employees</span>
                                     </label>
-                                    <label class="inline-flex items-center">
-                                        <input type="radio" value="departments" x-model="form.target_type" class="form-radio h-5 w-5 text-blue-600" aria-label="Specific Departments" :disabled="form.amount_type === 'percentage'">
+                                    <label class="inline-flex items-center text-sm">
+                                        <input type="radio" value="departments" x-model="form.target_type" class="form-radio h-4 w-4 text-blue-600" aria-label="Specific Departments" :disabled="form.amount_type === 'percentage'">
                                         <span class="ml-2 text-gray-700">Specific Departments</span>
                                     </label>
                                 </div>
                             </div>
 
                             <template x-if="form.target_type === 'employees'">
-                                <div x-show="form.target_type === 'employees'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-4 pl-6"> <!-- Added pl-6 for 24px indentation -->
-                                    <label for="select_employees" class="block text-sm font-medium text-gray-700 mb-1">Select Employees:</label>
+                                <div x-show="form.target_type === 'employees'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-3 pl-4">
+                                    <label for="select_employees" class="block text-xs font-medium text-gray-700 mb-1">Select Employees:</label>
                                     <div class="relative" x-data="{ open: false, search: '', selectedEmployees: [] }" x-init="selectedEmployees = form.applies_to" @keydown.escape.stop="open = false" @keydown.tab="open = false">
-                                        <button type="button" @click="open = !open" @click.away="open = false" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'" aria-labelledby="listbox-label-employees">
+                                        <button type="button" @click="open = !open" @click.away="open = false" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-8 py-1.5 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'" aria-labelledby="listbox-label-employees">
                                             <span class="block truncate" x-text="selectedEmployees.length ? `${selectedEmployees.length} employee(s) selected` : 'Select employees'"></span>
                                             <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                     <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                                                 </svg>
                                             </span>
                                         </button>
 
-                                        <ul x-show="open" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" role="listbox" aria-labelledby="listbox-label-employees">
+                                        <ul x-show="open" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-48 rounded-md py-1 text-sm ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" role="listbox" aria-labelledby="listbox-label-employees">
                                             <div class="px-2 py-1">
-                                                <input type="text" x-model="search" placeholder="Search employees..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search employees">
+                                                <input type="text" x-model="search" placeholder="Search employees..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search employees">
                                             </div>
                                             <template x-for="employee in allEmployees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))" :key="employee.id">
                                                 <li @click="event => {
@@ -142,20 +142,20 @@
                                                         form.applies_to = selectedEmployees;
                                                         $dispatch('input', form.applies_to); // Notify Alpine of change
                                                     }"
-                                                    class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
+                                                    class="text-gray-900 cursor-default select-none relative py-1.5 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
                                                     :class="{ 'bg-blue-600 text-white': selectedEmployees.includes(employee.id) }"
                                                     id="employee-option-" role="option" :aria-selected="selectedEmployees.includes(employee.id)">
                                                     <div class="flex items-center">
                                                         <input type="checkbox" :checked="selectedEmployees.includes(employee.id)" class="form-checkbox h-4 w-4 text-blue-600 pointer-events-none" aria-hidden="true">
-                                                        <span class="font-normal ml-3 block truncate" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="employee.name"></span>
+                                                        <span class="font-normal ml-3 block truncate text-sm" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="employee.name"></span>
                                                     </div>
                                                 </li>
                                             </template>
                                         </ul>
                                     </div>
-                                    <div class="mt-2 flex flex-wrap gap-2" x-show="selectedEmployees.length > 0" role="list" aria-label="Selected employees">
+                                    <div class="mt-2 flex flex-wrap gap-1" x-show="selectedEmployees.length > 0" role="list" aria-label="Selected employees">
                                         <template x-for="employeeId in selectedEmployees" :key="employeeId">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" role="listitem">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" role="listitem">
                                                 <span x-text="allEmployees.find(e => e.id === employeeId)?.name"></span>
                                                 <button type="button" @click="event => {
                                                     const index = selectedEmployees.indexOf(employeeId);
@@ -164,7 +164,7 @@
                                                     }
                                                     form.applies_to = selectedEmployees;
                                                     $dispatch('input', form.applies_to);
-                                                }" class="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${allEmployees.find(e => e.id === employeeId)?.name}`">
+                                                }" class="flex-shrink-0 ml-1 h-3 w-3 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${allEmployees.find(e => e.id === employeeId)?.name}`">
                                                     <span class="sr-only">Remove employee</span>
                                                     <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
                                                         <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
@@ -173,26 +173,26 @@
                                             </span>
                                         </template>
                                     </div>
-                                    <p x-show="form.target_type === 'employees' && selectedEmployees.length === 0 && form.amount_type === 'fixed'" class="text-red-500 text-sm mt-1" id="employee-selection-error">Please select at least one employee.</p>
+                                    <p x-show="form.target_type === 'employees' && selectedEmployees.length === 0 && form.amount_type === 'fixed'" class="text-red-500 text-xs mt-1" id="employee-selection-error">Please select at least one employee.</p>
                                 </div>
                             </template>
 
                             <template x-if="form.target_type === 'departments'">
-                                <div x-show="form.target_type === 'departments'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-4 pl-6"> <!-- Added pl-6 for 24px indentation -->
-                                    <label for="select_departments" class="block text-sm font-medium text-gray-700 mb-1">Select Department:</label>
+                                <div x-show="form.target_type === 'departments'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-3 pl-4">
+                                    <label for="select_departments" class="block text-xs font-medium text-gray-700 mb-1">Select Department:</label>
                                     <div class="relative" x-data="{ open: false, search: '', selectedDepartment: null }" x-init="selectedDepartment = form.applies_to[0] || null" @keydown.escape.stop="open = false" @keydown.tab="open = false">
-                                        <button type="button" @click="open = !open" @click.away="open = false" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'" aria-labelledby="listbox-label-departments">
+                                        <button type="button" @click="open = !open" @click.away="open = false" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-8 py-1.5 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm" aria-haspopup="listbox" :aria-expanded="open ? 'true' : 'false'" aria-labelledby="listbox-label-departments">
                                             <span class="block truncate" x-text="selectedDepartment ? allDepartments.find(d => d.id === selectedDepartment)?.name : 'Select a department'"></span>
                                             <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                     <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                                                 </svg>
                                             </span>
                                         </button>
 
-                                        <ul x-show="open" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" role="listbox" aria-labelledby="listbox-label-departments">
+                                        <ul x-show="open" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-48 rounded-md py-1 text-sm ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" role="listbox" aria-labelledby="listbox-label-departments">
                                             <div class="px-2 py-1">
-                                                <input type="text" x-model="search" placeholder="Search departments..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search departments">
+                                                <input type="text" x-model="search" placeholder="Search departments..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search departments">
                                             </div>
                                             <template x-for="department in allDepartments.filter(d => d.name.toLowerCase().includes(search.toLowerCase()))" :key="department.id">
                                                 <li @click="event => {
@@ -201,42 +201,42 @@
                                                         open = false;
                                                         $dispatch('input', form.applies_to);
                                                     }"
-                                                    class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
+                                                    class="text-gray-900 cursor-default select-none relative py-1.5 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
                                                     :class="{ 'bg-blue-600 text-white': selectedDepartment === department.id }"
                                                     id="department-option-" role="option" :aria-selected="selectedDepartment === department.id">
-                                                    <span class="font-normal block truncate" :class="{ 'font-semibold': selectedDepartment === department.id, 'font-normal': selectedDepartment !== department.id }" x-text="department.name"></span>
+                                                    <span class="font-normal block truncate text-sm" :class="{ 'font-semibold': selectedDepartment === department.id, 'font-normal': selectedDepartment !== department.id }" x-text="department.name"></span>
                                                 </li>
                                             </template>
                                         </ul>
                                     </div>
-                                    <p x-show="form.target_type === 'departments' && !selectedDepartment && form.amount_type === 'fixed'" class="text-red-500 text-sm mt-1" id="department-selection-error">Please select a department.</p>
+                                    <p x-show="form.target_type === 'departments' && !selectedDepartment && form.amount_type === 'fixed'" class="text-red-500 text-xs mt-1" id="department-selection-error">Please select a department.</p>
                                 </div>
                             </template>
                         </div>
                     </template>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label for="employee_share" class="block text-sm font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employee Share (%)' : 'Employee Share (₱)'"></label>
+                            <label for="employee_share" class="block text-xs font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employee Share (%)' : 'Employee Share (₱)'"></label>
                             <input type="number" min="0" :max="form.amount_type === 'percentage' ? '100' : null" step="0.01" id="employee_share" x-model.number="form.employee_share" required
                                 :placeholder="form.amount_type === 'percentage' ? 'e.g., 5.5' : 'e.g., 500.00'"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employee-share-percentage-label' : 'employee-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employee-share-percentage-error' : null">
-                            <p x-show="form.amount_type === 'percentage' && (form.employee_share < 0 || form.employee_share > 100)" class="text-red-500 text-sm mt-1" id="employee-share-percentage-error">Employee share must be between 0 and 100 for percentage-based contributions.</p>
+                                class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employee-share-percentage-label' : 'employee-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employee-share-percentage-error' : null">
+                            <p x-show="form.amount_type === 'percentage' && (form.employee_share < 0 || form.employee_share > 100)" class="text-red-500 text-xs mt-1" id="employee-share-percentage-error">Employee share must be between 0 and 100 for percentage-based contributions.</p>
                         </div>
                         <div>
-                            <label for="employer_share" class="block text-sm font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employer Share (%)' : 'Employer Share (₱)'"></label>
+                            <label for="employer_share" class="block text-xs font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employer Share (%)' : 'Employer Share (₱)'"></label>
                             <input type="number" min="0" :max="form.amount_type === 'percentage' ? '100' : null" step="0.01" id="employer_share" x-model.number="form.employer_share"
                                 :placeholder="form.amount_type === 'percentage' ? 'e.g., 5.5' : 'e.g., 500.00'"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employer-share-percentage-label' : 'employer-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employer-share-percentage-error' : null">
-                            <p x-show="form.amount_type === 'percentage' && (form.employer_share !== null && (form.employer_share < 0 || form.employer_share > 100))" class="text-red-500 text-sm mt-1" id="employer-share-percentage-error">Employer share must be between 0 and 100 for percentage-based contributions.</p>
+                                class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employer-share-percentage-label' : 'employer-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employer-share-percentage-error' : null">
+                            <p x-show="form.amount_type === 'percentage' && (form.employer_share !== null && (form.employer_share < 0 || form.employer_share > 100))" class="text-red-500 text-xs mt-1" id="employer-share-percentage-error">Employer share must be between 0 and 100 for percentage-based contributions.</p>
                         </div>
                     </div>
 
                     <div class="flex justify-end gap-2 pt-2">
-                        <button type="button" @click="closeGovernmentContributionModal()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
+                        <button type="button" @click="closeGovernmentContributionModal()" class="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
+                        <button type="submit" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
                             <i class="fas fa-save mr-1"></i> <span x-text="isEditMode ? 'Update Contribution' : 'Save Contribution'"></span>
                         </button>
                     </div>

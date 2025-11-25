@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DTR System - @yield('title')</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -25,7 +25,7 @@
 <body class="bg-gray-100">
     <div class="flex">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-[#0B1432] text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transition-all duration-300 ease-in-out z-50">
+        <div id="sidebar" class="bg-blue-800 text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
                 <button id="sidebarToggle" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
@@ -61,49 +61,49 @@
                             class="p-2 mt-2 space-y-2 overflow-hidden text-sm font-medium text-white bg-blue-700 rounded-md shadow-inner"
                             aria-label="submenu">
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ Auth::user()->isEmployee() ? route('dtr.index') : route('dtr.admin') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ Auth::user()->isEmployee() ? route('dtr.index') : route('dtr.admin') }}">
                                     <i class="fas fa-calendar-day mr-2"></i><span class="sidebar-dropdown-text">Daily Time Record</span>
                                 </a>
                             </li>
                             @if (Auth::user()->hasRole(['admin', 'hr']))
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-shift.review') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-shift.review') }}">
                                     <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Shift Approval</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-restday.review') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-restday.review') }}">
                                     <i class="fas fa-house-chimney mr-2"></i><span class="sidebar-dropdown-text">Restday Approval</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.no-bio-request.review') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.no-bio-request.review') }}">
                                     <i class="fas fa-fingerprint mr-2"></i><span class="sidebar-dropdown-text">No Bio Request Approval</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('admin.attendance.overtime-request.review') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.overtime-request.review') }}">
                                     <i class="fas fa-business-time mr-2"></i><span class="sidebar-dropdown-text">Overtime Approval</span>
                                 </a>
                             </li>
                             @else
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('attendance.change-shift.index') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.change-shift.index') }}">
                                     <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Change Shift</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('attendance.change-restday.index') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.change-restday.index') }}">
                                     <i class="fas fa-house-chimney mr-2"></i><span class="sidebar-dropdown-text">Change Restday</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('attendance.no-bio-request.index') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.no-bio-request.index') }}">
                                     <i class="fas fa-fingerprint mr-2"></i><span class="sidebar-dropdown-text">No Bio Request</span>
                                 </a>
                             </li>
                             <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
-                                <a class="w-full inline-flex items-center" href="{{ route('attendance.overtime-request.index') }}">
+                                <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.overtime-request.index') }}">
                                     <i class="fas fa-business-time mr-2"></i><span class="sidebar-dropdown-text">Apply for Overtime</span>
                                 </a>
                             </li>
@@ -159,20 +159,23 @@
         </div>
 
         <!-- Content -->
-        <div id="content" class="flex-1 transition-all duration-300 ease-in-out h-screen overflow-y-auto">
+        <div id="content" class="flex-1 transition-all duration-300 ease-in-out h-screen overflow-y-auto md:ml-64">
             <!-- Top Nav -->
             <nav class="bg-[#0B1432] text-white p-4">
                 <div class="flex items-center px-4">
-                    
+                    <!-- Top hamburger (overrides to front overlay) -->
+                    <button id="mobileSidebarToggle" class="text-white mr-4 md:hidden focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <span id="mobileNavTitle" class="text-2xl font-bold whitespace-nowrap md:hidden">HRIS SYSTEM</span>
                     <div class="flex-1">
-
                     </div>
                     
                     <div class="relative ml-auto">
                         <button id="profileDropdownToggle" class="rounded-full p-3 focus:outline-none">
                             <i class="fas fa-user-circle text-3xl text-white"></i>
                         </button>
-                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden">
+                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-[999] hidden">
                             <a href="{{ route('password.request') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-key mr-2"></i>Change Password</a>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
@@ -189,6 +192,9 @@
             </main>
         </div>
     </div>
+    {{-- Mobile overlay used when sidebar is open on small screens --}}
+    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-40 z-40 hidden"></div>
+
     {{-- Render modals and stacked scripts pushed from views --}}
     @stack('modals')
     @stack('scripts')
@@ -215,48 +221,58 @@
             const navSpans = document.querySelectorAll('#sidebar .sidebar-text');
             const dropdownSpans = document.querySelectorAll('#sidebar .sidebar-dropdown-text');
             const mobileOverlay = document.getElementById('mobile-overlay');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+            const mobileNavTitle = document.getElementById('mobileNavTitle');
 
-            // Function to set sidebar state
+            // Function to set sidebar state. On small screens the sidebar is hidden by default and uses an overlay.
             function setSidebarState() {
-                // Temporarily disable transitions
-                sidebar.style.transition = 'none';
-                sidebarTitle.style.transition = 'none';
-                content.style.transition = 'none';
-                navSpans.forEach(span => span.style.transition = 'none');
-                dropdownSpans.forEach(span => span.style.transition = 'none'); // Re-enabled
-
                 const sidebarOpen = localStorage.getItem('sidebarOpen');
 
-                if (sidebarOpen === 'true' || sidebarOpen === null) {
-                    // Sidebar is open/expanded
-                    sidebar.classList.remove('w-16');
-                    sidebar.classList.add('w-64');
-                    sidebar.classList.remove('sidebar-collapsed');
-                    sidebarTitle.classList.remove('hidden');
-                    content.classList.remove('ml-16');
-                    content.classList.add('ml-64');
-                    navSpans.forEach(span => span.classList.remove('hidden'));
-                    dropdownSpans.forEach(span => span.classList.remove('hidden')); // Re-enabled
-                } else {
-                    // Sidebar is closed/collapsed
-                    sidebar.classList.remove('w-64');
-                    sidebar.classList.add('w-16');
-                    sidebar.classList.add('sidebar-collapsed');
-                    sidebarTitle.classList.add('hidden');
-                    content.classList.remove('ml-64');
-                    content.classList.add('ml-16');
-                    navSpans.forEach(span => span.classList.add('hidden'));
-                    dropdownSpans.forEach(span => span.classList.add('hidden')); // Re-enabled
-                }
+                if (window.innerWidth >= 768) {
+                    // Desktop: show sidebar inline (expanded or compact)
+                    mobileOverlay.classList.add('hidden');
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebar.classList.add('translate-x-0');
 
-                // Re-enable transitions after a short delay
-                setTimeout(() => {
-                    sidebar.style.transition = ''; // Resets to CSS-defined transition
-                    sidebarTitle.style.transition = ''; // Resets to CSS-defined transition
-                    content.style.transition = ''; // Resets to CSS-defined transition
-                    navSpans.forEach(span => span.style.transition = '');
-                    dropdownSpans.forEach(span => span.style.transition = ''); // Re-enabled
-                }, 50);
+                    // Always remove both margin classes before adding the correct one
+                    content.classList.remove('md:ml-16', 'md:ml-64');
+
+                    if (sidebarOpen === 'false') {
+                        // compact
+                        sidebar.classList.add('w-16', 'sidebar-collapsed');
+                        sidebar.classList.remove('w-64');
+                        // sidebarTitle.classList.add('hidden'); // REMOVED: Keep HRIS SYSTEM visible
+                        navSpans.forEach(span => span.classList.add('hidden'));
+                        dropdownSpans.forEach(span => span.classList.add('hidden'));
+                        content.classList.add('md:ml-16'); // compact margin
+                    } else {
+                        // expanded
+                        sidebarTitle.classList.remove('hidden');
+                        navSpans.forEach(span => span.classList.remove('hidden'));
+                        dropdownSpans.forEach(span => span.classList.remove('hidden')); // Fix: apply to each span
+                        content.classList.add('md:ml-64'); // expanded margin
+                    }
+                } else {
+                    // Mobile: hide sidebar by default (overlay)
+                    content.classList.remove('md:ml-64');
+                    // Hide mobileNavTitle when sidebar is open on mobile, show when closed
+                    if (sidebarOpen === 'true') {
+                        sidebar.classList.remove('-translate-x-full');
+                        mobileOverlay.classList.remove('hidden');
+                        if (mobileNavTitle) mobileNavTitle.classList.add('hidden'); // Hide mobile nav title
+                    } else {
+                        sidebar.classList.add('-translate-x-full');
+                        mobileOverlay.classList.add('hidden');
+                        if (mobileNavTitle) mobileNavTitle.classList.remove('hidden'); // Show mobile nav title
+                    }
+                    // ensure sidebar shows full details on mobile
+                    sidebar.classList.remove('w-16', 'sidebar-collapsed');
+                    sidebar.classList.add('w-64');
+                    sidebarTitle.classList.remove('hidden');
+                    navSpans.forEach(span => span.classList.remove('hidden'));
+                    dropdownSpans.forEach(span => span.classList.remove('hidden'));
+                }
             }
 
             // Set initial state on load
@@ -265,29 +281,128 @@
             // Adjust state on resize
             window.addEventListener('resize', setSidebarState);
 
-            // Sidebar toggle
-            sidebarToggle.addEventListener('click', function() {
-                if (sidebar.classList.contains('w-16')) {
-                    sidebar.classList.remove('w-16');
-                    sidebar.classList.add('w-64');
-                    sidebar.classList.remove('sidebar-collapsed');
-                    sidebarTitle.classList.remove('hidden');
-                    content.classList.remove('ml-16');
-                    content.classList.add('ml-64');
-                    navSpans.forEach(span => span.classList.remove('hidden'));
-                    dropdownSpans.forEach(span => span.classList.remove('hidden')); // Re-enabled
-                    localStorage.setItem('sidebarOpen', 'true');
+            // Sidebar compact/expand toggle for desktop, and overlay open/close for mobile
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    if (window.innerWidth >= 768) {
+                        // desktop compact/expand
+                        const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+                        // Always remove both margin classes before adding the correct one
+                        content.classList.remove('md:ml-16', 'md:ml-64');
+                        if (isCollapsed) {
+                            sidebar.classList.remove('w-16', 'sidebar-collapsed');
+                            sidebar.classList.add('w-64');
+                            sidebarTitle.classList.remove('hidden');
+                            navSpans.forEach(span => span.classList.remove('hidden'));
+                            dropdownSpans.forEach(span => span.classList.remove('hidden'));
+                            localStorage.setItem('sidebarOpen', 'true');
+                            content.classList.add('md:ml-64');
+                        } else {
+                            sidebar.classList.remove('w-64');
+                            sidebar.classList.add('w-16', 'sidebar-collapsed');
+                            // sidebarTitle.classList.add('hidden'); // REMOVED: Keep HRIS SYSTEM visible
+                            navSpans.forEach(span => span.classList.add('hidden'));
+                            dropdownSpans.forEach(span => span.classList.add('hidden'));
+                            localStorage.setItem('sidebarOpen', 'false');
+                            content.classList.add('md:ml-16');
+                        }
+                    } else {
+                        // mobile: open overlay in front
+                        sidebar.classList.remove('-translate-x-full');
+                        mobileOverlay.classList.remove('hidden');
+                        localStorage.setItem('sidebarOpen', 'true');
+                        if (mobileNavTitle) mobileNavTitle.classList.add('hidden'); // Hide mobile nav title
+                    }
+                });
+            }
+
+            // Helper functions to open/close/toggle overlay sidebar
+            function openOverlaySidebar() {
+                sidebar.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+                // bring sidebar above overlay
+                sidebar.style.zIndex = 60;
+                localStorage.setItem('sidebarOpen', 'true');
+                // Optionally hide mobileNavTitle when sidebar opens
+                if (mobileNavTitle) mobileNavTitle.classList.add('hidden');
+                // optionally disable body scroll while open
+                document.body.classList.add('overflow-hidden');
+            }
+
+            function closeOverlaySidebar() {
+                sidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.add('hidden');
+                localStorage.setItem('sidebarOpen', 'false');
+                // Optionally show mobileNavTitle when sidebar closes
+                if (mobileNavTitle) mobileNavTitle.classList.remove('hidden');
+                // restore body scroll
+                document.body.classList.remove('overflow-hidden');
+            }
+
+            function toggleOverlaySidebar() {
+                if (sidebar.classList.contains('-translate-x-full')) {
+                    openOverlaySidebar();
                 } else {
-                    sidebar.classList.remove('w-64');
-                    sidebar.classList.add('w-16');
-                    sidebar.classList.add('sidebar-collapsed');
-                    sidebarTitle.classList.add('hidden');
-                    content.classList.remove('ml-64');
-                    content.classList.add('ml-16');
-                    navSpans.forEach(span => span.classList.add('hidden'));
-                    dropdownSpans.forEach(span => span.classList.add('hidden')); // Re-enabled
-                    localStorage.setItem('sidebarOpen', 'false');
+                    closeOverlaySidebar();
                 }
+            }
+
+            // Mobile top hamburger toggles sidebar overlay (does not push content)
+            if (mobileSidebarToggle) {
+                mobileSidebarToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleOverlaySidebar();
+                });
+            }
+
+            // Also make the sidebar internal toggle behave as a toggle on mobile
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    if (window.innerWidth < 768) {
+                        // on mobile act as overlay toggle
+                        e.stopPropagation();
+                        toggleOverlaySidebar();
+                        return;
+                    }
+                    // desktop behavior handled earlier
+                });
+            }
+
+            // Clicking overlay closes the sidebar on mobile
+            if (mobileOverlay) {
+                mobileOverlay.addEventListener('click', function() {
+                    closeOverlaySidebar();
+                });
+            }
+
+            // Auto-close overlay when a sidebar link is clicked and collapse sidebar on desktop for uniform behavior
+            const sidebarLinks = document.querySelectorAll('#sidebar nav a');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Close overlay immediately for mobile
+                    if (window.innerWidth < 768) {
+                        // small delay to allow navigation to start
+                        setTimeout(() => {
+                            closeOverlaySidebar();
+                            if (mobileNavTitle) mobileNavTitle.classList.remove('hidden'); // Ensure it's shown on close
+                        }, 80);
+                    }
+
+                    // For desktop, collapse the sidebar to icons-only for uniform behavior
+                    if (window.innerWidth >= 768) {
+                        // set localStorage and update classes
+                        // localStorage.setItem('sidebarOpen', 'false'); // REMOVED: Do not auto-collapse on desktop link click
+                        // collapse sidebar visually
+                        // sidebar.classList.remove('w-64'); // REMOVED: Do not auto-collapse on desktop link click
+                        // sidebar.classList.add('w-16', 'sidebar-collapsed'); // REMOVED: Do not auto-collapse on desktop link click
+                        // sidebarTitle.classList.add('hidden'); // REMOVED: Keep HRIS SYSTEM visible
+                        // navSpans.forEach(span => span.classList.add('hidden')); // REMOVED: Do not auto-collapse on desktop link click
+                        // dropdownSpans.forEach(span => span.classList.add('hidden')); // REMOVED: Do not auto-collapse on desktop link click
+                        // Always remove both margin classes before adding the correct one
+                        // content.classList.remove('md:ml-16', 'md:ml-64'); // REMOVED: Do not auto-collapse on desktop link click
+                        // content.classList.add('md:ml-16'); // REMOVED: Do not auto-collapse on desktop link click
+                    }
+                });
             });
         });
     </script>

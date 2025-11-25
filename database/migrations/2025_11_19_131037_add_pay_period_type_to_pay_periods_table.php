@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('pay_periods', function (Blueprint $table) {
-            //
+            $table->enum('pay_period_type', ['daily', 'weekly', 'bi-weekly', 'semi-monthly', 'monthly'])->default('semi-monthly')->after('status');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('pay_periods', function (Blueprint $table) {
-            //
+            $table->dropColumn('pay_period_type');
         });
     }
 };

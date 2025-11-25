@@ -10,7 +10,8 @@ class PayPeriod extends Model
     protected $fillable = [
         'start_date',
         'end_date',
-        'status'
+        'status',
+        'pay_period_type'
     ];
 
     protected $casts = [
