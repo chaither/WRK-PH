@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DTR System - @yield('title')</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -161,7 +161,7 @@
         <!-- Content -->
         <div id="content" class="flex-1 transition-all duration-300 ease-in-out h-screen overflow-y-auto md:ml-64">
             <!-- Top Nav -->
-            <nav class="bg-blue-800 text-white p-4 overflow-hidden">
+            <nav class="bg-blue-800 text-white p-4">
                 <div class="flex items-center px-4">
                     <!-- Top hamburger (overrides to front overlay) -->
                     <button id="mobileSidebarToggle" class="text-white mr-4 md:hidden focus:outline-none">
@@ -175,7 +175,7 @@
                         <button id="profileDropdownToggle" class="rounded-full p-3 focus:outline-none">
                             <i class="fas fa-user-circle text-3xl text-white"></i>
                         </button>
-                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden">
+                        <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-[999] hidden">
                             <a href="{{ route('password.request') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-key mr-2"></i>Change Password</a>
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
