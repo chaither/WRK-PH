@@ -7,8 +7,8 @@
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Employees in {{ $department->name }} Department</h1>
 
     <div class="flex justify-end mb-4">
-        <button onclick="openAddEmployeeToDepartmentModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md flex items-center">
-            <i class="fas fa-user-plus mr-2"></i> Add Existing Employee
+        <button onclick="openEmployeeModal(null, {{ $department->id }})" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md flex items-center mr-2">
+            <i class="fas fa-plus mr-2"></i> Add Employee
         </button>
     </div>
 
@@ -75,53 +75,15 @@
     </div>
 </div>
 
-{{-- Add Existing Employee to Department Modal --}}
-<div id="addEmployeeToDepartmentModal" class="fixed inset-0 bg-gray-600 bg-opacity50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Add Existing Employee to {{ $department->name }}</h3>
-        <form action="{{ route('departments.add_employee', $department->id) }}" method="POST">
-            @csrf
-            <div class="mb-4">
-                <label for="employee_id" class="block text-sm font-medium text-gray-700">Select Employee</label>
-                <select name="employee_id" id="employee_id" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    <option value="">Select an employee</option>
-                    @foreach($availableEmployees as $emp)
-                        <option value="{{ $emp->id }}">{{ $emp->name }} ({{ $emp->email }})</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="flex justify-end">
-                <button type="button" onclick="closeAddEmployeeToDepartmentModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
-                    Cancel
-                </button>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Add Employee
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+
 @endsection
+
+@push('modals')
+    @include('components.employee_modal', ['departments' => $departments, 'shifts' => $shifts])
+@endpush
 
 @push('scripts')
 <script>
-    function openAddEmployeeToDepartmentModal() {
-        document.getElementById('addEmployeeToDepartmentModal').classList.remove('hidden');
-    }
-
-    function closeAddEmployeeToDepartmentModal() {
-        document.getElementById('addEmployeeToDepartmentModal').classList.add('hidden');
-    }
-
-    // Close modal when clicking outside of it
-    window.addEventListener('click', function (event) {
-        const modal = document.getElementById('addEmployeeToDepartmentModal');
-        if (event.target === modal) {
-            modal.classList.add('hidden');
-        }
-    });
-
     // Function to handle editing an employee
     window.editEmployee = async function(employeeId) {
         try {
@@ -144,8 +106,4 @@
         }
     };
 </script>
-@endpush
-
-@push('modals')
-    @include('components.employee_modal', ['departments' => $departments, 'shifts' => $shifts])
 @endpush

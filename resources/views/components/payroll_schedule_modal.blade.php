@@ -1,42 +1,42 @@
-<div id="payrollScheduleModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4" x-data="payrollScheduleData()" x-init="fetchSchedules()">
-    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full transform transition-all duration-300 scale-100">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-            <h2 class="text-xl font-bold text-gray-800">🗓️ Manage Payroll Schedules</h2>
+<div id="payrollScheduleModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-2" x-data="payrollScheduleData()" x-init="fetchSchedules()">
+    <div class="bg-white rounded-xl shadow-2xl p-4 max-w-lg sm:max-w-1xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100">
+        <div class="flex justify-between items-center mb-3 border-b pb-2">
+            <h2 class="text-lg font-bold text-gray-800">🗓️ Manage Payroll Schedules</h2>
             <button type="button" @click="closePayrollScheduleModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
-                <i class="fas fa-times text-lg"></i>
+                <i class="fas fa-times text-base"></i>
             </button>
         </div>
 
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Schedules</h3>
+        <div class="mb-3">
+            <h3 class="text-base font-semibold text-gray-700 mb-2">Current Schedules</h3>
             <template x-if="schedules.length === 0">
-                <p class="text-gray-600">No payroll schedules configured yet.</p>
+                <p class="text-gray-600 text-sm">No payroll schedules configured yet.</p>
             </template>
             <template x-for="schedule in schedules" :key="schedule.id">
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex items-center justify-between">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div>
-                        <p class="font-medium text-gray-800" x-text="formatPayPeriodType(schedule.pay_period_type)"></p>
-                        <p class="text-sm text-gray-600">Generation Days: <span x-text="formatGenerationDays(schedule.generation_days)"></span></p>
+                        <p class="font-medium text-gray-800 text-sm" x-text="formatPayPeriodType(schedule.pay_period_type)"></p>
+                        <p class="text-xs text-gray-600">Generation Days: <span x-text="formatGenerationDays(schedule.generation_days)"></span></p>
                     </div>
-                    <div class="flex space-x-2">
-                        <button type="button" @click="editSchedule(schedule)" class="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
-                            <i class="fas fa-edit text-base"></i>
+                    <div class="flex space-x-2 mt-2 sm:mt-0">
+                        <button type="button" @click="editSchedule(schedule)" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
+                            <i class="fas fa-edit text-sm"></i>
                         </button>
-                        <button type="button" @click="deleteSchedule(schedule.id)" class="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
-                            <i class="fas fa-trash-alt text-base"></i>
+                        <button type="button" @click="deleteSchedule(schedule.id)" class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
+                            <i class="fas fa-trash-alt text-sm"></i>
                         </button>
                     </div>
                 </div>
             </template>
         </div>
 
-        <div class="border-t pt-4 mt-4">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Payroll Schedule' : 'Add New Payroll Schedule'"></h3>
-            <form @submit.prevent="isEditMode ? updateSchedule() : addSchedule()" class="space-y-4">
+        <div class="border-t pt-3 mt-3">
+            <h3 class="text-base font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Payroll Schedule' : 'Add New Payroll Schedule'"></h3>
+            <form @submit.prevent="isEditMode ? updateSchedule() : addSchedule()" class="space-y-3">
                 <div>
-                    <label for="pay_period_type" class="block text-sm font-medium text-gray-700 mb-1">Pay Period Type</label>
+                    <label for="pay_period_type" class="block text-xs font-medium text-gray-700 mb-1">Pay Period Type</label>
                     <select id="pay_period_type" x-model="form.pay_period_type" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 transition-colors duration-200">
+                        class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200">
                         <option value="" disabled>Select Pay Period Type</option>
                         <option value="semi-monthly">Semi-Monthly</option>
                         <option value="monthly">Monthly</option>
@@ -44,32 +44,32 @@
                 </div>
 
                 <div x-show="form.pay_period_type === 'semi-monthly'">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Generation Days (Semi-Monthly)</label>
-                    <div class="flex space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" value="15" x-model="form.generation_days" class="form-checkbox h-5 w-5 text-blue-600 rounded-md">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Generation Days (Semi-Monthly)</label>
+                    <div class="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
+                        <label class="inline-flex items-center text-sm">
+                            <input type="checkbox" value="15" x-model="form.generation_days" class="form-checkbox h-4 w-4 text-blue-600 rounded-md">
                             <span class="ml-2 text-gray-700">15th of the month</span>
                         </label>
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" value="last_day" x-model="form.generation_days" class="form-checkbox h-5 w-5 text-blue-600 rounded-md">
+                        <label class="inline-flex items-center text-sm">
+                            <input type="checkbox" value="last_day" x-model="form.generation_days" class="form-checkbox h-4 w-4 text-blue-600 rounded-md">
                             <span class="ml-2 text-gray-700">Last day of the month</span>
                         </label>
                     </div>
                 </div>
 
                 <div x-show="form.pay_period_type === 'monthly'">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Generation Day (Monthly)</label>
-                    <label class="inline-flex items-center">
-                        <input type="radio" value="last_day" x-model="form.generation_days" name="monthly_generation_day" class="form-radio h-5 w-5 text-blue-600">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Generation Day (Monthly)</label>
+                    <label class="inline-flex items-center text-sm">
+                        <input type="radio" value="last_day" x-model="form.generation_days" name="monthly_generation_day" class="form-radio h-4 w-4 text-blue-600">
                         <span class="ml-2 text-gray-700">Last day of the month</span>
                     </label>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" @click="closePayrollScheduleModal()" class="px-4 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
+                    <button type="button" @click="closePayrollScheduleModal()" class="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
+                    <button type="submit" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
                         <i class="fas fa-save mr-1"></i> <span x-text="isEditMode ? 'Update Schedule' : 'Save Schedule'"></span>
                     </button>
                 </div>
