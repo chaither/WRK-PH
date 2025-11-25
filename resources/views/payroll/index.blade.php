@@ -11,7 +11,7 @@
     </header>
 
     <div class="bg-white rounded-lg shadow-xl p-6"> {{-- Reduced padding to p-6 --}}
-        <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Payroll Overview</h2>
+        <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b border-gray-400 pb-2">Payroll Overview</h2>
 
         {{-- Payroll Statistics Cards (More compact design) --}}
         <div class="mb-6">
@@ -66,7 +66,7 @@
         </form>
 
         @php $period = $currentPeriod; @endphp
-        <div class="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-3 bg-white border-t border-b gap-3"> {{-- Sticky behavior removed, padding reduced, flex-col on small screens --}}
+        <div class="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-3 bg-white border-t border-b border-gray-400 gap-3"> {{-- Sticky behavior removed, padding reduced, flex-col on small screens --}}
             <div>
                 @if($period && $period->status === 'paid')
                     <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
