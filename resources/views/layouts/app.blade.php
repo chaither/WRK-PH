@@ -161,7 +161,7 @@
         <!-- Content -->
         <div id="content" class="flex-1 transition-all duration-300 ease-in-out h-screen overflow-y-auto md:ml-64">
             <!-- Top Nav -->
-            <nav class="bg-blue-800 text-white p-4">
+            <nav class="bg-[#0B1432] text-white p-4">
                 <div class="flex items-center px-4">
                     <!-- Top hamburger (overrides to front overlay) -->
                     <button id="mobileSidebarToggle" class="text-white mr-4 md:hidden focus:outline-none">

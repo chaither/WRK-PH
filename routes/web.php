@@ -21,6 +21,7 @@ use App\Http\Controllers\AdminOvertimeRequestController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\PayrollScheduleController;
 use App\Http\Controllers\GovernmentContributionController;
+use App\Http\Controllers\OrganizationChartController;
 
 // Auth Routes
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -51,6 +52,11 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
     Route::resource('holidays', HolidayController::class);
     Route::resource('payroll-schedules', PayrollScheduleController::class)->except(['create', 'edit']);
     Route::resource('government-contributions', GovernmentContributionController::class)->except(['create', 'edit']);
+});
+
+// Organization Chart Routes
+Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    Route::resource('organization', OrganizationChartController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
 // API for fetching employees and departments (for modals, etc.)
