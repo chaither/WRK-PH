@@ -12,7 +12,7 @@
         </button>
         <button onclick="openDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             <i class="fas fa-plus mr-2"></i> Add Department
-        </button>
+        </button>   
     </div>
 
     <!-- Department List (Table) -->
