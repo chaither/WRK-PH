@@ -106,12 +106,11 @@
                                 </select>
                             </div>
 
-                        <div class="mt-4" x-data="{ open: false, selectedDays: [], days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" 
-                            x-init="$watch('$store.employeeStore.currentEmployee', employee => { selectedDays = employee?.working_days || []; }); selectedDays = $store.employeeStore.currentEmployee?.working_days || [];">
+                        <div class="mt-4" x-data="{ open: false, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" data-working-days-dropdown>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
                             <div class="relative">
                                 <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <span x-text="selectedDays.length ? selectedDays.join(', ') : 'Select working days'" class="block truncate"></span>
+                                    <span x-text="$store.employeeStore.workingDays.length ? $store.employeeStore.workingDays.join(', ') : 'Select working days'" class="block truncate"></span>
                                     <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                         <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -119,10 +118,10 @@
                                     </span>
                                 </button>
                                 <ul x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-40 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-y-auto scroll-smooth focus:outline-none sm:text-sm list-none" tabindex="-1" role="listbox" aria-labelledby="listbox-label">
-                                    <template x-for="(day, index) in days" :key="index">
+                                    <template x-for="(day, index) in days" :key="`working-day-${index}`">
                                         <li class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white" :id="`day-option-${index}`" role="option">
                                             <div class="flex items-center space-x-2">
-                                                <input type="checkbox" name="working_days[]" :value="day" x-model="selectedDays" @change="Alpine.nextTick(() => calculateRatesModal())" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                <input type="checkbox" name="working_days[]" :value="day" x-model="$store.employeeStore.workingDays" @change="Alpine.nextTick(() => calculateRatesModal())" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                                 <span class="block font-normal" x-text="day"></span>
                                             </div>
                                         </li>
@@ -131,12 +130,11 @@
                             </div>
                         </div>
 
-                        <div class="mt-4" x-data="{ open: false, selectedRestDays: [], days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }"
-                            x-init="$watch('$store.employeeStore.currentEmployee', employee => { selectedRestDays = employee?.rest_days || []; }); selectedRestDays = $store.employeeStore.currentEmployee?.rest_days || [];">
+                        <div class="mt-4" x-data="{ open: false, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" data-rest-days-dropdown>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Rest Days</label>
                             <div class="relative">
                                 <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <span x-text="selectedRestDays.length ? selectedRestDays.join(', ') : 'Select rest days'" class="block truncate"></span>
+                                    <span x-text="$store.employeeStore.restDays.length ? $store.employeeStore.restDays.join(', ') : 'Select rest days'" class="block truncate"></span>
                                     <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                         <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -144,10 +142,10 @@
                                     </span>
                                 </button>
                                 <ul x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-40 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-y-auto scroll-smooth focus:outline-none sm:text-sm list-none" tabindex="-1" role="listbox" aria-labelledby="listbox-label">
-                                    <template x-for="(day, index) in days" :key="index">
+                                    <template x-for="(day, index) in days" :key="`rest-day-${index}`">
                                         <li class="text-gray-900 cursor-default select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white" :id="`rest-day-option-${index}`" role="option">
                                             <div class="flex items-center space-x-2">
-                                                <input type="checkbox" name="rest_days[]" :value="day" x-model="selectedRestDays" @change="Alpine.nextTick(() => calculateRatesModal())" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                                <input type="checkbox" name="rest_days[]" :value="day" x-model="$store.employeeStore.restDays" @change="Alpine.nextTick(() => calculateRatesModal())" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                                 <span class="block font-normal" x-text="day"></span>
                                             </div>
                                         </li>
@@ -258,6 +256,49 @@
         const passwordInput = document.getElementById('password');
         const passwordConfirmationInput = document.getElementById('password_confirmation');
         const saveEmployeeBtn = document.getElementById('saveEmployeeBtn');
+        const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        function normalizeDaysArray(value) {
+            if (Array.isArray(value)) {
+                return value;
+            }
+
+            if (typeof value === 'string' && value.trim() !== '') {
+                try {
+                    const parsed = JSON.parse(value);
+                    if (Array.isArray(parsed)) {
+                        return parsed;
+                    }
+                } catch (error) {
+                    console.warn('Unable to parse days array from server response.', error);
+                }
+            }
+
+            return [];
+        }
+
+        function setStoreDays(workingDays, restDays) {
+            const store = Alpine.store('employeeStore');
+            if (!store) {
+                return;
+            }
+            store.setDays(workingDays, restDays);
+        }
+
+        function extractTimePortion(value) {
+            if (!value) {
+                return '';
+            }
+
+            const timeString = String(value);
+
+            if (timeString.includes('T')) {
+                const [, time] = timeString.split('T');
+                return time ? time.substring(0, 5) : '';
+            }
+
+            return timeString.substring(0, 5);
+        }
 
         /**
          * Calculates the number of working days (Mon-Sat) in the current month.
@@ -297,11 +338,9 @@
             
             const WORKING_HOURS_PER_DAY = 8;
             
-            // Get selected working days directly from checked checkboxes
-            const selectedWorkingDayElements = document.querySelectorAll('input[name="working_days[]"]:checked');
-            const selectedWorkingDaysArray = Array.from(selectedWorkingDayElements).map(el => el.value);
-            const selectedRestDayElements = document.querySelectorAll('input[name="rest_days[]"]:checked');
-            const selectedRestDaysArray = Array.from(selectedRestDayElements).map(el => el.value);
+            const store = Alpine.store('employeeStore');
+            const selectedWorkingDaysArray = store?.workingDays || [];
+            const selectedRestDaysArray = store?.restDays || [];
             
             const actualWorkingDaysInMonth = getWorkingDaysInMonth(selectedWorkingDaysArray, selectedRestDaysArray);
             
@@ -379,16 +418,31 @@
                 // document.getElementById('basic_salary_modal').value = employee.basic_salary; // This generic field is no longer used for direct input
                 document.getElementById('pay_period_modal').value = employee.pay_schedule;
                 
+                const workStartSource = employee.work_start_time != null ? employee.work_start_time : employee.work_start;
+                const workEndSource = employee.work_end_time != null ? employee.work_end_time : employee.work_end;
+                const workStartValue = extractTimePortion(workStartSource);
+                const workEndValue = extractTimePortion(workEndSource);
+                document.getElementById('work_start').value = workStartValue || '00:00';
+                document.getElementById('work_end').value = workEndValue || '00:00';
                 console.log('Employee Work Start (raw):', employee.work_start, 'Employee Work End (raw):', employee.work_end);
-                document.getElementById('work_start').value = employee.work_start ? employee.work_start.substring(0, 5) : '00:00';
-                document.getElementById('work_end').value = employee.work_end ? employee.work_end.substring(0, 5) : '00:00';
                 console.log('Work Start Time (EDIT mode) after setting:', document.getElementById('work_start').value, 'Work End Time (EDIT mode) after setting:', document.getElementById('work_end').value);
                 
                 document.getElementById('start_date').value = employee.start_date; // Populate start_date
                 document.getElementById('shift_id').value = employee.shift_id; // Populate shift_id
 
+                console.log('Raw working days from API:', employee.working_days);
+                console.log('Raw rest days from API:', employee.rest_days);
+                const normalizedWorkingDays = normalizeDaysArray(employee.working_days);
+                const normalizedRestDays = normalizeDaysArray(employee.rest_days);
+                console.log('Normalized working days:', normalizedWorkingDays, 'Normalized rest days:', normalizedRestDays);
+                employee.working_days = normalizedWorkingDays;
+                employee.rest_days = normalizedRestDays;
+                employee.work_start = workStartValue;
+                employee.work_end = workEndValue;
+
                 // Update Alpine store with current employee data
                 Alpine.store('employeeStore').setEmployee(employee);
+                setStoreDays(normalizedWorkingDays, normalizedRestDays);
 
                 // Hide password fields for edit mode (password changes can be a separate flow if needed)
                 passwordFields.classList.add('hidden');
@@ -413,7 +467,7 @@
                 console.log('Opening modal in ADD mode.');
                 // Add mode
                 modalTitle.textContent = 'Add New Employee';
-                employeeForm.action = '{{ route('employees.store') }}';
+                employeeForm.action = "{{ route('employees.store') }}";
                 methodField.value = 'POST';
                 saveEmployeeBtn.innerHTML = '<i class="fas fa-user-plus mr-1"></i> Save Employee';
                 
@@ -438,17 +492,7 @@
                 console.log('Work End Time (ADD mode) immediately after setting:', document.getElementById('work_end').value);
                 console.log('Work Start Time (ADD mode) after reset:', document.getElementById('work_start').value, 'Work End Time (ADD mode) after reset:', document.getElementById('work_end').value);
 
-                // Reset working days multi-select
-                const workingDaysDropdown = document.querySelector('[x-data*="selectedDays"]');
-                if (workingDaysDropdown && workingDaysDropdown.__alpine) {
-                    workingDaysDropdown.__alpine.data.selectedDays = [];
-                }
-
-                // Reset rest days multi-select
-                const restDaysDropdown = document.querySelector('[x-data*="selectedRestDays"]');
-                if (restDaysDropdown && restDaysDropdown.__alpine) {
-                    restDaysDropdown.__alpine.data.selectedRestDays = [];
-                }
+                setStoreDays([], []);
 
                 // Initialize calculated rates on open for add mode
                 monthlySalaryInput.value = '';
@@ -503,8 +547,17 @@
     document.addEventListener('alpine:init', () => {
         Alpine.store('employeeStore', {
             currentEmployee: null,
+            workingDays: [],
+            restDays: [],
             setEmployee(employee) {
                 this.currentEmployee = employee;
+            },
+            setDays(workingDays = [], restDays = []) {
+                this.workingDays = Array.isArray(workingDays) ? [...workingDays] : [];
+                this.restDays = Array.isArray(restDays) ? [...restDays] : [];
+            },
+            resetDays() {
+                this.setDays([], []);
             }
         });
     });

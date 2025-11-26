@@ -135,6 +135,14 @@ class DepartmentController extends Controller
 
         $department->update(['name' => $request->name]);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Department updated successfully.',
+                'department' => $department,
+            ]);
+        }
+
         return redirect()->route('department.index')->with('success', 'Department updated successfully.');
     }
 

@@ -41,6 +41,22 @@
         const departmentNameInput = document.getElementById('department_name');
         const saveDepartmentBtn = document.getElementById('saveDepartmentBtn');
 
+        function syncDepartmentDropdowns(department) {
+            if (!department) {
+                return;
+            }
+
+            document.querySelectorAll('select[name="department_id"]').forEach(select => {
+                let option = select.querySelector(`option[value="${department.id}"]`);
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = department.id;
+                    select.appendChild(option);
+                }
+                option.textContent = department.name;
+            });
+        }
+
         // New code for handling AJAX submission
         departmentForm.addEventListener('submit', async function(event) {
             event.preventDefault(); // Prevent default form submission
@@ -66,6 +82,9 @@
                 const data = await response.json();
 
                 if (data.success) {
+
+                    syncDepartmentDropdowns(data.department);
+
                     // Assuming `addDepartmentToTable` and `updateDepartmentInTable` functions exist globally or are passed somehow
                     if (methodToUse === 'POST') {
                         // This function will be defined in department.index.blade.php
@@ -98,7 +117,7 @@
                 departmentNameInput.value = department.name;
             } else {
                 departmentModalTitle.textContent = 'Create New Department';
-                departmentForm.action = '{{ route('department.store') }}';
+                departmentForm.action = "{{ route('department.store') }}";
                 departmentMethodField.value = 'POST';
                 saveDepartmentBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Save Department';
                 departmentForm.reset();

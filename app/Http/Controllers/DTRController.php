@@ -264,7 +264,8 @@ class DTRController extends Controller
         $filterStatus = $request->input('status', 'present');
 
         $employees = User::where('role', 'employee')
-                        ->orderBy('name')
+                        ->orderBy('first_name')
+                        ->orderBy('last_name')
                         ->with(['dtrRecords' => function ($query) use ($today) {
                             $query->whereDate('date', $today);
                         }]);
@@ -294,7 +295,10 @@ class DTRController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $employees = User::where('role', 'employee')->orderBy('name')->get();
+        $employees = User::where('role', 'employee')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
 
         return view('dtr.employees_list', compact('employees'));
     }
