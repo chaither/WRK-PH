@@ -6,11 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use App\Notifications\MyResetPassword; // Import your custom notification
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, CanResetPassword;
 
     /**
      * The attributes that are mass assignable.
@@ -67,6 +69,17 @@ class User extends Authenticatable
         'working_days' => 'array',
         'face_embedding' => 'array',
     ];
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new MyResetPassword($token));
+    }
 
     public function isAdmin(): bool
     {
