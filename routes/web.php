@@ -22,6 +22,7 @@ use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\PayrollScheduleController;
 use App\Http\Controllers\GovernmentContributionController;
 use App\Http\Controllers\OrganizationChartController;
+use App\Http\Controllers\EmployeeOrganizationChartController;
 
 // Auth Routes
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -34,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
     Route::get('/my-payslips', [PayrollController::class, 'employeePayslips'])->name('employee.payslips.index');
+    Route::get('/employee/organization', [EmployeeOrganizationChartController::class, 'index'])->name('employee.organization.index');
 });
 
 // Employee Management Routes (Protected)

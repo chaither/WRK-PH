@@ -66,6 +66,15 @@
                 </a>
             </div>
 
+            <!-- Organization Chart Link Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Organization Chart</h2>
+                <p class="text-gray-600 mb-4">View the company's organizational structure.</p>
+                <a href="{{ route('employee.organization.index') }}" class="inline-block bg-indigo-500 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                    View Chart <i class="fas fa-sitemap ml-2"></i>
+                </a>
+            </div>
+
             <!-- Next Shift Card (Optional, if you want to display this prominently) -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-lg font-semibold text-gray-700 mb-4">Your Shift Details</h2>
