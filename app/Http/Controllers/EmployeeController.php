@@ -47,7 +47,8 @@ class EmployeeController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'position' => 'required|string|max:255',
@@ -75,9 +76,9 @@ class EmployeeController extends Controller
         // Determine basic salary based on pay period
         $basicSalary = 0;
         if ($validated['pay_period'] === 'monthly') {
-            $basicSalary = (float) $validated['monthly_salary'];
+            $basicSalary = $validated['monthly_salary'];
         } elseif ($validated['pay_period'] === 'semi-monthly') {
-            $basicSalary = (float) $validated['semi_monthly_salary'];
+            $basicSalary = $validated['semi_monthly_salary'];
         }
 
         // Convert semi-monthly to monthly equivalent for consistent rate calculation
@@ -111,7 +112,23 @@ class EmployeeController extends Controller
         // Assign the pay_period input to the pay_schedule column
         $validated['pay_schedule'] = $validated['pay_period'];
 
-        User::create($validated);
+        $user = User::create([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'position' => $validated['position'],
+            'basic_salary' => $validated['basic_salary'],
+            'daily_rate' => $validated['daily_rate'],
+            'hourly_rate' => $validated['hourly_rate'],
+            'pay_schedule' => $validated['pay_schedule'],
+            'work_start' => $validated['work_start'],
+            'work_end' => $validated['work_end'],
+            'start_date' => $validated['start_date'],
+            'department_id' => $validated['department_id'],
+            'shift_id' => $validated['shift_id'],
+            'role' => $validated['role'],
+        ]);
 
         return redirect()->route('department.index')->with('success', 'Employee created successfully');
     }
@@ -136,7 +153,8 @@ class EmployeeController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $employee->id,
             'position' => 'required|string|max:255',
             'pay_period' => 'required|in:semi-monthly,monthly',
@@ -196,7 +214,23 @@ class EmployeeController extends Controller
         // Assign the pay_period input to the pay_schedule column
         $validated['pay_schedule'] = $validated['pay_period'];
 
-        $employee->update($validated);
+        $employee->update([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'email' => $validated['email'],
+            'position' => $validated['position'],
+            'pay_schedule' => $validated['pay_schedule'],
+            'basic_salary' => $validated['basic_salary'],
+            'daily_rate' => $validated['daily_rate'],
+            'hourly_rate' => $validated['hourly_rate'],
+            'work_start' => $validated['work_start'],
+            'work_end' => $validated['work_end'],
+            'role' => $validated['role'],
+            'start_date' => $validated['start_date'],
+            'working_days' => $validated['working_days'],
+            'rest_days' => $validated['rest_days'],
+            'shift_id' => $validated['shift_id'],
+        ]);
 
         return redirect()->route('employees.index')->with('success', 'Employee updated successfully');
     }

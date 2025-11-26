@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIMEHILLS DTR - Reset Password</title>
+    <title>LIMEHILLS DTR - Change Password</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -217,12 +217,6 @@
 </head>
 <body class="antialiased min-h-screen flex relative overflow-hidden">
 
-    <!-- Parallax Circles - More & Larger, Extremely Subtle -->
-    <div class="parallax w-72 h-72 rounded-full top-12 left-1/4 transform -translate-x-1/2 bg-purple-500 hidden md:block" data-speed="0.00025"></div>
-    <div class="parallax w-56 h-56 rounded-full bottom-24 right-1/3 transform translate-x-1/2 bg-indigo-400 hidden md:block" data-speed="0.00015"></div>
-    <div class="parallax w-96 h-96 rounded-full top-1/2 left-3/4 transform -translate-x-1/2 -translate-y-1/2 bg-purple-500 hidden md:block" data-speed="0.00035"></div>
-    <div class="parallax w-40 h-40 rounded-full top-1/3 right-1/4 transform translate-x-1/2 -translate-y-1/2 bg-indigo-400 hidden md:block" data-speed="0.0002"></div>
-
     <!-- Left Section -->
     <div class="hidden md:flex flex-1 flex-col justify-center items-center relative px-20 py-32 left-section">
         <h1 class="main-title font-extrabold mb-6 text-center text-white">Human Resource <br> Information System</h1>
@@ -256,7 +250,7 @@
         </div>
     </div>
 
-    <!-- Right Section: Login Form -->
+    <!-- Right Section: Change Password Form -->
     <div class="flex-1 flex items-center justify-center p-12 relative">
         <div class="login-card p-10 w-full max-w-md relative z-10">
             <div class="text-center mb-8">
@@ -282,61 +276,65 @@
                 </div>
             @endif
 
-            <form action="{{ route('password.update') }}" method="POST" class="space-y-5">
+            <form action="{{ route('password.change') }}" method="POST" class="space-y-5">
                 @csrf
-                <input type="hidden" name="token" value="{{ $token }}">
 
                 <div>
-                    <label for="email" class="form-label block mb-2">Email</label>
-                    <input type="email" name="email" id="email" required autocomplete="email"
-                        class="input-field w-full"
-                        placeholder="Enter your email address"
-                        value="{{ old('email') }}">
-                    @error('email')
+                    <label for="current_password" class="form-label block mb-2">Current Password</label>
+                    <div class="relative">
+                        <input type="password" name="current_password" id="current_password" required autocomplete="current-password"
+                            class="input-field w-full pr-12"
+                            placeholder="••••••••">
+                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer password-toggle-icon"
+                            onclick="togglePasswordVisibility('current_password')">
+                            <i id="toggleCurrentPasswordIcon" class="far fa-eye"></i>
+                        </span>
+                    </div>
+                    @error('current_password')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="password" class="form-label block mb-2">New Password</label>
+                    <label for="new_password" class="form-label block mb-2">New Password</label>
                     <div class="relative">
-                        <input type="password" name="password" id="password" required autocomplete="new-password"
+                        <input type="password" name="new_password" id="new_password" required autocomplete="new-password"
                             class="input-field w-full pr-12"
                             placeholder="••••••••">
                         <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer password-toggle-icon"
-                            onclick="togglePasswordVisibility('password')">
-                            <i id="togglePasswordIcon" class="far fa-eye"></i>
+                            onclick="togglePasswordVisibility('new_password')">
+                            <i id="toggleNewPasswordIcon" class="far fa-eye"></i>
                         </span>
                     </div>
-                    @error('password')
+                    @error('new_password')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="password_confirmation" class="form-label block mb-2">Confirm New Password</label>
+                    <label for="new_password_confirmation" class="form-label block mb-2">Confirm New Password</label>
                     <div class="relative">
-                        <input type="password" name="password_confirmation" id="password_confirmation" required autocomplete="new-password"
+                        <input type="password" name="new_password_confirmation" id="new_password_confirmation" required autocomplete="new-password"
                             class="input-field w-full pr-12"
                             placeholder="••••••••">
                         <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer password-toggle-icon"
-                            onclick="togglePasswordVisibility('password_confirmation')">
-                            <i id="togglePasswordConfirmationIcon" class="far fa-eye"></i>
+                            onclick="togglePasswordVisibility('new_password_confirmation')">
+                            <i id="toggleNewPasswordConfirmationIcon" class="far fa-eye"></i>
                         </span>
                     </div>
-                    @error('password_confirmation')
+                    @error('new_password_confirmation')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <button type="submit" class="btn-gradient w-full text-white font-bold shadow-lg mt-5">
-                    Reset Password
+                    Change Password
                 </button>
             </form>
 
             <div class="mt-6 text-center">
-                <a href="{{ route('login') }}" class="font-medium text-blue-600 hover:text-blue-500">
-                    Back to Login
+                <a href="{{ route('dashboard') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                    Back to Dashboard
                 </a>
             </div>
         </div>
@@ -367,10 +365,12 @@
         function togglePasswordVisibility(fieldId) {
             const passwordField = document.getElementById(fieldId);
             let toggleIcon;
-            if (fieldId === 'password') {
-                toggleIcon = document.getElementById('togglePasswordIcon');
-            } else if (fieldId === 'password_confirmation') {
-                toggleIcon = document.getElementById('togglePasswordConfirmationIcon');
+            if (fieldId === 'current_password') {
+                toggleIcon = document.getElementById('toggleCurrentPasswordIcon');
+            } else if (fieldId === 'new_password') {
+                toggleIcon = document.getElementById('toggleNewPasswordIcon');
+            } else if (fieldId === 'new_password_confirmation') {
+                toggleIcon = document.getElementById('toggleNewPasswordConfirmationIcon');
             }
 
             if (passwordField.type === 'password') {
