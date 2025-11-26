@@ -105,6 +105,16 @@
         // No more imperative JavaScript for delete modal, Alpine.js handles it.
         // The window.openDeleteDepartmentModal function will be replaced by direct Alpine.js calls.
 
+        function refreshDepartmentIndices() {
+            const rows = document.querySelectorAll('#departmentTableBody tr.mobile-accordion');
+            rows.forEach((row, index) => {
+                const indexCell = row.querySelector('td');
+                if (indexCell) {
+                    indexCell.textContent = index + 1;
+                }
+            });
+        }
+
         // Function to add a new department to the table dynamically
         window.addDepartmentToTable = function(department) {
             const tableBody = document.querySelector('#departmentTableBody');
@@ -139,6 +149,7 @@
                 </tr>
             `;
             tableBody.insertAdjacentHTML('beforeend', newRow);
+            refreshDepartmentIndices();
         };
 
         // Function to update an existing department in the table dynamically
@@ -161,6 +172,8 @@
                 }
             });
         };
+
+        refreshDepartmentIndices();
     });
 </script>
 @endpush

@@ -126,7 +126,7 @@
         window.closeHolidayModal = function() {
             holidayModal.classList.add('hidden');
             holidayModal.classList.remove('flex');
-        });
+        };
     });
 </script>
 @endpush

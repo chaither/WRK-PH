@@ -16,7 +16,10 @@ class LeaveController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $employees = User::where('role', 'employee')->orderBy('name')->get();
+        $employees = User::where('role', 'employee')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
         return view('leave.index', compact('employees'));
     }
 

@@ -8,6 +8,7 @@ use App\Models\Department; // Add this line
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
@@ -127,6 +128,8 @@ class EmployeeController extends Controller
             'start_date' => $validated['start_date'],
             'department_id' => $validated['department_id'],
             'shift_id' => $validated['shift_id'],
+            'working_days' => $validated['working_days'],
+            'rest_days' => $validated['rest_days'],
             'role' => $validated['role'],
         ]);
 
@@ -135,7 +138,19 @@ class EmployeeController extends Controller
 
     public function show(User $employee)
     {
-        return response()->json($employee->load(['department', 'shift']));
+        $employee->load(['department', 'shift']);
+
+        $data = $employee->toArray();
+        $data['working_days'] = $this->decodeDaysArray($employee->working_days);
+        $data['rest_days'] = $this->decodeDaysArray($employee->rest_days);
+        $data['work_start_time'] = $employee->work_start
+            ? Carbon::parse($employee->work_start)->format('H:i')
+            : null;
+        $data['work_end_time'] = $employee->work_end
+            ? Carbon::parse($employee->work_end)->format('H:i')
+            : null;
+
+        return response()->json($data);
     }
 
     public function update(Request $request, User $employee)
@@ -273,5 +288,21 @@ class EmployeeController extends Controller
         }
  
         return $actualWorkingDays;
+    }
+
+    private function decodeDaysArray($value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && trim($value) !== '') {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
     }
 }
