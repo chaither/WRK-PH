@@ -130,7 +130,7 @@
                                             <div class="px-2 py-1">
                                                 <input type="text" x-model="search" placeholder="Search employees..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search employees">
                                             </div>
-                                            <template x-for="employee in allEmployees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))" :key="employee.id">
+                                            <template x-for="employee in allEmployees.filter(employee => getEmployeeName(employee).toLowerCase().includes(search.toLowerCase()))" :key="employee.id">
                                                 <li @click="event => {
                                                         const employeeId = employee.id;
                                                         const index = selectedEmployees.indexOf(employeeId);
@@ -147,7 +147,7 @@
                                                     id="employee-option-" role="option" :aria-selected="selectedEmployees.includes(employee.id)">
                                                     <div class="flex items-center">
                                                         <input type="checkbox" :checked="selectedEmployees.includes(employee.id)" class="form-checkbox h-4 w-4 text-blue-600 pointer-events-none" aria-hidden="true">
-                                                        <span class="font-normal ml-3 block truncate text-sm" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="`${employee.first_name} ${employee.last_name}`"></span>
+                                                        <span class="font-normal ml-3 block truncate text-sm" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="getEmployeeName(employee)"></span>
                                                     </div>
                                                 </li>
                                             </template>
@@ -156,7 +156,7 @@
                                     <div class="mt-2 flex flex-wrap gap-1" x-show="selectedEmployees.length > 0" role="list" aria-label="Selected employees">
                                         <template x-for="employeeId in selectedEmployees" :key="employeeId">
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" role="listitem">
-                                                <span x-text="allEmployees.find(e => e.id === employeeId)?.name"></span>
+                                                <span x-text="getEmployeeNameById(employeeId)"></span>
                                                 <button type="button" @click="event => {
                                                     const index = selectedEmployees.indexOf(employeeId);
                                                     if (index > -1) {
@@ -164,7 +164,7 @@
                                                     }
                                                     form.applies_to = selectedEmployees;
                                                     $dispatch('input', form.applies_to);
-                                                }" class="flex-shrink-0 ml-1 h-3 w-3 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${allEmployees.find(e => e.id === employeeId)?.name}`">
+                                                }" class="flex-shrink-0 ml-1 h-3 w-3 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${getEmployeeNameById(employeeId)}`">
                                                     <span class="sr-only">Remove employee</span>
                                                     <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
                                                         <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
@@ -253,9 +253,15 @@
 
     function closeGovernmentContributionModal() {
         const modal = document.getElementById('governmentContributionModal');
+        if (!modal) {
+            return;
+        }
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        modal._x_data_governmentContributionData.resetForm();
+        const alpineComponent = modal.__x;
+        if (alpineComponent && typeof alpineComponent.$data.resetForm === 'function') {
+            alpineComponent.$data.resetForm();
+        }
     }
 
     document.addEventListener('alpine:init', () => {
@@ -488,6 +494,21 @@
 
             formatCurrency(amount) {
                 return parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            },
+            getEmployeeName(employee) {
+                if (!employee) {
+                    return '';
+                }
+                if (employee.name) {
+                    return employee.name;
+                }
+                const first = employee.first_name ?? '';
+                const last = employee.last_name ?? '';
+                return `${first} ${last}`.trim();
+            },
+            getEmployeeNameById(id) {
+                const employee = this.allEmployees.find(e => Number(e.id) === Number(id));
+                return this.getEmployeeName(employee);
             },
         }));
     });

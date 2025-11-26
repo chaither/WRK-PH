@@ -112,14 +112,16 @@ class PayrollService
     {
         // Determine the actual days in the pay period
         $currentDate = $payPeriodStart->copy();
-        $totalWorkingDaysInPeriod = $this->getActualWorkingDaysInMonth($employee->working_days, $employee->rest_days, $payPeriodStart, $payPeriodEnd);
+        $workingDays = $this->normalizeDaysArray($employee->working_days, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+        $restDays = $this->normalizeDaysArray($employee->rest_days);
+        $totalWorkingDaysInPeriod = $this->getActualWorkingDaysInMonth($workingDays, $restDays, $payPeriodStart, $payPeriodEnd);
         $totalHolidayWorkingDays = [
             'regular' => ['count' => 0, 'multiplier' => 1.00],
             'special_non_working' => ['count' => 0, 'multiplier' => 1.00],
         ];
 
-        $workingDays = $employee->working_days ?? [];
-        $restDays = $employee->rest_days ?? [];
+        $workingDays = $this->normalizeDaysArray($employee->working_days, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+        $restDays = $this->normalizeDaysArray($employee->rest_days);
         $dtrRecords = $employee->dtrRecords()
             ->whereBetween('date', [$payPeriodStart, $payPeriodEnd])
             ->get();
@@ -169,7 +171,7 @@ class PayrollService
         $daysInMonth = $payPeriodStart->daysInMonth;
         $workingHoursPerDay = 8; // Assuming 8 working hours per day
 
-        $actualWorkingDaysInPeriod = $this->getActualWorkingDaysInMonth($employee->working_days, $employee->rest_days, $payPeriodStart, $payPeriodEnd);
+        $actualWorkingDaysInPeriod = $this->getActualWorkingDaysInMonth($workingDays, $restDays, $payPeriodStart, $payPeriodEnd);
 
         // Adjust effective salary based on pay schedule for the current period
         $effectivePeriodSalary = $effectiveMonthlySalary;
@@ -374,5 +376,25 @@ class PayrollService
         }
 
         return $actualWorkingDays;
+    }
+
+    /**
+     * Ensure day lists are always arrays with sensible defaults.
+     *
+     * @param mixed $days
+     * @param array $default
+     * @return array
+     */
+    private function normalizeDaysArray($days, array $default = []): array
+    {
+        if (is_array($days) && !empty($days)) {
+            return array_values(array_filter($days));
+        }
+
+        if (is_string($days) && trim($days) !== '') {
+            return array_values(array_filter(array_map('trim', explode(',', $days))));
+        }
+
+        return $default;
     }
 }

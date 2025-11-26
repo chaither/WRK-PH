@@ -53,6 +53,15 @@ class User extends Authenticatable
     ];
 
     /**
+     * Attributes that should be appended when the model is serialized.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'full_name',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -136,5 +145,27 @@ class User extends Authenticatable
     public function overtimeRequests()
     {
         return $this->hasMany(OvertimeRequest::class);
+    }
+
+    /**
+     * Accessor to keep backwards compatibility for code still using `name`.
+     */
+    public function getNameAttribute($value): string
+    {
+        $fullName = trim(($this->attributes['first_name'] ?? $this->first_name ?? '') . ' ' . ($this->attributes['last_name'] ?? $this->last_name ?? ''));
+
+        if ($fullName !== '') {
+            return $fullName;
+        }
+
+        return $value ?? '';
+    }
+
+    /**
+     * Computed full name for serialization/use in views.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim(($this->attributes['first_name'] ?? $this->first_name ?? '') . ' ' . ($this->attributes['last_name'] ?? $this->last_name ?? ''));
     }
 }
