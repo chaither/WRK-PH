@@ -193,7 +193,7 @@
         </div>
     </div>
     {{-- Mobile overlay used when sidebar is open on small screens --}}
-    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-40 z-40 hidden"></div>
+    <div id="mobile-overlay" class="fixed inset-0 bg-transparent z-40 hidden"></div>
 
     {{-- Render modals and stacked scripts pushed from views --}}
     @stack('modals')
