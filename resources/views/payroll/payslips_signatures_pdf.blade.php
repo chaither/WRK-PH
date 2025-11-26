@@ -44,9 +44,8 @@
             color: #333;
         }
         .employee-name-cell {
-            width: 40%; 
-            font-weight: bold; 
-            color: #2c3e50; 
+            width: 25%; /* Adjust width for full name */
+            text-align: left;
         }
         .signature-cell {
             width: 35%; 
@@ -80,7 +79,7 @@
             <tbody>
                 @foreach($payrolls as $payslip)
                     <tr>
-                        <td class="employee-name-cell">{{ $payslip->user->name }}</td>
+                        <td class="employee-name-cell">{{ $payslip->user->first_name }} {{ $payslip->user->last_name }}</td>
                         <td class="signature-cell" style="padding-bottom: 5px;"></td> {{-- Space for signature --}}
                         <td class="date-cell" style="padding-bottom: 5px;"></td> {{-- Space for date --}}
                     </tr>

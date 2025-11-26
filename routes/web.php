@@ -23,6 +23,7 @@ use App\Http\Controllers\PayrollScheduleController;
 use App\Http\Controllers\GovernmentContributionController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\EmployeeOrganizationChartController;
+use App\Http\Controllers\ChangePasswordController;
 
 // Auth Routes
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -168,3 +169,9 @@ Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showRese
     ->name('password.reset');
 Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
     ->name('password.update');
+
+// Authenticated User Change Password Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/change-password', [ChangePasswordController::class, 'showChangePasswordForm'])->name('password.change');
+    Route::post('/change-password', [ChangePasswordController::class, 'changePassword'])->name('password.change.submit');
+});

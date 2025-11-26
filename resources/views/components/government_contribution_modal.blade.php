@@ -147,7 +147,7 @@
                                                     id="employee-option-" role="option" :aria-selected="selectedEmployees.includes(employee.id)">
                                                     <div class="flex items-center">
                                                         <input type="checkbox" :checked="selectedEmployees.includes(employee.id)" class="form-checkbox h-4 w-4 text-blue-600 pointer-events-none" aria-hidden="true">
-                                                        <span class="font-normal ml-3 block truncate text-sm" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="employee.name"></span>
+                                                        <span class="font-normal ml-3 block truncate text-sm" :class="{ 'font-semibold': selectedEmployees.includes(employee.id), 'font-normal': !selectedEmployees.includes(employee.id) }" x-text="`${employee.first_name} ${employee.last_name}`"></span>
                                                     </div>
                                                 </li>
                                             </template>
