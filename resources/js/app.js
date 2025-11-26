@@ -32,8 +32,27 @@ function initEmployeeModal() {
 
 	if (form) {
 		form.addEventListener('submit', function(e) {
-			// Find candidate salary inputs (supporting old and modal IDs)
-			const basicEl = document.getElementById('basic_salary') || document.getElementById('monthly_salary') || document.getElementById('semi_monthly_salary');
+			// Detect salary inputs dynamically so hidden fields don't trigger validation
+			const payPeriodSelect = document.getElementById('pay_period_modal') || document.getElementById('pay_period');
+			const monthlyInput = document.getElementById('monthly_salary');
+			const semiMonthlyInput = document.getElementById('semi_monthly_salary');
+
+			let basicEl = document.getElementById('basic_salary');
+			if (!basicEl) {
+				if (payPeriodSelect) {
+					if (payPeriodSelect.value === 'monthly' && monthlyInput) {
+						basicEl = monthlyInput;
+					} else if (payPeriodSelect.value === 'semi-monthly' && semiMonthlyInput) {
+						basicEl = semiMonthlyInput;
+					}
+				}
+
+				// Fallback for legacy forms where only one field exists
+				if (!basicEl) {
+					basicEl = monthlyInput || semiMonthlyInput;
+				}
+			}
+
 			const dailyEl = document.getElementById('daily_rate') || document.getElementById('daily_rate_modal');
 			const hourlyEl = document.getElementById('hourly_rate') || document.getElementById('hourly_rate_modal');
 

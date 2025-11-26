@@ -65,7 +65,18 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
 // API for fetching employees and departments (for modals, etc.)
 Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
     Route::get('/api/employees', function () {
-        return response()->json(App\Models\User::where('role', 'employee')->select('id', 'name')->get());
+        return response()->json(
+            App\Models\User::where('role', 'employee')
+                ->select('id', 'first_name', 'last_name')
+                ->get()
+                ->map(function ($user) {
+                    $fullName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+                    $user->name = $fullName;
+                    $user->full_name = $fullName;
+                    return $user;
+                })
+                ->values()
+        );
     })->name('api.employees');
     Route::get('/api/departments', function () {
         return response()->json(App\Models\Department::select('id', 'name')->get());
