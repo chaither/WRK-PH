@@ -17,10 +17,33 @@
                 <!-- Build assets with `npm run build` or `npm run dev` to enable app.js. -->
             @endif
             <style>
+                /* Hide dropdown text immediately when sidebar is collapsed */
                 #sidebar.sidebar-collapsed .sidebar-dropdown-text {
                     display: none !important;
                 }
+
+                /* Initial load: Force collapsed state without transition to prevent FOUC */
+                html.has-initial-sidebar-collapsed #sidebar {
+                    width: 4rem !important; /* Force w-16 */
+                    transform: translateX(0%) !important; /* Ensure it's not off-screen */
+                    transition: none !important;
+                }
+                html.has-initial-sidebar-collapsed #content {
+                    margin-left: 4rem !important; /* Force md:ml-16 */
+                    transition: none !important;
+                }
+                html.has-initial-sidebar-collapsed #sidebar .sidebar-text,
+                html.has-initial-sidebar-collapsed #sidebar .sidebar-dropdown-text {
+                    display: none !important;
+                }
             </style>
+    <script>
+        // Check localStorage immediately to apply initial sidebar state
+        const sidebarOpenState = localStorage.getItem('sidebarOpen');
+        if (sidebarOpenState === 'false' && window.innerWidth >= 768) {
+            document.documentElement.classList.add('has-initial-sidebar-collapsed');
+        }
+    </script>
 </head>
 <body class="bg-gray-100">
     <div class="flex">
@@ -30,7 +53,7 @@
                 <button id="sidebarToggle" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl align-middle"></i>
                 </button>
-                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap">LIMEHILLS HRIS</span>
+                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap cursor-pointer" onclick="event.stopPropagation(); window.location.href='{{ route('dashboard') }}'">LIMEHILLS HRIS</span>
             </div>
             
             <nav>
@@ -227,7 +250,14 @@
 
             // Function to set sidebar state. On small screens the sidebar is hidden by default and uses an overlay.
             function setSidebarState() {
-                const sidebarOpen = localStorage.getItem('sidebarOpen');
+                // Remove the initial FOUC class and re-enable transitions once JS takes over
+                document.documentElement.classList.remove('has-initial-sidebar-collapsed');
+                // Re-enable transitions explicitly if they were disabled for FOUC
+                sidebar.style.transition = 'all 0.3s ease-in-out';
+                content.style.transition = 'all 0.3s ease-in-out';
+
+                const sidebarOpenInStorage = localStorage.getItem('sidebarOpen');
+                const sidebarShouldBeOpen = sidebarOpenInStorage === null ? true : sidebarOpenInStorage === 'true';
 
                 if (window.innerWidth >= 768) {
                     // Desktop: show sidebar inline (expanded or compact)
@@ -235,43 +265,38 @@
                     sidebar.classList.remove('-translate-x-full');
                     sidebar.classList.add('translate-x-0');
 
-                    // Always remove both margin classes before adding the correct one
-                    content.classList.remove('md:ml-16', 'md:ml-64');
-
-                    if (sidebarOpen === 'false') {
+                    if (!sidebarShouldBeOpen) {
                         // compact
                         sidebar.classList.add('w-16', 'sidebar-collapsed');
                         sidebar.classList.remove('w-64');
-                        // sidebarTitle.classList.add('hidden'); // REMOVED: Keep HRIS SYSTEM visible
                         navSpans.forEach(span => span.classList.add('hidden'));
                         dropdownSpans.forEach(span => span.classList.add('hidden'));
+                        content.classList.remove('md:ml-64');
                         content.classList.add('md:ml-16'); // compact margin
                     } else {
                         // expanded
+                        sidebar.classList.remove('w-16', 'sidebar-collapsed');
+                        sidebar.classList.add('w-64');
                         sidebarTitle.classList.remove('hidden');
                         navSpans.forEach(span => span.classList.remove('hidden'));
                         dropdownSpans.forEach(span => span.classList.remove('hidden')); // Fix: apply to each span
+                        content.classList.remove('md:ml-16'); // Ensure correct margin
                         content.classList.add('md:ml-64'); // expanded margin
                     }
                 } else {
-                    // Mobile: hide sidebar by default (overlay)
-                    content.classList.remove('md:ml-64');
-                    // Hide mobileNavTitle when sidebar is open on mobile, show when closed
-                    if (sidebarOpen === 'true') {
-                        sidebar.classList.remove('-translate-x-full');
-                        mobileOverlay.classList.remove('hidden');
-                        if (mobileNavTitle) mobileNavTitle.classList.add('hidden'); // Hide mobile nav title
-                    } else {
-                        sidebar.classList.add('-translate-x-full');
-                        mobileOverlay.classList.add('hidden');
-                        if (mobileNavTitle) mobileNavTitle.classList.remove('hidden'); // Show mobile nav title
-                    }
-                    // ensure sidebar shows full details on mobile
+                    // Mobile: sidebar is always a full-width overlay. State in localStorage determines if it slides in or out.
+                    content.classList.remove('md:ml-64', 'md:ml-16'); // ensure no desktop margins
                     sidebar.classList.remove('w-16', 'sidebar-collapsed');
-                    sidebar.classList.add('w-64');
+                    sidebar.classList.add('w-64'); // Always full width on mobile
                     sidebarTitle.classList.remove('hidden');
                     navSpans.forEach(span => span.classList.remove('hidden'));
                     dropdownSpans.forEach(span => span.classList.remove('hidden'));
+
+                    if (sidebarShouldBeOpen) {
+                        openOverlaySidebar(); // Use existing function to correctly open on mobile
+                    } else {
+                        closeOverlaySidebar(); // Use existing function to correctly close on mobile
+                    }
                 }
             }
 
@@ -300,18 +325,14 @@
                         } else {
                             sidebar.classList.remove('w-64');
                             sidebar.classList.add('w-16', 'sidebar-collapsed');
-                            // sidebarTitle.classList.add('hidden'); // REMOVED: Keep HRIS SYSTEM visible
                             navSpans.forEach(span => span.classList.add('hidden'));
                             dropdownSpans.forEach(span => span.classList.add('hidden'));
                             localStorage.setItem('sidebarOpen', 'false');
                             content.classList.add('md:ml-16');
                         }
                     } else {
-                        // mobile: open overlay in front
-                        sidebar.classList.remove('-translate-x-full');
-                        mobileOverlay.classList.remove('hidden');
-                        localStorage.setItem('sidebarOpen', 'true');
-                        if (mobileNavTitle) mobileNavTitle.classList.add('hidden'); // Hide mobile nav title
+                        // mobile: toggle overlay sidebar
+                        toggleOverlaySidebar();
                     }
                 });
             }
@@ -375,33 +396,18 @@
                 });
             }
 
-            // Auto-close overlay when a sidebar link is clicked and collapse sidebar on desktop for uniform behavior
+            // Auto-close overlay when a sidebar link is clicked
             const sidebarLinks = document.querySelectorAll('#sidebar nav a');
             sidebarLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
-                    // Close overlay immediately for mobile
+                    // Only close overlay immediately for mobile
                     if (window.innerWidth < 768) {
-                        // small delay to allow navigation to start
                         setTimeout(() => {
                             closeOverlaySidebar();
                             if (mobileNavTitle) mobileNavTitle.classList.remove('hidden'); // Ensure it's shown on close
                         }, 80);
                     }
-
-                    // For desktop, collapse the sidebar to icons-only for uniform behavior
-                    if (window.innerWidth >= 768) {
-                        // set localStorage and update classes
-                        // localStorage.setItem('sidebarOpen', 'false'); // REMOVED: Do not auto-collapse on desktop link click
-                        // collapse sidebar visually
-                        // sidebar.classList.remove('w-64'); // REMOVED: Do not auto-collapse on desktop link click
-                        // sidebar.classList.add('w-16', 'sidebar-collapsed'); // REMOVED: Do not auto-collapse on desktop link click
-                        // sidebarTitle.classList.add('hidden'); // REMOVED: Keep HRIS SYSTEM visible
-                        // navSpans.forEach(span => span.classList.add('hidden')); // REMOVED: Do not auto-collapse on desktop link click
-                        // dropdownSpans.forEach(span => span.classList.add('hidden')); // REMOVED: Do not auto-collapse on desktop link click
-                        // Always remove both margin classes before adding the correct one
-                        // content.classList.remove('md:ml-16', 'md:ml-64'); // REMOVED: Do not auto-collapse on desktop link click
-                        // content.classList.add('md:ml-16'); // REMOVED: Do not auto-collapse on desktop link click
-                    }
+                    // For desktop, do nothing on click to keep the collapsed state, just navigate
                 });
             });
         });

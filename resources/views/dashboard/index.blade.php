@@ -96,22 +96,26 @@
         <div class="flex flex-wrap justify-between items-center mb-6">
             <h2 class="text-3xl font-bold text-gray-800">Daily Update</h2>
             <div class="flex items-center space-x-4">
-                <select class="bg-white/60 backdrop-blur-sm border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>Department Name</option>
-                    <option>IT Department</option>
-                    <option>HR Department</option>
-                    <option>Finance Department</option>
-                </select>
+                <form id="departmentFilterForm" action="{{ route('dashboard') }}" method="GET">
+                    <select name="department_id" id="departmentFilter" class="bg-white/60 backdrop-blur-sm border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Departments</option>
+                        @foreach($departments as $department)
+                            <option value="{{ $department->id }}" {{ (string)$department->id === (string)$selectedDepartmentId ? 'selected' : '' }}>
+                                {{ $department->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
             </div>
         </div>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6" id="dailyUpdateMetrics">
             <div class="bg-blue-600 rounded-xl p-6 text-white hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-blue-100 text-sm">Total Employees</p>
-                        <p class="text-3xl font-bold">{{ $employeeCount ?? 0 }}</p>
+                        <p class="text-3xl font-bold" id="totalEmployees">{{ $employeeCount ?? 0 }}</p>
                     </div>
                     <i class="fas fa-users text-4xl text-blue-200"></i>
                 </div>
@@ -121,7 +125,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-green-100 text-sm">Present Today</p>
-                        <p class="text-3xl font-bold">{{ $presentToday ?? 0 }}</p>
+                        <p class="text-3xl font-bold" id="presentToday">{{ $presentToday ?? 0 }}</p>
                     </div>
                     <i class="fas fa-check-circle text-4xl text-green-200"></i>
                 </div>
@@ -131,7 +135,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-yellow-100 text-sm">Late Today</p>
-                        <p class="text-3xl font-bold">{{ $lateToday ?? 0 }}</p>
+                        <p class="text-3xl font-bold" id="lateToday">{{ $lateToday ?? 0 }}</p>
                     </div>
                     <i class="fas fa-clock text-4xl text-yellow-200"></i>
                 </div>
@@ -141,7 +145,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-red-100 text-sm">Absent Today</p>
-                        <p class="text-3xl font-bold">{{ $absentToday ?? 0 }}</p>
+                        <p class="text-3xl font-bold" id="absentToday">{{ $absentToday ?? 0 }}</p>
                     </div>
                     <i class="fas fa-times-circle text-4xl text-red-200"></i>
                 </div>
@@ -298,6 +302,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }catch(e){ console.warn('Chart animation error', e); }
         })();
+
+    const departmentFilter = document.getElementById('departmentFilter');
+    departmentFilter.addEventListener('change', async function() {
+        const selectedDepartmentId = this.value;
+        try {
+            const response = await fetch(`/dashboard?department_id=${selectedDepartmentId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            
+            // Update the dashboard metrics
+            document.getElementById('totalEmployees').textContent = data.employeeCount;
+            document.getElementById('presentToday').textContent = data.presentToday;
+            document.getElementById('lateToday').textContent = data.lateToday;
+            document.getElementById('absentToday').textContent = data.absentToday;
+
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            alert('Failed to load dashboard data.');
+        }
+    });
 
 });
 </script>

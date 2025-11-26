@@ -31,7 +31,7 @@
                     </th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody id="departmentTableBody" class="bg-white divide-y divide-gray-200">
                 {{-- Department data will be loaded here by JavaScript or passed from the controller --}}
                 @forelse ($departments as $department)
                     <tr x-data="{ open: false }" class="mobile-accordion hover:bg-gray-50 transition-colors duration-150">
@@ -104,6 +104,63 @@
     document.addEventListener('DOMContentLoaded', function() {
         // No more imperative JavaScript for delete modal, Alpine.js handles it.
         // The window.openDeleteDepartmentModal function will be replaced by direct Alpine.js calls.
+
+        // Function to add a new department to the table dynamically
+        window.addDepartmentToTable = function(department) {
+            const tableBody = document.querySelector('#departmentTableBody');
+            const newRow = `
+                <tr x-data="{ open: false }" class="mobile-accordion hover:bg-gray-50 transition-colors duration-150">
+                    <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell"></td> <!-- Index will be updated on next page load or dynamically if we fetch all departments -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button @click="open = !open" class="flex justify-between items-center w-full focus:outline-none sm:cursor-default py-2">
+                            <a href="/departments/${department.id}/employees" class="text-blue-600 hover:text-blue-900 font-semibold">
+                                ${department.name}
+                            </a>
+                            <svg x-show="!open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                            <svg x-show="open" class="w-4 h-4 sm:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2 hidden sm:table-cell">
+                        <button onclick="openDepartmentModal(${JSON.stringify(department)})" class="text-indigo-600 hover:text-indigo-900 edit-department-btn"><i class="fas fa-edit"></i></button>
+                        <button @click="window.openDeleteDepartmentModal(${department.id}, '${department.name}')" class="text-red-600 hover:text-red-900 delete-department-btn"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                <tr x-show="open" x-transition:enter="transition-all ease-in-out duration-300" x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-xl" x-transition:leave="transition-all ease-in-out duration-300" x-transition:leave-start="opacity-100 max-h-xl" x-transition:leave-end="opacity-0 max-h-0" class="sm:hidden">
+                    <td colspan="3" class="px-6 py-4 bg-white text-sm">
+                        <div class="flex justify-end space-x-2">
+                            <button onclick="openDepartmentModal(${JSON.stringify(department)})" class="text-indigo-600 hover:text-indigo-900 edit-department-btn"><i class="fas fa-edit"></i> Edit</button>
+                            <button @click="window.openDeleteDepartmentModal(${department.id}, '${department.name}')" class="text-red-600 hover:text-red-900 delete-department-btn"><i class="fas fa-trash"></i> Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', newRow);
+        };
+
+        // Function to update an existing department in the table dynamically
+        window.updateDepartmentInTable = function(updatedDepartment) {
+            const departmentRows = document.querySelectorAll('#departmentTableBody tr');
+            departmentRows.forEach(row => {
+                const departmentLink = row.querySelector('a[href*="/departments/"]');
+                if (departmentLink && departmentLink.href.includes(`/departments/${updatedDepartment.id}/employees`)) {
+                    departmentLink.textContent = updatedDepartment.name;
+                    // Update the JSON in the edit button's onclick for the updated data
+                    const editButton = row.querySelector('.edit-department-btn');
+                    if (editButton) {
+                        editButton.setAttribute('onclick', `openDepartmentModal(${JSON.stringify(updatedDepartment)})`);
+                    }
+                     // Update the JSON in the mobile edit button's onclick for the updated data
+                    const mobileEditButton = row.nextElementSibling ? row.nextElementSibling.querySelector('.edit-department-btn') : null;
+                    if (mobileEditButton) {
+                        mobileEditButton.setAttribute('onclick', `openDepartmentModal(${JSON.stringify(updatedDepartment)})`);
+                    }
+                }
+            });
+        };
     });
 </script>
 @endpush

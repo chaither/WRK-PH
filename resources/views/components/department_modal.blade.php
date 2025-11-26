@@ -41,6 +41,51 @@
         const departmentNameInput = document.getElementById('department_name');
         const saveDepartmentBtn = document.getElementById('saveDepartmentBtn');
 
+        // New code for handling AJAX submission
+        departmentForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = new FormData(this);
+            const url = this.action;
+            const methodToUse = document.getElementById('departmentMethodField').value; // Get the actual method from the hidden field
+
+            try {
+                const response = await fetch(url, {
+                    method: methodToUse, // Use the method from the hidden field
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Assuming `addDepartmentToTable` and `updateDepartmentInTable` functions exist globally or are passed somehow
+                    if (methodToUse === 'POST') {
+                        // This function will be defined in department.index.blade.php
+                        window.addDepartmentToTable(data.department);
+                    } else {
+                        // This function will be defined in department.index.blade.php
+                        window.updateDepartmentInTable(data.department);
+                    }
+                    closeDepartmentModal();
+                    // Optionally display a success message to the user
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error submitting department form:', error);
+                alert('An error occurred while saving the department.');
+            }
+        });
+
         window.openDepartmentModal = function(department = null) {
             document.getElementById('departmentModal').classList.remove('hidden');
             document.getElementById('departmentModal').classList.add('flex');
