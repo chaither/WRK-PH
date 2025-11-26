@@ -261,8 +261,7 @@
         <div class="login-card p-10 w-full max-w-md relative z-10">
             <div class="text-center mb-8">
                 <img src="{{ asset('limehills.png') }}" alt="Limehills Logo" class="mx-auto h-24 w-24 mb-4">
-                <h2 class="limehills-heading font-extrabold mb-1 text-gray-900">LIMEHILLS</h2>
-                <p class="hris-system-text text-gray-700">HRIS SYSTEM</p>
+                <h2 class="limehills-heading font-extrabold mb-1 text-gray-900">LIMEHILLS HRIS</h2>
             </div>
 
             @if (session('status'))
