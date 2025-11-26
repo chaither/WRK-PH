@@ -9,13 +9,7 @@
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
             <meta name="csrf-token" content="{{ csrf_token() }}">
-            @php $viteManifest = public_path('build/manifest.json'); @endphp
-            @if (file_exists($viteManifest))
-                @vite(['resources/css/app.css', 'resources/js/app.js'])
-            @else
-                <!-- Vite manifest not found. Assets not built. -->
-                <!-- Build assets with `npm run build` or `npm run dev` to enable app.js. -->
-            @endif
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
             <style>
                 /* Hide dropdown text immediately when sidebar is collapsed */
                 #sidebar.sidebar-collapsed .sidebar-dropdown-text {
