@@ -1,8 +1,8 @@
-<div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
+<div id="employeeModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col"> {{-- Sharper modal styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Employee</h3>
-            <button onclick="closeEmployeeModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
+            <button onclick="closeEmployeeModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100">
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>

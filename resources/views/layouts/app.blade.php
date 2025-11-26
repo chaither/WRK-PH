@@ -28,9 +28,9 @@
         <div id="sidebar" class="bg-[#0B1432] text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
                 <button id="sidebarToggle" class="text-white focus:outline-none">
-                    <i class="fas fa-bars text-xl"></i>
+                    <i class="fas fa-bars text-xl align-middle"></i>
                 </button>
-                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap">HRIS SYSTEM</span>
+                <span id="sidebarTitle" class="text-2xl font-bold whitespace-nowrap">LIMEHILLS HRIS</span>
             </div>
             
             <nav>
@@ -165,9 +165,9 @@
                 <div class="flex items-center px-4">
                     <!-- Top hamburger (overrides to front overlay) -->
                     <button id="mobileSidebarToggle" class="text-white mr-4 md:hidden focus:outline-none">
-                        <i class="fas fa-bars text-xl"></i>
+                        <i class="fas fa-bars text-xl align-middle"></i>
                     </button>
-                    <span id="mobileNavTitle" class="text-2xl font-bold whitespace-nowrap md:hidden">HRIS SYSTEM</span>
+                    <span id="mobileNavTitle" class="text-2xl font-bold whitespace-nowrap md:hidden">LIMEHILLS HRIS</span>
                     <div class="flex-1">
                     </div>
                     

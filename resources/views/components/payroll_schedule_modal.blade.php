@@ -1,8 +1,8 @@
-<div id="payrollScheduleModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-2" x-data="payrollScheduleData()" x-init="fetchSchedules()">
+<div id="payrollScheduleModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 p-2" x-data="payrollScheduleData()" x-init="fetchSchedules()">
     <div class="bg-white rounded-xl shadow-2xl p-4 max-w-lg sm:max-w-1xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100">
         <div class="flex justify-between items-center mb-3 border-b pb-2">
             <h2 class="text-lg font-bold text-gray-800">🗓️ Manage Payroll Schedules</h2>
-            <button type="button" @click="closePayrollScheduleModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
+            <button type="button" @click="closePayrollScheduleModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100">
                 <i class="fas fa-times text-base"></i>
             </button>
         </div>
