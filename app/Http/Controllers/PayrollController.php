@@ -43,26 +43,76 @@ class PayrollController extends Controller
         $start = $request->input('start_date', $today->copy()->startOfMonth()->format('Y-m-d'));
         $end = $request->input('end_date', $today->copy()->endOfMonth()->format('Y-m-d'));
 
+        $departmentIds = $request->input('department_ids', []); // Initialize departmentIds from request
+        // Handle "All Departments" case: if no specific departments are selected,
+        // or if an empty string/null is passed, treat as all departments.
+        if (empty($departmentIds) || (count($departmentIds) === 1 && $departmentIds[0] === "")) {
+            $departmentIds = null; // Represents all departments
+        }
+
         $payrolls = collect();
         $currentPeriod = null;
 
+        // Determine payScheduleFilter based on selected dates (same logic as generateForRange)
+        $payScheduleFilter = null;
+        if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif (Carbon::parse($start)->day === 16 && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+            $payScheduleFilter = 'semi-monthly';
+        } elseif (Carbon::parse($start)->isSameDay(Carbon::parse($start)->startOfMonth()) && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+            $payScheduleFilter = 'monthly';
+        }
+
+        // ALWAYS calculate totalEmployees based on the determined pay schedule filter from the User model.
+        // This count represents *eligible* employees, regardless of whether payslips are generated.
+        $totalEmployeesQuery = User::where('role', 'employee');
+        if ($payScheduleFilter) {
+            $totalEmployeesQuery->where('pay_schedule', $payScheduleFilter);
+        }
+        $totalEmployees = $totalEmployeesQuery->count();
+
+        // Try to find an existing pay period for the selected dates (for gross/net pay, etc.)
         $currentPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
 
         if ($currentPeriod) {
             $payslipQuery = Payslip::with(['user', 'payPeriod'])
                 ->where('pay_period_id', $currentPeriod->id);
-
             $payrolls = $payslipQuery->get();
+            
+            // totalEmployees is already set based on eligible users; do not override it here unless specific requirement.
+            // If you want totalEmployees to *only* show those with payslips when a period is found,
+            // you would uncomment and adjust the line below.
+            // if ($payrolls->isNotEmpty()) {
+            //     $totalEmployees = $payrolls->unique('user_id')->count();
+            // }
+        } else {
+            // If no currentPeriod is found, there are no existing payroll records for this range.
+            // Therefore, ensure $payrolls is an empty collection so sums are 0.
+            $payrolls = collect();
         }
 
-        // Get total employees directly from the User model, filtered by pay schedule if applicable
-        $totalEmployeesQuery = User::where('role', 'employee');
-        $totalEmployees = $totalEmployeesQuery->count();
+        // If departmentIds is null (all departments), or an array (one or more specific departments),
+        // we want to display grouped tables.
+        // The only exception where we wouldn't want to group is if there were *no* department filtering at all,
+        // but the modal ensures department_ids is always sent.
+        $isGroupedByDepartment = ($departmentIds === null || (is_array($departmentIds) && count($departmentIds) > 0));
+
+        $groupedPayslips = collect(); // Initialize as an empty collection
+
+        if ($isGroupedByDepartment) {
+            // Group the *filtered* payslips by department name
+            $groupedPayslips = $payrolls->groupBy(function ($payslip) {
+                return $payslip->user->department->name ?? 'Unassigned';
+            });
+        }
+
         $totalGrossPay = $payrolls->sum('gross_pay');
         $totalDeductions = $payrolls->sum('deductions');
         $totalNetPay = $payrolls->sum('net_pay');
 
-        return view('payroll.index', compact('payPeriods', 'currentPeriod', 'payrolls', 'totalEmployees', 'totalGrossPay', 'totalDeductions', 'totalNetPay', 'start', 'end'));
+        $departments = \App\Models\Department::all(); // Fetch all departments
+
+        return view('payroll.index', compact('payPeriods', 'currentPeriod', 'payrolls', 'totalEmployees', 'totalGrossPay', 'totalDeductions', 'totalNetPay', 'start', 'end', 'departments', 'groupedPayslips', 'isGroupedByDepartment'));
     }
 
     public function createPayPeriod(Request $request)
@@ -103,10 +153,18 @@ class PayrollController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'department_ids' => 'nullable|array', // Add department_ids validation
         ]);
 
         $start = $request->input('start_date');
         $end = $request->input('end_date');
+        $departmentIds = $request->input('department_ids', []); // Get array of department IDs
+        
+        // Handle "All Departments" case: if no specific departments are selected,
+        // or if an empty string/null is passed, treat as all departments.
+        if (empty($departmentIds) || (count($departmentIds) === 1 && $departmentIds[0] === "")) {
+            $departmentIds = null; // Represents all departments
+        }
 
         $payScheduleFilter = null;
         if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
@@ -124,7 +182,7 @@ class PayrollController extends Controller
 
         // Do not regenerate if already generated/unpaid or paid
         if (in_array($payPeriod->status, ['unpaid', 'paid']) && !$request->has('force_regenerate')) {
-            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
         }
 
         // If forced regeneration, set status to draft to allow re-generation
@@ -132,13 +190,12 @@ class PayrollController extends Controller
             $payPeriod->update(['status' => 'draft']);
         }
 
-        // Call existing generator
-        // Instead of calling generatePayslips directly, we determine the filter and pass it
-        $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter);
+        // Call existing generator, pass departmentId array
+        $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter, $departmentIds);
 
         $payPeriod->update(['status' => 'unpaid']); // Update status after generation
 
-        return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end])->with('success', 'Payroll generated for selected period.');
+        return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
     }
 
     // Mark pay period as completed (done payment)
@@ -208,10 +265,13 @@ class PayrollController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'department_ids' => 'nullable|array', // Add validation for department_ids
+            'department_ids.*' => 'exists:departments,id', // Validate each department ID
         ]);
 
         $start = $request->input('start_date');
         $end = $request->input('end_date');
+        $departmentIds = $request->input('department_ids'); // Get department IDs from request
 
         $payPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
 
@@ -219,23 +279,46 @@ class PayrollController extends Controller
             return redirect()->back()->with('error', 'No payroll period found for the selected dates.');
         }
 
-        $payslipQuery = Payslip::with(['user', 'payPeriod'])
+        $payslipQuery = Payslip::with(['user.department', 'payPeriod']) // Eager load department
             ->where('pay_period_id', $payPeriod->id);
+        
+        if (!empty($departmentIds)) {
+            $payslipQuery->whereHas('user', function ($query) use ($departmentIds) {
+                $query->whereIn('department_id', $departmentIds);
+            });
+        }
 
         $payrolls = $payslipQuery->get();
+
+        // Group payslips by department name
+        $groupedPayrolls = $payrolls->groupBy('user.department.name');
 
         $data = [
             'payPeriod' => $payPeriod,
             'payrolls' => $payrolls,
+            'groupedPayrolls' => $groupedPayrolls, // Pass grouped data to the view
             'payScheduleFilter' => null, // Pass to view for potential display
         ];
 
         // Render both views to HTML
-        $payrollHtml = view('payroll.payslips_pdf', $data)->render();
-        $signaturesHtml = view('payroll.payslips_signatures_pdf', $data)->render();
+        // $payrollHtml = view('payroll.payslips_pdf', $data)->render();
+        // $signaturesHtml = view('payroll.payslips_signatures_pdf', $data)->render();
 
-        // No explicit page break needed here; will merge PDFs later
-        $combinedHtml = $payrollHtml . $signaturesHtml;
+        // // No explicit page break needed here; will merge PDFs later
+        // $combinedHtml = $payrollHtml . $signaturesHtml;
+
+        $combinedHtml = '';
+        foreach ($groupedPayrolls as $departmentName => $departmentPayslips) {
+            $departmentData = [
+                'payPeriod' => $payPeriod,
+                'payrolls' => $departmentPayslips,
+                'groupedPayrolls' => collect([$departmentName => $departmentPayslips]), // Pass single department for rendering
+                'departmentName' => $departmentName,
+                'payScheduleFilter' => null,
+            ];
+            $combinedHtml .= view('payroll.payslips_pdf', $departmentData)->render();
+            $combinedHtml .= view('payroll.payslips_signatures_pdf', $departmentData)->render();
+        }
 
         $pdf = Pdf::loadHtml($combinedHtml)->setPaper('a4', 'landscape');
         

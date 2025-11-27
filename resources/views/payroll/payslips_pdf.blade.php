@@ -98,72 +98,114 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        {{-- Moved header block to individual department sections --}}
+        {{-- <div class="header">
             <div class="logo">
                 <img src="{{ public_path('limehills.png') }}" alt="Company Logo">
             </div>
             <div class="report-info">
                 <h1>Payroll Report</h1>
                 <p>For Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</p>
-                {{-- <p>Status: {{ ucfirst($payPeriod->status) }}</p> Removed as per user request --}}
             </div>
-        </div>
+        </div> --}}
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Employee</th>
-                    <th>Basic Pay</th>
-                    <th>Overtime Pay</th>
-                    <th>Late Deductions</th>
-                    <th>SSS</th>
-                    <th>Pag-IBIG</th>
-                    <th>PhilHealth</th>
-                    <th>Other Deductions</th>
-                    <th>Total Deductions</th>
-                    <th>Net Pay</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($payrolls as $payslip)
-                <tr>
-                    <td style="font-weight: bold;">{{ $payslip->user->name }}</td>
-                    <td>₱{{ number_format((($payslip->gross_pay ?? 0) - ($payslip->overtime_pay ?? 0)), 2) }}</td>
-                    <td>₱{{ number_format($payslip->overtime_pay ?? 0, 2) }}</td>
-                    <td>₱{{ number_format($payslip->late_deductions ?? 0, 2) }}</td>
-                    @php
-                        $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
-                        $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
-                        $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
-                        $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
-                        $otherDetails = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+        @forelse($groupedPayrolls as $departmentName => $departmentPayslips)
+            <div style="margin-bottom: 30px; @if(!$loop->first) page-break-before: always; @endif">
+                <div class="header">
+                    <div class="logo">
+                        <img src="{{ public_path('limehills.png') }}" alt="Company Logo">
+                    </div>
+                    <div class="report-info">
+                        <h1>Payroll Report</h1>
+                        <p>For Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</p>
+                    </div>
+                </div>
+                <h2>Department: {{ $departmentName }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Basic Pay</th>
+                            <th>Overtime Pay</th>
+                            <th>Late Deductions</th>
+                            <th>SSS</th>
+                            <th>Pag-IBIG</th>
+                            <th>PhilHealth</th>
+                            <th>Other Deductions</th>
+                            <th>Total Deductions</th>
+                            <th>Net Pay</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($departmentPayslips as $payslip)
+                        <tr>
+                            <td style="font-weight: bold;">{{ $payslip->user->name }}</td>
+                            <td>₱{{ number_format((($payslip->gross_pay ?? 0) - ($payslip->overtime_pay ?? 0)), 2) }}</td>
+                            <td>₱{{ number_format($payslip->overtime_pay ?? 0, 2) }}</td>
+                            <td>₱{{ number_format($payslip->late_deductions ?? 0, 2) }}</td>
+                            @php
+                                $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
+                                $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
+                                $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
+                                $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
+                                $otherDetails = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
 
-                        // If the total deductions were manually updated (and stored in payslip->deductions),
-                        // show the remainder as "Other Deductions" so the PDF reflects what was actually deducted.
-                        $componentsSum = $sss + $phil + $pagibig + $otherDetails;
-                        $totalDeductions = $payslip->deductions ?? 0;
-                        $manualRemainder = max(0, $totalDeductions - $componentsSum);
-                        $otherShown = $otherDetails + $manualRemainder;
-                    @endphp
+                                // If the total deductions were manually updated (and stored in payslip->deductions),
+                                // show the remainder as "Other Deductions" so the PDF reflects what was actually deducted.
+                                $componentsSum = $sss + $phil + $pagibig + $otherDetails;
+                                $totalDeductions = $payslip->deductions ?? 0;
+                                $manualRemainder = max(0, $totalDeductions - $componentsSum);
+                                $otherShown = $otherDetails + $manualRemainder;
+                            @endphp
 
-                    <td>₱{{ number_format($sss, 2) }}</td>
-                    <td>₱{{ number_format($pagibig, 2) }}</td>
-                    <td>₱{{ number_format($phil, 2) }}</td>
-                    <td>₱{{ number_format($otherShown, 2) }}</td>
-                    <td>₱{{ number_format($totalDeductions, 2) }}</td>
-                    <td>₱{{ number_format($payslip->net_pay ?? 0, 2) }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="11" class="text-center">No payroll records found for this period.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            <td>₱{{ number_format($sss, 2) }}</td>
+                            <td>₱{{ number_format($pagibig, 2) }}</td>
+                            <td>₱{{ number_format($phil, 2) }}</td>
+                            <td>₱{{ number_format($otherShown, 2) }}</td>
+                            <td>₱{{ number_format($totalDeductions, 2) }}</td>
+                            <td>₱{{ number_format($payslip->net_pay ?? 0, 2) }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="text-center">No payroll records found for this department.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                <div class="total-section">
+                    <p>Overall Total Payroll for {{ $departmentName }}: ₱{{ number_format($departmentPayslips->sum('net_pay'), 2) }}</p>
+                </div>
+            </div>
+            {{-- Removed explicit page-break-after to allow content to flow naturally --}}
+            {{-- <div style="page-break-after: always;"></div> --}}
+        @empty
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Basic Pay</th>
+                        <th>Overtime Pay</th>
+                        <th>Late Deductions</th>
+                        <th>SSS</th>
+                        <th>Pag-IBIG</th>
+                        <th>PhilHealth</th>
+                        <th>Other Deductions</th>
+                        <th>Total Deductions</th>
+                        <th>Net Pay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="10" class="text-center">No payroll records found for the selected period.</td>
+                    </tr>
+                </tbody>
+            </table>
+        @endforelse
 
-        <div class="total-section">
+        {{-- Removed the overall total payroll section --}}
+        {{-- <div class="total-section">
             <p>Overall Total Payroll: ₱{{ number_format($payrolls->sum('net_pay'), 2) }}</p>
-        </div>
+        </div> --}}
 
         {{-- Removed as per user request to move to a separate page --}}
         {{-- <div class="signature-section" style="margin-top: 50px; text-align: left;">
