@@ -15,9 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->date('date');
-            $table->string('type');
+            $table->enum('type', ['time_in', 'time_out', 'both']);
             $table->text('reason');
-            $table->string('status')->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->time('requested_time_in')->nullable();
+            $table->time('requested_time_out')->nullable();
             $table->timestamps();
         });
     }

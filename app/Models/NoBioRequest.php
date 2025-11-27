@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NoBioRequest extends Model
 {
-    protected $fillable = ['user_id', 'date', 'type', 'reason', 'status'];
+    protected $fillable = ['user_id', 'date', 'type', 'reason', 'status', 'requested_time_in', 'requested_time_out'];
 
     public function user(): BelongsTo
     {

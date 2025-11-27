@@ -39,8 +39,8 @@
         <div class="flex flex-wrap justify-between items-center">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center space-x-3">
-                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate">
-                        HRIS Dashboard
+                    <h1 class="text-4xl font-bold text-[#0B1432] truncate">
+                        LIMEHILLS HRIS
                     </h1>
                 </div>
                 <p class="text-gray-600 mt-2">Period: June 2025 - May 2026</p>

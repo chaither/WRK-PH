@@ -8,10 +8,10 @@
     <div class="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50 p-6 mb-8">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Employee Dashboard
+                <h1 class="text-4xl font-bold text-[#0B1432]">
+                    Welcome, {{ auth()->user()->name }}
                 </h1>
-                <p class="text-gray-600 mt-2">Welcome, {{ auth()->user()->name }}!</p>
+                
             </div>
             <div class="flex items-center space-x-4">
                 @if(auth()->user()->shift)

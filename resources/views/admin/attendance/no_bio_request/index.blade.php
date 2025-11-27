@@ -26,6 +26,8 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee Name</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Time In</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Time Out</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -36,7 +38,9 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $request->user->name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($request->date)->format('M d, Y') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst(str_replace('_', ' ', $request->type)) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst(str_replace(['_in', '_out', 'all_morning', 'all_afternoon', 'whole_day'], [' In', ' Out', 'All Morning', 'All Afternoon', 'Whole Day'], $request->type)) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $request->requested_time_in ? \Carbon\Carbon::parse($request->requested_time_in)->format('h:i A') : '-' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $request->requested_time_out ? \Carbon\Carbon::parse($request->requested_time_out)->format('h:i A') : '-' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($request->status) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -56,7 +60,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-4 whitespace-nowrap text-gray-600">No pending no bio requests.</td>
+                        <td colspan="8" class="px-6 py-4 whitespace-nowrap text-gray-600">No pending no bio requests.</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -118,6 +118,13 @@
         // Function to add a new department to the table dynamically
         window.addDepartmentToTable = function(department) {
             const tableBody = document.querySelector('#departmentTableBody');
+
+            // Check if "No departments found." row exists and remove it
+            const noDepartmentsRow = tableBody.querySelector('tr:has(td[colspan="3"])');
+            if (noDepartmentsRow && noDepartmentsRow.textContent.includes('No departments found.')) {
+                noDepartmentsRow.remove();
+            }
+
             const newRow = `
                 <tr x-data="{ open: false }" class="mobile-accordion hover:bg-gray-50 transition-colors duration-150">
                     <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell"></td> <!-- Index will be updated on next page load or dynamically if we fetch all departments -->
