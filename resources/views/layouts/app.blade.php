@@ -60,9 +60,9 @@
                 <div x-data="{ open: {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('attendance.no-bio-request.*') || request()->routeIs('attendance.overtime-request.*') || request()->routeIs('admin.attendance.*') ? 'true' : 'false' }} }" class="relative ">
                     <button @click="open = !open" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white w-full text-sm font-semibold justify-between {{ request()->routeIs('dtr.*') || request()->routeIs('attendance.change-shift.*') || request()->routeIs('attendance.change-restday.*') || request()->routeIs('admin.attendance.*') ? 'bg-blue-700' : '' }}"
                         :aria-expanded="open ? 'true' : 'false'">
-                        <span class="inline-flex items-center">
+                        <span class="flex items-center">
                             <i class="fas fa-clock text-xl mr-3"></i>
-                            <span class="ml-3 sidebar-text">Attendance</span>
+                            <span class="sidebar-text">Attendance</span>
                         </span>
                         <svg id="attendanceDropdownArrow" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -75,51 +75,51 @@
                             x-transition:leave="transition-all ease-in-out duration-300"
                             x-transition:leave-start="opacity-100 max-h-xl"
                             x-transition:leave-end="opacity-0 max-h-0"
-                            class="p-2 mt-2 space-y-2 overflow-hidden text-sm font-medium text-white bg-blue-700 rounded-md shadow-inner"
+                            class="p-2 mt-2 space-y-2 overflow-hidden text-sm font-medium text-white rounded-md shadow-inner"
                             aria-label="submenu">
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.index') || request()->routeIs('dtr.admin') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ Auth::user()->isEmployee() ? route('dtr.index') : route('dtr.admin') }}">
                                     <i class="fas fa-calendar-day mr-2"></i><span class="sidebar-dropdown-text">Daily Time Record</span>
                                 </a>
                             </li>
                             @if (Auth::user()->hasRole(['admin', 'hr']))
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('admin.attendance.change-shift.review') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-shift.review') }}">
                                     <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Shift Approval</span>
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('admin.attendance.change-restday.review') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-restday.review') }}">
                                     <i class="fas fa-house-chimney mr-2"></i><span class="sidebar-dropdown-text">Restday Approval</span>
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('admin.attendance.no-bio-request.review') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.no-bio-request.review') }}">
                                     <i class="fas fa-fingerprint mr-2"></i><span class="sidebar-dropdown-text">No Bio Request Approval</span>
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('admin.attendance.overtime-request.review') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.overtime-request.review') }}">
                                     <i class="fas fa-business-time mr-2"></i><span class="sidebar-dropdown-text">Overtime Approval</span>
                                 </a>
                             </li>
                             @else
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('attendance.change-shift.index') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.change-shift.index') }}">
                                     <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Change Shift</span>
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('attendance.change-restday.index') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.change-restday.index') }}">
                                     <i class="fas fa-house-chimney mr-2"></i><span class="sidebar-dropdown-text">Change Restday</span>
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('attendance.no-bio-request.index') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.no-bio-request.index') }}">
                                     <i class="fas fa-fingerprint mr-2"></i><span class="sidebar-dropdown-text">No Bio Request</span>
                                 </a>
                             </li>
-                            <li class="px-2 py-1 transition-colors duration-150 hover:text-gray-200">
+                            <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('attendance.overtime-request.index') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('attendance.overtime-request.index') }}">
                                     <i class="fas fa-business-time mr-2"></i><span class="sidebar-dropdown-text">Apply for Overtime</span>
                                 </a>
