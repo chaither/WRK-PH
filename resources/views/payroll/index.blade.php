@@ -91,26 +91,21 @@
                     <i class="fas fa-calendar-alt mr-1"></i> Manage Payroll Schedules
                 </button>
                 {{-- Generate Payroll Button --}}
-                <form method="POST" action="{{ route('payroll.generate.range') }}" class="w-full sm:flex-1">
-                    @csrf
-                    <input type="hidden" name="start_date" value="{{ $start }}">
-                    <input type="hidden" name="end_date" value="{{ $end }}">
-                    @if($period && in_array($period->status, ['unpaid', 'paid']))
-                        <button type="submit" name="force_regenerate" value="true" class="w-full bg-orange-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center">
-                            <i class="fas fa-redo mr-1"></i> Regenerate Payroll
-                        </button>
-                    @else
-                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-sm flex items-center justify-center">
-                            <i class="fas fa-calculator mr-1"></i> Generate Payroll
-                        </button>
-                    @endif
-                </form>
+                @if($period && in_array($period->status, ['unpaid', 'paid']))
+                    <button type="button" onclick="openGeneratePayrollModal('{{ $start }}', '{{ $end }}', true)" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center">
+                        <i class="fas fa-redo mr-1"></i> Regenerate Payroll
+                    </button>
+                @else
+                    <button type="button" onclick="openGeneratePayrollModal('{{ $start }}', '{{ $end }}', false)" class="w-full sm:flex-1 bg-blue-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-sm flex items-center justify-center">
+                        <i class="fas fa-calculator mr-1"></i> Generate Payroll
+                    </button>
+                @endif
 
                 {{-- Download PDF Button --}}
                 @if(!empty($period) && ($payrolls->count() ?? 0) > 0)
-                    <a href="{{ route('payroll.download_pdf', ['start_date' => $start, 'end_date' => $end]) }}" class="w-full sm:flex-1 bg-red-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center" target="_blank">
+                    <button type="button" onclick="downloadPayrollPdf('{{ $start }}', '{{ $end }}')" class="w-full sm:flex-1 bg-red-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center" @if ($period && $period->status === 'paid') disabled @endif>
                         <i class="fas fa-file-pdf mr-2"></i> Download PDF
-                    </a>
+                    </button>
                 @endif
 
                 {{-- Done Payment Button --}}
@@ -126,40 +121,193 @@
         </div>
         
         {{-- Payroll Records Table --}}
-        <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th> {{-- Reduced px and py --}}
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
-                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
-                        <th class="px-3 py-2 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider hidden sm:table-cell">Net Pay</th>
-                        <th class="px-3 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    @forelse($payrolls as $payslip)
-                        @php
-                            $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
-                            $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
-                            $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
-                            $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
-                            $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
-                            $componentsTotal = $sss + $phil + $pagibig + $other;
-                        @endphp
-                        <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
-                            <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                                <div class="flex flex-col">
-                                    <span>{{ $payslip->user->name }}</span>
-                                    <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
-                                        <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
-                                        <p><span class="font-medium">Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
-                                        <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
-                                        <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
-                                        <p><span class="font-medium">Deductions:</span>
+        @if($isGroupedByDepartment)
+            @forelse($groupedPayslips as $departmentName => $departmentPayslips)
+                <div class="mb-6 mt-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">{{ $departmentName }}</h3>
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
+                                    <th class="px-3 py-2 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider hidden sm:table-cell">Net Pay</th>
+                                    <th class="px-3 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                @forelse($departmentPayslips as $payslip)
+                                    @php
+                                        $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
+                                        $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
+                                        $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
+                                        $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
+                                        $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+                                        $componentsTotal = $sss + $phil + $pagibig + $other;
+                                    @endphp
+                                    <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <div class="flex flex-col">
+                                                <span>{{ $payslip->user->name }}</span>
+                                                <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
+                                                    <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
+                                                    <p><span class="font-medium">Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
+                                                    <p><span class="font-medium">Deductions:</span>
+                                                        @if($componentsTotal > 0)
+                                                            @if($sss > 0)
+                                                                <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
+                                                            @endif
+                                                            @if($phil > 0)
+                                                                <div class="text-xs text-gray-700">PhilHealth: <span class="text-red-600">₱{{ number_format($phil, 2) }}</span></div>
+                                                            @endif
+                                                            @if($pagibig > 0)
+                                                                <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
+                                                            @endif
+                                                            @if($other > 0)
+                                                                <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
+                                                            @endif
+                                                            <div class="text-xs font-semibold mt-1">Total: <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></div>
+                                                        @else
+                                                            <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
+                                                        @endif
+                                                    </p>
+                                                    <p class="font-bold mt-2">Net Pay: ₱{{ number_format($payslip->net_pay, 2) }}</p>
+                                                    <div class="flex flex-col sm:flex-row justify-end mt-3 gap-2">
+                                                        <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="View Payslip">
+                                                            <i class="fas fa-eye text-base mr-1"></i> View Payslip
+                                                        </a>
+                                                        <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                                            <i class="fas fa-coins text-base mr-1"></i> Set Deductions
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->user->department->name ?? 'N/A' }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm hidden sm:table-cell">
+                                            @if($componentsTotal > 0)
+                                                @if($sss > 0)
+                                                    <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
+                                                @endif
+                                                @if($phil > 0)
+                                                    <div class="text-xs text-gray-700">PhilHealth: <span class="text-red-600">₱{{ number_format($phil, 2) }}</span></div>
+                                                @endif
+                                                @if($pagibig > 0)
+                                                    <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
+                                                @endif
+                                                @if($other > 0)
+                                                    <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
+                                                @endif
+                                                <div class="text-xs font-semibold mt-1">Total: <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></div>
+                                            @else
+                                                <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-center hidden sm:table-cell">
+                                            <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
+                                                <i class="fas fa-eye text-base"></i>
+                                            </a>
+                                            <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                                <i class="fas fa-coins text-base"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                            <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for this department.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @empty
+                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm mb-6">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
+                                <th class="px-3 py-2 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider hidden sm:table-cell">Net Pay</th>
+                                <th class="px-3 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            <tr>
+                                <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                    <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @endforelse
+        @else
+            {{-- Original single table rendering if not grouped --}}
+            @if($payrolls->isNotEmpty())
+                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm mb-6">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
+                                <th class="px-3 py-2 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider hidden sm:table-cell">Net Pay</th>
+                                <th class="px-3 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            @forelse($payrolls as $payslip)
+                                @php
+                                    $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
+                                    $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
+                                    $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
+                                    $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
+                                    $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+                                    $componentsTotal = $sss + $phil + $pagibig + $other;
+                                @endphp
+                                <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <div class="flex flex-col">
+                                            <span>{{ $payslip->user->name }}</span>
+                                            <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
+                                                <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
+                                                <p><span class="font-medium">Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->user->department->name ?? 'N/A' }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm hidden sm:table-cell">
+                                        <p><span class="font-medium sm:hidden">Deductions:</span>
                                             @if($componentsTotal > 0)
                                                 @if($sss > 0)
                                                     <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
@@ -178,62 +326,58 @@
                                                 <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
                                             @endif
                                         </p>
-                                        <p class="font-bold mt-2">Net Pay: ₱{{ number_format($payslip->net_pay, 2) }}</p>
-                                        <div class="flex flex-col sm:flex-row justify-end mt-3 gap-2">
-                                            <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="View Payslip">
-                                                <i class="fas fa-eye text-base mr-1"></i> View Payslip
-                                            </a>
-                                            <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
-                                                <i class="fas fa-coins text-base mr-1"></i> Set Deductions
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm hidden sm:table-cell">
-                                @if($componentsTotal > 0)
-                                    @if($sss > 0)
-                                        <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
-                                    @endif
-                                    @if($phil > 0)
-                                        <div class="text-xs text-gray-700">PhilHealth: <span class="text-red-600">₱{{ number_format($phil, 2) }}</span></div>
-                                    @endif
-                                    @if($pagibig > 0)
-                                        <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
-                                    @endif
-                                    @if($other > 0)
-                                        <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
-                                    @endif
-                                    <div class="text-xs font-semibold mt-1">Total: <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></div>
-                                @else
-                                    <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
-                                @endif
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">₱{{ number_format($payslip->net_pay, 2) }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-center hidden sm:table-cell">
-                                <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
-                                    <i class="fas fa-eye text-base"></i>
-                                </a>
-                                <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
-                                    <i class="fas fa-coins text-base"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="px-3 py-3 text-center text-base text-gray-500 bg-white"> {{-- Reduced px and py --}}
-                                <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">
+                                        <p><span class="font-medium sm:hidden">Net Pay:</span> ₱{{ number_format($payslip->net_pay, 2) }}</p>
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center hidden sm:table-cell">
+                                        <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
+                                            <i class="fas fa-eye text-base"></i>
+                                        </a>
+                                        <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                            <i class="fas fa-coins text-base"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                        <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                {{-- Display message if no payrolls at all when not grouped --}}
+                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm mb-6">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
+                                <th class="px-3 py-2 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider hidden sm:table-cell">Net Pay</th>
+                                <th class="px-3 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            <tr>
+                                <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                    <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        @endif
+        
         {{-- Edit Deductions Modal (further compacting) --}}
         {{-- The payroll schedule and government contributions modals will be handled in separate steps --}}
     </div>
@@ -243,6 +387,7 @@
 @push('modals')
 @include('components.payroll_schedule_modal')
 @include('components.government_contribution_modal')
+@include('components.generate_payroll_modal')
 <div id="editDeductionsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-2"> {{-- Reduced overall padding --}}
     <div class="bg-white rounded-xl shadow-2xl p-4 max-w-xs sm:max-w-2xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100"> {{-- Reduced max-width and padding --}}
         <div class="flex justify-between items-center mb-3 border-b pb-2"> {{-- Reduced margin and padding --}}
@@ -296,6 +441,21 @@
     function closeEditDeductionsModal() {
         document.getElementById('editDeductionsModal').classList.add('hidden');
         document.getElementById('editDeductionsModal').classList.remove('flex');
+    }
+
+    function downloadPayrollPdf(startDate, endDate) {
+        const departmentCheckboxes = document.querySelectorAll('#generatePayrollModal .department-checkbox:checked');
+        const selectedDepartmentIds = Array.from(departmentCheckboxes).map(cb => cb.value);
+
+        let url = `{{ route('payroll.download_pdf') }}?start_date=${startDate}&end_date=${endDate}`;
+
+        if (selectedDepartmentIds.length > 0) {
+            selectedDepartmentIds.forEach(id => {
+                url += `&department_ids[]=${id}`;
+            });
+        }
+
+        window.open(url, '_blank');
     }
 </script>
 @endpush
