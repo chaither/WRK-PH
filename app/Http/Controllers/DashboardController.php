@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Payslip;
 use App\Models\Department;
+use App\Models\Absence;
+use App\Models\Notification;
+use App\Services\PayrollService;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -82,6 +86,103 @@ class DashboardController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('dashboard.employee', compact('payslips'));
+        $absences = Absence::where('user_id', $user->id)
+            ->orderByDesc('date')
+            ->get();
+
+        $generalNotifications = Notification::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $salaryNotification = null;
+        $payrollService = new PayrollService();
+        $today = Carbon::today();
+
+        if ($user->pay_schedule) {
+            $currentYear = $today->year;
+            $currentMonth = $today->month;
+            
+            // Attempt to get pay periods for the current month and next month
+            $payPeriodsThisMonth = $payrollService->getPayPeriodDates(
+                $user->pay_schedule,
+                Carbon::create($currentYear, $currentMonth, 1)->startOfMonth(),
+                Carbon::create($currentYear, $currentMonth, 1)->endOfMonth()
+            );
+
+            $payPeriodsNextMonth = [];
+            if ($currentMonth === 12) {
+                $payPeriodsNextMonth = $payrollService->getPayPeriodDates(
+                    $user->pay_schedule,
+                    Carbon::create($currentYear + 1, 1, 1)->startOfMonth(),
+                    Carbon::create($currentYear + 1, 1, 1)->endOfMonth()
+                );
+            } else {
+                $payPeriodsNextMonth = $payrollService->getPayPeriodDates(
+                    $user->pay_schedule,
+                    Carbon::create($currentYear, $currentMonth + 1, 1)->startOfMonth(),
+                    Carbon::create($currentYear, $currentMonth + 1, 1)->endOfMonth()
+                );
+            }
+            
+            $allPayPeriods = array_merge($payPeriodsThisMonth, $payPeriodsNextMonth);
+            $nextPayday = null;
+
+            foreach ($allPayPeriods as $period) {
+                $payDate = Carbon::parse($period['end']); // Assuming 'end' is the payday
+                if ($payDate->greaterThanOrEqualTo($today)) {
+                    if (!$nextPayday || $payDate->lessThan($nextPayday)) {
+                        $nextPayday = $payDate;
+                    }
+                }
+            }
+
+            if ($nextPayday) {
+                $diffInDays = $today->diffInDays($nextPayday, false);
+
+                if ($diffInDays === 0) {
+                    $salaryNotification = 'Today is payday! Your salary is ready for pickup.';
+                } elseif ($diffInDays === 1) {
+                    $salaryNotification = 'Tomorrow is payday! Prepare to pick up your salary.';
+                }
+            }
+        }
+
+        // Add salary notification to general notifications if it exists
+        if ($salaryNotification) {
+            $generalNotifications->prepend((object)['message' => $salaryNotification, 'type' => 'salary', 'created_at' => Carbon::now()]);
+        }
+
+        return view('dashboard.employee', compact('payslips', 'absences', 'generalNotifications'));
+    }
+
+    public function destroyNotification(Notification $notification)
+    {
+        $user = Auth::user();
+
+        // Ensure the authenticated user owns the notification
+        if ($notification->user_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $notification->delete();
+
+        return response()->json(['message' => 'Notification deleted successfully'], 200);
+    }
+
+    public function bulkDestroyNotifications(Request $request)
+    {
+        $user = Auth::user();
+        $notificationIds = $request->input('ids');
+
+        if (!is_array($notificationIds) || empty($notificationIds)) {
+            return response()->json(['error' => 'No notifications selected for deletion'], 400);
+        }
+
+        // Delete only notifications that belong to the authenticated user
+        Notification::where('user_id', $user->id)
+            ->whereIn('id', $notificationIds)
+            ->delete();
+
+        return response()->json(['message' => 'Selected notifications deleted successfully'], 200);
     }
 }
