@@ -63,7 +63,7 @@ class PayrollService
      * @param Carbon $monthEnd
      * @return array
      */
-    private function getPayPeriodDates(string $paySchedule, Carbon $monthStart, Carbon $monthEnd, string $payScheduleFilter = null): array
+    public function getPayPeriodDates(string $paySchedule, Carbon $monthStart, Carbon $monthEnd, string $payScheduleFilter = null): array
     {
         $periods = [];
 

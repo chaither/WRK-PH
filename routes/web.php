@@ -37,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee-dashboard', [DashboardController::class, 'employeeDashboard'])->name('employee.dashboard');
     Route::get('/my-payslips', [PayrollController::class, 'employeePayslips'])->name('employee.payslips.index');
     Route::get('/employee/organization', [EmployeeOrganizationChartController::class, 'index'])->name('employee.organization.index');
+    Route::delete('/employee/notifications/{notification}', [DashboardController::class, 'destroyNotification'])->name('employee.notifications.destroy');
+    Route::delete('/employee/notifications', [DashboardController::class, 'bulkDestroyNotifications'])->name('employee.notifications.bulkDestroy');
 });
 
 // Employee Management Routes (Protected)

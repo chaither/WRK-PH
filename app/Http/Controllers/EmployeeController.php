@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Shift; // Add this line
 use App\Models\Department; // Add this line
+use App\Models\Notification; // Add this line
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -228,6 +229,150 @@ class EmployeeController extends Controller
 
         // Assign the pay_period input to the pay_schedule column
         $validated['pay_schedule'] = $validated['pay_period'];
+
+        // Check if the role has changed
+        if ($employee->role !== $validated['role']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your role has been changed from ' . $employee->role . ' to ' . $validated['role'] . ' by an administrator.',
+                'type' => 'role_change',
+            ]);
+        }
+
+        // Check for changes in Personal Information
+        if ($employee->first_name !== $validated['first_name'] ||
+            $employee->last_name !== $validated['last_name'])
+        {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your name has been updated to ' . $validated['first_name'] . ' ' . $validated['last_name'] . ' by an administrator.',
+                'type' => 'personal_info_update',
+            ]);
+        }
+
+        if ($employee->email !== $validated['email']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your email address has been updated from ' . $employee->email . ' to ' . $validated['email'] . ' by an administrator.',
+                'type' => 'personal_info_update',
+            ]);
+        }
+
+        if ($employee->position !== $validated['position']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your position has been changed from ' . $employee->position . ' to ' . $validated['position'] . ' by an administrator.',
+                'type' => 'personal_info_update',
+            ]);
+        }
+
+        // Department change check
+        $newDepartmentId = $request->input('department_id');
+        // Normalize newDepartmentId to be an integer or null
+        $newDepartmentId = (empty($newDepartmentId) && $newDepartmentId !== 0) ? null : (int)$newDepartmentId;
+
+        // Normalize oldDepartmentId to be an integer or null
+        $oldDepartmentId = $employee->department_id;
+        $oldDepartmentId = (empty($oldDepartmentId) && $oldDepartmentId !== 0) ? null : (int)$oldDepartmentId;
+
+        // Log for debugging
+        \Illuminate\Support\Facades\Log::info('Department Comparison', [
+            'employee_id' => $employee->id,
+            'oldDepartmentId' => $oldDepartmentId,
+            'oldDepartmentIdType' => gettype($oldDepartmentId),
+            'newDepartmentId' => $newDepartmentId,
+            'newDepartmentIdType' => gettype($newDepartmentId),
+        ]);
+
+        if ($oldDepartmentId !== $newDepartmentId) {
+            $oldDepartmentName = $employee->department->name ?? 'N/A';
+            $newDepartment = ($newDepartmentId !== null) ? Department::find($newDepartmentId) : null;
+            $newDepartmentName = $newDepartment->name ?? 'N/A';
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your department has been changed from ' . $oldDepartmentName . ' to ' . $newDepartmentName . ' by an administrator.',
+                'type' => 'personal_info_update',
+            ]);
+        }
+
+        // Check for changes in Work Schedule
+        if (Carbon::parse($employee->start_date)->format('Y-m-d') !== Carbon::parse($validated['start_date'])->format('Y-m-d')) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your start date has been changed from ' . Carbon::parse($employee->start_date)->format('M d, Y') . ' to ' . Carbon::parse($validated['start_date'])->format('M d, Y') . ' by an administrator.',
+                'type' => 'work_schedule_update',
+            ]);
+        }
+
+        if ($employee->shift_id !== $validated['shift_id']) {
+            $oldShiftName = $employee->shift->name ?? 'N/A';
+            $newShift = Shift::find($validated['shift_id']);
+            $newShiftName = $newShift->name ?? 'N/A';
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your shift has been changed from ' . $oldShiftName . ' to ' . $newShiftName . ' by an administrator.',
+                'type' => 'work_schedule_update',
+            ]);
+        }
+
+        if ($this->decodeDaysArray($employee->working_days) !== $validated['working_days']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your working days have been updated by an administrator.',
+                'type' => 'work_schedule_update',
+            ]);
+        }
+
+        if ($this->decodeDaysArray($employee->rest_days) !== $validated['rest_days']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your rest days have been updated by an administrator.',
+                'type' => 'work_schedule_update',
+            ]);
+        }
+
+        if (Carbon::parse($employee->work_start)->format('H:i') !== Carbon::parse($validated['work_start'])->format('H:i') ||
+            Carbon::parse($employee->work_end)->format('H:i') !== Carbon::parse($validated['work_end'])->format('H:i'))
+        {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your work start and/or end times have been updated by an administrator.',
+                'type' => 'work_schedule_update',
+            ]);
+        }
+
+        // Check for changes in Payroll Details
+        if ($employee->pay_schedule !== $validated['pay_schedule']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your pay schedule has been changed from ' . $employee->pay_schedule . ' to ' . $validated['pay_schedule'] . ' by an administrator.',
+                'type' => 'payroll_update',
+            ]);
+        }
+
+        if ((float) $employee->basic_salary !== (float) $validated['basic_salary']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your basic salary has been changed from ₱' . number_format($employee->basic_salary, 2) . ' to ₱' . number_format($validated['basic_salary'], 2) . ' by an administrator.',
+                'type' => 'payroll_update',
+            ]);
+        }
+
+        if ((float) $employee->daily_rate !== (float) $validated['daily_rate']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your daily rate has been changed from ₱' . number_format($employee->daily_rate, 2) . ' to ₱' . number_format($validated['daily_rate'], 2) . ' by an administrator.',
+                'type' => 'payroll_update',
+            ]);
+        }
+
+        if ((float) $employee->hourly_rate !== (float) $validated['hourly_rate']) {
+            Notification::create([
+                'user_id' => $employee->id,
+                'message' => 'Your hourly rate has been changed from ₱' . number_format($employee->hourly_rate, 2) . ' to ₱' . number_format($validated['hourly_rate'], 2) . ' by an administrator.',
+                'type' => 'payroll_update',
+            ]);
+        }
 
         $employee->update([
             'first_name' => $validated['first_name'],
