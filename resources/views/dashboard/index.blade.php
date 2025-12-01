@@ -19,9 +19,7 @@
 .parallax-layer, .parallax-inner { transform: translate3d(0,0,0); will-change: transform; }
 
 /* Chart float animation */
-.chart-float { animation: floatY 6s ease-in-out infinite; will-change: transform; }
-.chart-float.paused { animation-play-state: paused !important; }
-@keyframes floatY { 0% { transform: translateY(-6px);} 50% { transform: translateY(6px);} 100% { transform: translateY(-6px);} }
+/* Removed chart float animation CSS */
 
 /* Make sure canvas fills wrapper */
 .chart-wrapper { height: 24rem; }
@@ -56,35 +54,33 @@
 
     <!-- Main Dashboard Grid -->
     @if(auth()->user()->role !== 'employee')
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
         
-        <!-- Left Column -->
+        <!-- Combined Payroll and Deductions Chart -->
         <div class="space-y-8">
-            <!-- Attendance Type Chart -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
-                    Attendance Type
+                    <i class="fas fa-money-bill-transfer text-indigo-600 mr-3"></i>
+                    Monthly Payroll & Deductions
                 </h3>
                 <div class="chart-wrapper">
-                    <div class="chart-float" tabindex="0" role="group" aria-label="Attendance Type chart wrapper">
-                        <canvas id="attendanceTypeChart"></canvas>
+                    <div tabindex="0" role="group" aria-label="Monthly Payroll and Deductions chart wrapper">
+                        <canvas id="monthlyCombinedChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column -->
+        <!-- Employee Attendance Summary Chart (moved to right column) -->
         <div class="space-y-8">
-            <!-- Leave Reasons Chart -->
             <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                    <i class="fas fa-chart-bar text-purple-600 mr-3"></i>
-                    Leave Reasons
+                    <i class="fas fa-users-line text-cyan-600 mr-3"></i>
+                    Employee Attendance Summary
                 </h3>
                 <div class="chart-wrapper">
-                    <div class="chart-float" tabindex="0" role="group" aria-label="Leave Reasons chart wrapper">
-                        <canvas id="terminationReasonChart"></canvas>
+                    <div tabindex="0" role="group" aria-label="Employee Attendance Summary chart wrapper">
+                        <canvas id="monthlyAttendanceChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -162,52 +158,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const labels = ['Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May'];
 
-    // Attendance Type Chart
-        const attendanceCtx = document.getElementById('attendanceTypeChart').getContext('2d');
-        const attendanceChart = new Chart(attendanceCtx, {
-        type: 'bar',
+    // Monthly Combined Payroll and Deductions Chart
+    const combinedCtx = document.getElementById('monthlyCombinedChart').getContext('2d');
+    const monthlyCombinedChart = new Chart(combinedCtx, {
+        type: 'line',
         data: {
-            labels: labels,
+            labels: {!! json_encode($combinedLabels) !!},
             datasets: [
-                { label: 'Present', data: [100,100,92,89,94,0,0,0,0,0,0,0], backgroundColor:'rgba(59,130,246,0.8)', borderColor:'rgba(59,130,246,1)', borderWidth:2 },
-                { label: 'Late', data: [,7,5,7,4,0,0,0,0,0,0,0], backgroundColor:'rgba(245,158,11,0.8)', borderColor:'rgba(245,158,11,1)', borderWidth:2 },
-                { label: 'Absent', data: [0,0,3,4,2,0,0,0,0,0,0,0], backgroundColor:'rgba(239,68,68,0.8)', borderColor:'rgba(239,68,68,1)', borderWidth:2 }
+                { label: 'Net Pay', data: {!! json_encode($payrollData) !!}, backgroundColor: 'rgba(96,182,189,0.4)', borderColor: 'rgba(96,182,189,1)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: 'rgba(96,182,189,1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 5, pointHoverRadius: 7 },
+                { label: 'Total Deductions', data: {!! json_encode($deductionData) !!}, backgroundColor: 'rgba(239,68,68,0.4)', borderColor: 'rgba(239,68,68,1)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: 'rgba(239,68,68,1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 5, pointHoverRadius: 7 }
             ]
         },
         options: {
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{ legend:{ position:'top', labels:{ color:'#374151', font:{ size:12, weight:'500' } } } },
-            scales:{ 
-                x:{ grid:{ display:false }, ticks:{ color:'#6B7280' } }, 
-                y:{ beginAtZero:true, grid:{ color:'#E5E7EB' }, ticks:{ color:'#6B7280' } } 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { color: '#374151', font: { size: 12, weight: '500' } } } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#6B7280', maxRotation: 45, minRotation: 45 } },
+                y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { color: '#6B7280' } }
             },
-            animation:{ duration:2000, easing:'easeInOutQuart' }
+            animation: false // Disable animation
         }
     });
 
-    // Leave Reasons Chart (0–20 rating scale)
-        const leaveCtx = document.getElementById('terminationReasonChart').getContext('2d');
-        const leaveChart = new Chart(leaveCtx, {
-        type: 'bar',
+    // Monthly Attendance Chart
+    const monthlyAttendanceCtx = document.getElementById('monthlyAttendanceChart').getContext('2d');
+    const monthlyAttendanceChart = new Chart(monthlyAttendanceCtx, {
+        type: 'line',
         data: {
-            labels: labels,
+            labels: {!! json_encode($attendanceLabels) !!},
             datasets: [
-                { label: 'Personal', data: [0,0,5,2,3,0,0,0,0,0,0,0], backgroundColor:'rgba(139,92,246,0.8)', borderColor:'rgba(139,92,246,1)', borderWidth:2 },
-                { label: 'School', data: [0,0,7,10,2,0,0,0,0,0,0,0], backgroundColor:'rgba(59,130,246,0.8)', borderColor:'rgba(59,130,246,1)', borderWidth:2 },
-                { label: 'Sick Leave', data: [0,0,20,8,2,0,0,0,0,0,0,0], backgroundColor:'rgba(16,185,129,0.8)', borderColor:'rgba(16,185,129,1)', borderWidth:2 },
-                { label: 'Natural disasters', data: [0,0,0,7,15,0,0,0,0,0,0,0], backgroundColor:'rgba(245,158,11,0.8)', borderColor:'rgba(245,158,11,1)', borderWidth:2 }
-            ]   
+                { label: 'Present', data: {!! json_encode($presentData) !!}, backgroundColor: 'rgba(59,130,246,0.4)', borderColor: 'rgba(59,130,246,1)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: 'rgba(59,130,246,1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 5, pointHoverRadius: 7 },
+                { label: 'Late', data: {!! json_encode($lateData) !!}, backgroundColor: 'rgba(245,158,11,0.4)', borderColor: 'rgba(245,158,11,1)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: 'rgba(245,158,11,1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 5, pointHoverRadius: 7 },
+                { label: 'Absent', data: {!! json_encode($absentData) !!}, backgroundColor: 'rgba(239,68,68,0.4)', borderColor: 'rgba(239,68,68,1)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: 'rgba(239,68,68,1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 5, pointHoverRadius: 7 }
+            ]
         },
         options: {
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{ legend:{ position:'top', labels:{ color:'#374151', font:{ size:12, weight:'500' } } } },
-            scales:{ 
-                x:{ grid:{ display:false }, ticks:{ color:'#6B7280' } }, 
-                y:{ min:0, max:24, beginAtZero:true, grid:{ color:'#E5E7EB' }, ticks:{ color:'#6B7280' } } 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { color: '#374151', font: { size: 12, weight: '500' } } } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#6B7280', maxRotation: 45, minRotation: 45 } },
+                y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { color: '#6B7280' } }
             },
-            animation:{ duration:2000, easing:'easeInOutQuart' }
+            animation: false // Disable animation
         }
     });
 
@@ -256,50 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            // helper: animate a chart by applying small sine offsets to its data
-            function animateChart(chart, baselineDatasets, amplitudeFactor = 0.05, speed = 1.0){
-                let last = performance.now();
-                let rafId;
-                function step(now){
-                    const dt = now - last;
-                    if(dt > 30){ // throttle to ~30fps
-                        const t = now / 1000 * speed;
-                        const wrapper = chart.canvas.closest('.chart-float');
-                        const paused = wrapper && wrapper.classList.contains('paused');
-                        if(!paused){
-                            // update each dataset
-                            chart.data.datasets.forEach((ds, idx) => {
-                                const base = baselineDatasets[idx];
-                                if(!base) return;
-                                const newData = base.map((val, j) => {
-                                    // some datasets may be zero; scale amplitude reasonably
-                                    const amp = (Math.max(1, Math.abs(val)) * amplitudeFactor) + 0.5;
-                                    const offset = Math.sin(t * (0.6 + idx*0.15) + j*0.3) * amp;
-                                    const v = Math.max(0, Math.round((val + offset) * 100) / 100);
-                                    return v;
-                                });
-                                ds.data = newData;
-                            });
-                            chart.update('none');
-                        }
-                        last = now;
-                    }
-                    rafId = requestAnimationFrame(step);
-                }
-                rafId = requestAnimationFrame(step);
-                return ()=> cancelAnimationFrame(rafId);
-            }
-
             // capture baselines and start animators
             try{
-                if(typeof attendanceChart !== 'undefined' && attendanceChart){
-                    const baselineA = attendanceChart.data.datasets.map(d => Array.from(d.data));
-                    animateChart(attendanceChart, baselineA, 0.04, 0.9);
-                }
-                if(typeof leaveChart !== 'undefined' && leaveChart){
-                    const baselineL = leaveChart.data.datasets.map(d => Array.from(d.data));
-                    animateChart(leaveChart, baselineL, 0.06, 0.8);
-                }
+                // Removed chart animation logic as animations are now disabled
             }catch(e){ console.warn('Chart animation error', e); }
         })();
 

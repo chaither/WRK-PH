@@ -59,6 +59,97 @@ class DashboardController extends Controller
             $data['absentToday'] = $totalEmployees - $presentLateCount;
         }
 
+        // Fetch monthly payroll totals
+        $monthlyPayroll = Payslip::selectRaw('DATE_FORMAT(pay_period_end, "%Y-%m") as month, SUM(net_pay) as total_net_pay')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month')
+            ->toArray();
+
+        $payrollLabels = [];
+        $payrollData = [];
+        for ($i = 6; $i <= 12; $i++) { // June to December
+            $month = '2025-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $payrollLabels[] = date('M', mktime(0, 0, 0, $i, 10));
+            $payrollData[] = $monthlyPayroll[$month]['total_net_pay'] ?? 0;
+        }
+        for ($i = 1; $i <= 5; $i++) { // January to May
+            $month = '2026-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $payrollLabels[] = date('M', mktime(0, 0, 0, $i, 10));
+            $payrollData[] = $monthlyPayroll[$month]['total_net_pay'] ?? 0;
+        }
+
+        $data['payrollLabels'] = $payrollLabels;
+        $data['payrollData'] = $payrollData;
+
+        // Fetch monthly deduction totals
+        $monthlyDeductions = Payslip::selectRaw('DATE_FORMAT(pay_period_end, "%Y-%m") as month, SUM(deductions) as total_deductions')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month')
+            ->toArray();
+
+        $deductionLabels = [];
+        $deductionData = [];
+        for ($i = 6; $i <= 12; $i++) { // June to December
+            $month = '2025-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $deductionLabels[] = date('M', mktime(0, 0, 0, $i, 10));
+            $deductionData[] = $monthlyDeductions[$month]['total_deductions'] ?? 0;
+        }
+        for ($i = 1; $i <= 5; $i++) { // January to May
+            $month = '2026-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $deductionLabels[] = date('M', mktime(0, 0, 0, $i, 10));
+            $deductionData[] = $monthlyDeductions[$month]['total_deductions'] ?? 0;
+        }
+
+        $data['deductionLabels'] = $deductionLabels;
+        $data['deductionData'] = $deductionData;
+
+        // Combine payroll and deduction labels for consistency
+        $combinedLabels = $payrollLabels; // Assuming payrollLabels and deductionLabels are identical
+        
+        $data['combinedLabels'] = $combinedLabels;
+        $data['payrollData'] = $payrollData; // Keep for the combined chart
+        $data['deductionData'] = $deductionData; // Keep for the combined chart
+
+        // Fetch monthly attendance data
+        $monthlyAttendance = \App\Models\DTRRecord::selectRaw('DATE_FORMAT(date, "%Y-%m") as month, 
+                                                SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present_count,
+                                                SUM(CASE WHEN status = "late" THEN 1 ELSE 0 END) as late_count,
+                                                SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent_count')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month')
+            ->toArray();
+
+        $attendanceLabels = [];
+        $presentData = [];
+        $lateData = [];
+        $absentData = [];
+
+        for ($i = 6; $i <= 12; $i++) { // June to December
+            $month = '2025-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $attendanceLabels[] = date('M', mktime(0, 0, 0, $i, 10));
+            $presentData[] = $monthlyAttendance[$month]['present_count'] ?? 0;
+            $lateData[] = $monthlyAttendance[$month]['late_count'] ?? 0;
+            $absentData[] = $monthlyAttendance[$month]['absent_count'] ?? 0;
+        }
+        for ($i = 1; $i <= 5; $i++) { // January to May
+            $month = '2026-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+            $attendanceLabels[] = date('M', mktime(0, 0, 0, $i, 10));
+            $presentData[] = $monthlyAttendance[$month]['present_count'] ?? 0;
+            $lateData[] = $monthlyAttendance[$month]['late_count'] ?? 0;
+            $absentData[] = $monthlyAttendance[$month]['absent_count'] ?? 0;
+        }
+
+        $data['attendanceLabels'] = $attendanceLabels;
+        $data['presentData'] = $presentData;
+        $data['lateData'] = $lateData;
+        $data['absentData'] = $absentData;
+
         $data['departments'] = $departments; // Pass departments to the view
         $data['selectedDepartmentId'] = $selectedDepartmentId; // Pass selected department ID to the view
 

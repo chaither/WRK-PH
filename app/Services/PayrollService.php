@@ -27,7 +27,7 @@ class PayrollService
      * @param Carbon $payPeriodEnd
      * @return void
      */
-    public function generatePayslipsForPeriod(Carbon $payPeriodStart, Carbon $payPeriodEnd, string $payScheduleFilter = null): void
+    public function generatePayslipsForPeriod(Carbon $payPeriodStart, Carbon $payPeriodEnd, string $payScheduleFilter = null, ?array $departmentIds = null): void
     {
         $payPeriod = PayPeriod::firstOrCreate(
             ['start_date' => $payPeriodStart, 'end_date' => $payPeriodEnd],
@@ -37,6 +37,9 @@ class PayrollService
         $employeesQuery = User::where('role', 'employee');
         if ($payScheduleFilter) {
             $employeesQuery->where('pay_schedule', $payScheduleFilter);
+        }
+        if ($departmentIds !== null) {
+            $employeesQuery->whereIn('department_id', $departmentIds);
         }
 
         $employees = $employeesQuery->get();

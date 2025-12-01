@@ -44,16 +44,16 @@
                         <span>Overtime Pay:</span>
                         <span>₱{{ number_format($payslip->overtime_pay, 2) }}</span>
                     </div>
-                    @if(optional($details)['holiday_working_days']['regular'] > 0)
+                    @if(optional($details)['holiday_working_days']['regular']['count'] > 0)
                     <div class="flex justify-between text-green-700">
-                        <span>Regular Holiday Pay (x{{ optional($details)['holiday_working_days']['regular'] }} days):</span>
-                        <span>₱{{ number_format(optional($details)['holiday_working_days']['regular'] * optional($details)['daily_rate'] * 2, 2) }}</span>
+                        <span>Regular Holiday Pay (x{{ number_format(optional($details)['holiday_working_days']['regular']['count'] ?? 0) }} days):</span>
+                        <span>₱{{ number_format(optional($details)['holiday_working_days']['regular']['count'] ?? 0 * optional($details)['daily_rate'] * 2, 2) }}</span>
                     </div>
                     @endif
-                    @if(optional($details)['holiday_working_days']['special_non_working'] > 0)
+                    @if(optional($details)['holiday_working_days']['special_non_working']['count'] > 0)
                     <div class="flex justify-between text-yellow-700">
-                        <span>Special Non-Working Holiday Pay (x{{ optional($details)['holiday_working_days']['special_non_working'] }} days):</span>
-                        <span>₱{{ number_format(optional($details)['holiday_working_days']['special_non_working'] * optional($details)['daily_rate'] * 1.3, 2) }}</span>
+                        <span>Special Non-Working Holiday Pay (x{{ number_format(optional($details)['holiday_working_days']['special_non_working']['count'] ?? 0) }} days):</span>
+                        <span>₱{{ number_format(optional($details)['holiday_working_days']['special_non_working']['count'] ?? 0 * optional($details)['daily_rate'] * 1.3, 2) }}</span>
                     </div>
                     @endif
                     <div class="flex justify-between font-semibold">

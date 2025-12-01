@@ -66,26 +66,33 @@
 </head>
 <body>
     <div class="container">
-        <h1>Payroll Acknowledgment for Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</h1>
+        {{-- Removed the single grand header --}}
+        {{-- <h1>Payroll Acknowledgment for Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</h1> --}}
 
-        <table class="signature-table">
-            <thead>
-                <tr>
-                    <th class="employee-name-cell">Employee Name</th>
-                    <th class="signature-cell">Signature</th>
-                    <th class="date-cell">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($payrolls as $payslip)
-                    <tr>
-                        <td class="employee-name-cell">{{ $payslip->user->first_name }} {{ $payslip->user->last_name }}</td>
-                        <td class="signature-cell" style="padding-bottom: 5px;"></td> {{-- Space for signature --}}
-                        <td class="date-cell" style="padding-bottom: 5px;"></td> {{-- Space for date --}}
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+        @foreach($groupedPayrolls as $departmentName => $departmentPayslips)
+            <div style="margin-top: 20px; @if(!$loop->first) page-break-before: always; @endif">
+                <h1>Payroll Acknowledgment for {{ $departmentName }} <br> Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</h1>
+
+                <table class="signature-table">
+                    <thead>
+                        <tr>
+                            <th class="employee-name-cell">Employee Name</th>
+                            <th class="signature-cell">Signature</th>
+                            <th class="date-cell">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($departmentPayslips as $payslip)
+                            <tr>
+                                <td class="employee-name-cell">{{ $payslip->user->first_name }} {{ $payslip->user->last_name }}</td>
+                                <td class="signature-cell" style="padding-bottom: 5px;"></td> {{-- Space for signature --}}
+                                <td class="date-cell" style="padding-bottom: 5px;"></td> {{-- Space for date --}}
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endforeach
     </div>
 </body>
 </html>
