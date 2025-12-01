@@ -82,7 +82,7 @@
                                     <i class="fas fa-calendar-day mr-2"></i><span class="sidebar-dropdown-text">Daily Time Record</span>
                                 </a>
                             </li>
-                            @if (Auth::user()->hasRole(['admin', 'hr']))
+                            @if (Auth::user()->isHRManager())
                             <li class="px-2 py-1 transition-colors duration-150 hover:bg-blue-700 hover:text-white {{ request()->routeIs('admin.attendance.change-shift.review') ? 'bg-blue-700' : '' }}">
                                 <a @click="open = false" class="w-full inline-flex items-center" href="{{ route('admin.attendance.change-shift.review') }}">
                                     <i class="fas fa-file-invoice mr-2"></i><span class="sidebar-dropdown-text">Shift Approval</span>
@@ -130,7 +130,7 @@
                 </div>
                 <!-- End Attendance Dropdown -->
 
-                @if(auth()->user()->role === 'admin')
+                @if (Auth::user()->isHRManager())
                 <a href="{{ route('department.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('department.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-building text-xl"></i>
                     <span class="ml-3 sidebar-text">Department</span>
@@ -162,7 +162,7 @@
                     </a>
                 @endif
 
-                @if(in_array(auth()->user()->role, ['admin', 'hr']))
+                @if (Auth::user()->isHRManager())
                 <a href="{{ route('payroll.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('payroll.*') ? 'bg-blue-700' : '' }}">
                     <i class="fas fa-money-bill text-xl"></i>
                     <span class="ml-3 sidebar-text">Payroll</span>

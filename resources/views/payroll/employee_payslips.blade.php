@@ -23,11 +23,10 @@
                     <div class="">
                         <table class="divide-y divide-gray-200 w-full">
                             <thead class="bg-gray-50">
-                                <tr>
+                                <tr class="bg-gray-50">
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pay Period</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Gross Pay</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Deductions</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-extrabold text-indigo-700 uppercase tracking-wider">Net Pay</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Net Pay</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -38,9 +37,18 @@
                                             <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
                                             <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type ?? 'N/A') }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">₱{{ number_format($payslip->gross_pay, 2) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">₱{{ number_format($payslip->deductions, 2) }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-700">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-700">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            @if($payslip->payPeriod->status === 'paid')
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Done Payment
+                                                </span>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Pending
+                                                </span>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                             <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-2 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip" target="_blank">
                                                 <i class="fas fa-eye text-base"></i>
@@ -74,6 +82,18 @@
                                     <p class="flex justify-between items-center"><span class="font-medium text-gray-800">Gross Pay:</span> <span class="text-gray-700">₱{{ number_format($payslip->gross_pay, 2) }}</span></p>
                                     <p class="flex justify-between items-center"><span class="font-medium text-gray-800">Deductions:</span> <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></p>
                                     <p class="flex justify-between items-center text-lg font-bold text-indigo-700"><span>Net Pay:</span> <span>₱{{ number_format($payslip->net_pay, 2) }}</span></p>
+                                    <p class="flex justify-between items-center">
+                                        <span class="font-medium text-gray-800">Status:</span>
+                                        @if($payslip->payPeriod->status === 'paid')
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Done Payment
+                                            </span>
+                                        @else
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                Pending
+                                            </span>
+                                        @endif
+                                    </p>
                                     <div class="pt-3 border-t border-gray-200 flex justify-center">
                                         <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" title="View Payslip" target="_blank">
                                             <i class="fas fa-eye mr-2"></i> View Payslip

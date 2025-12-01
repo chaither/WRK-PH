@@ -73,10 +73,8 @@ class DTRRecord extends Model
         $this->recalculateLateStatus();
 
         $totalWorkHours = $this->calculateWorkHours();
-        $totalOvertimeHours = $this->calculateOvertimeHours($totalWorkHours);
 
         $this->work_hours = $totalWorkHours;
-        $this->overtime_hours = $totalOvertimeHours;
 
         // Additional status check for half-day
         if (!$this->time_in && $this->time_in_2 && $this->time_out_2 && $this->work_hours > 0) {
@@ -103,6 +101,12 @@ class DTRRecord extends Model
             $workMinutes += $this->time_out_2->diffInMinutes($this->time_in_2, true); // Added true for absolute difference
         }
 
+        // Add approved overtime hours to workMinutes
+        // Ensure overtime_hours is not negative when adding
+        if ($this->overtime_hours > 0) {
+            $workMinutes += ($this->overtime_hours * 60);
+        }
+
         \Log::info('DTRRecord ID: ' . $this->id . ' - time_in: ' . ($this->time_in ? $this->time_in->toDateTimeString() : 'NULL'));
         \Log::info('DTRRecord ID: ' . $this->id . ' - time_out: ' . ($this->time_out ? $this->time_out->toDateTimeString() : 'NULL'));
         \Log::info('DTRRecord ID: ' . $this->id . ' - time_in_2: ' . ($this->time_in_2 ? $this->time_in_2->toDateTimeString() : 'NULL'));
@@ -112,16 +116,6 @@ class DTRRecord extends Model
         
 
         return max(0, (float) ($workMinutes / 60));
-    }
-
-    public function calculateOvertimeHours(float $totalWorkHours = 0)
-    {
-        $regularWorkHours = 8; // Assuming 8 regular work hours
-
-        if ($totalWorkHours > $regularWorkHours) {
-            return (float) ($totalWorkHours - $regularWorkHours);
-        }
-        return 0;
     }
 
     public function calculateLateHours()

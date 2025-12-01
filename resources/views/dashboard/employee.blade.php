@@ -79,7 +79,7 @@
             <div class="bg-white rounded-lg shadow-md p-6 h-full">
                 <h2 class="text-lg font-semibold text-gray-700 mb-4">My Absences</h2>
                 @if($absences->count() > 0)
-                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700 max-h-40 overflow-y-auto pr-2">
                         @foreach($absences as $absence)
                             <li>{{ \Illuminate\Support\Carbon::parse($absence->date)->format('M d, Y') }}</li>
                         @endforeach
@@ -160,19 +160,31 @@
                 <table class="min-w-full table-auto">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="px-4 py-2">Pay Period</th>
-                            <th class="px-4 py-2">Net Pay</th>
-                            <th class="px-4 py-2">Actions</th>
+                            <th class="px-4 py-2 text-left">Pay Period</th>
+                            <th class="px-4 py-2 text-right">Net Pay</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                            <th class="px-4 py-2 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($payslips as $payslip)
                             <tr class="border-b">
-                                <td class="px-4 py-2">
+                                <td class="px-4 py-2 text-left">
                                     {{ $payslip->payPeriod->start_date->format('M d, Y') }} - {{ $payslip->payPeriod->end_date->format('M d, Y') }}
                                 </td>
-                                <td class="px-4 py-2">₱{{ number_format($payslip->net_pay, 2) }}</td>
-                                <td class="px-4 py-2">
+                                <td class="px-4 py-2 text-right">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                <td class="px-4 py-2 text-left">
+                                    @if($payslip->payPeriod->status === 'paid')
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Done Payment
+                                        </span>
+                                    @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            Pending
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-2 text-center">
                                     <a href="{{ route('payroll.show-payslip', ['employee' => auth()->id(), 'payPeriod' => $payslip->pay_period_id]) }}" class="text-blue-500 hover:text-blue-700" title="View Payslip">
                                         <i class="fas fa-eye"></i> View
                                     </a>
@@ -180,7 +192,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-4 py-2 text-center text-gray-500">No payslips found</td>
+                                <td colspan="4" class="px-4 py-2 text-center text-gray-500">No payslips found</td>
                             </tr>
                         @endforelse
                     </tbody>

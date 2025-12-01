@@ -130,6 +130,9 @@ class PayrollService
             ->get();
         $presentDays = 0;
         $totalActualWorkHours = 0;
+        $totalApprovedOvertimeHours = 0; // Initialize total approved overtime hours
+        $totalRegularWorkHours = 0; // Initialize total regular work hours for payslip details
+        $totalLateMinutes = 0; // Initialize total late minutes
 
         while ($currentDate->lte($payPeriodEnd)) {
             $dayName = $currentDate->format('l'); // e.g., 'Monday'
@@ -140,12 +143,21 @@ class PayrollService
                 return $dtr->date->toDateString() === $currentDate->toDateString();
             });
 
-            Log::info('Processing date: ' . $currentDate->toDateString() . ', isWorkingDay: ' . ($isWorkingDay ? 'true' : 'false') . ', dtrForDay exists: ' . ($dtrForDay ? 'true' : 'false') . ', time_in: ' . ($dtrForDay && $dtrForDay->time_in ? $dtrForDay->time_in->toDateTimeString() : 'NULL') . ', time_in_2: ' . ($dtrForDay && $dtrForDay->time_in_2 ? $dtrForDay->time_in_2->toDateTimeString() : 'NULL'));
+            Log::info('Processing date: ' . $currentDate->toDateString() . ', isWorkingDay: ' . ($isWorkingDay ? 'true' : 'false') . ', dtrForDay exists: ' . ($dtrForDay ? 'true' : 'false') . ', time_in: ' . ($dtrForDay && $dtrForDay->time_in ? $dtrForDay->time_in->toDateTimeString() : 'NULL') . ', time_in_2: ' . ($dtrForDay && $dtrForDay->time_in_2 ? $dtrForDay->time_in_2->toDateTimeString() : 'NULL') . ', DTR Record Overtime Hours: ' . ($dtrForDay ? $dtrForDay->overtime_hours : 'NULL'));
 
             if ($isWorkingDay) {
                 if ($dtrForDay && ($dtrForDay->time_in || $dtrForDay->time_in_2)) {
                     $presentDays++;
-                    $totalActualWorkHours += $dtrForDay->work_hours; // Accumulate actual work hours
+                    // totalActualWorkHours now explicitly includes regular and approved overtime
+                    $totalActualWorkHours += $dtrForDay->work_hours;
+                    $totalApprovedOvertimeHours += $dtrForDay->overtime_hours; // Accumulate approved overtime hours
+
+                    // Calculate regular work hours for this day and round to 2 decimal places
+                    $dailyRegularWorkHours = round(max(0, $dtrForDay->work_hours - $dtrForDay->overtime_hours), 2);
+                    $totalRegularWorkHours += $dailyRegularWorkHours;
+                    $totalLateMinutes += $dtrForDay->late_minutes; // Accumulate late minutes
+
+                    Log::info('PayrollService: Accumulating Overtime - Date: ' . $currentDate->toDateString() . ', DTR Work Hours: ' . $dtrForDay->work_hours . ', DTR Overtime Hours: ' . $dtrForDay->overtime_hours . ', Daily Regular Work Hours: ' . $dailyRegularWorkHours . ', Total Approved Overtime Hours: ' . $totalApprovedOvertimeHours . ', Total Regular Work Hours: ' . $totalRegularWorkHours . ', Total Actual Work Hours (including OT): ' . $totalActualWorkHours);
 
                     if ($isHoliday) {
                         $holiday = $holidays->get($currentDate->toDateString());
@@ -183,12 +195,25 @@ class PayrollService
             $effectivePeriodSalary = ($effectiveMonthlySalary / $daysInMonth) * $daysInCurrentPayPeriod;
         }
 
-        $dailyRate = ($actualWorkingDaysInPeriod > 0) ? $effectivePeriodSalary / $actualWorkingDaysInPeriod : 0;
-        $hourlyRate = ($dailyRate > 0) ? $dailyRate / $workingHoursPerDay : 0;
+        $dailyRate = ($actualWorkingDaysInPeriod > 0) ? (float)($effectivePeriodSalary / $actualWorkingDaysInPeriod) : 0.00;
+        $hourlyRate = ($dailyRate > 0) ? (float)($dailyRate / $workingHoursPerDay) : 0.00;
 
-        $grossPay = ($totalActualWorkHours * $hourlyRate) +
+        // Overtime rate (e.g., 1.5 times the hourly rate)
+        $overtimeRateMultiplier = $employee->overtime_multiplier ?? 1.5; // Dynamically retrieve from employee or default to 1.5
+        $overtimePay = ($totalApprovedOvertimeHours * $hourlyRate * $overtimeRateMultiplier);
+        Log::info('PayrollService: Total Approved Overtime Hours: ' . $totalApprovedOvertimeHours . ', Overtime Pay: ' . $overtimePay);
+        Log::info('PayrollService: Total Regular Work Hours for Gross Pay: ' . $totalRegularWorkHours);
+        Log::info('PayrollService: Daily Rate: ' . $dailyRate . ', Hourly Rate: ' . $hourlyRate);
+
+        $grossPay = ($totalRegularWorkHours * $hourlyRate) +
                     ($totalHolidayWorkingDays['regular']['count'] * $dailyRate * $totalHolidayWorkingDays['regular']['multiplier']) + // Regular Holiday
-                    ($totalHolidayWorkingDays['special_non_working']['count'] * $dailyRate * $totalHolidayWorkingDays['special_non_working']['multiplier']); // Special Non-Working Holiday
+                    ($totalHolidayWorkingDays['special_non_working']['count'] * $dailyRate * $totalHolidayWorkingDays['special_non_working']['multiplier']) +
+                    $overtimePay; // Add overtime pay to gross pay
+
+        Log::info('PayrollService: Calculated Gross Pay: ' . $grossPay);
+
+        // Calculate Late Deductions
+        $lateDeductions = ($totalLateMinutes / 60) * $hourlyRate; // Convert minutes to hours and multiply by hourly rate
 
         // Calculate Government Contributions
         $sssDeduction = $this->calculateContribution('sss', $effectivePeriodSalary, $governmentContributions, $employee);
@@ -199,7 +224,7 @@ class PayrollService
         $governmentDeductions = $sssDeduction + $philhealthDeduction + $pagibigDeduction;
 
         // Deductions (simplified for now)
-        $deductions = $governmentDeductions; // Start with government deductions
+        $deductions = $governmentDeductions + $lateDeductions; // Add late deductions to total deductions
 
         $netPay = $grossPay - $deductions;
 
@@ -214,12 +239,12 @@ class PayrollService
                 'gross_pay' => round($grossPay, 2),
                 'deductions' => round($deductions, 2),
                 'net_pay' => round($netPay, 2),
-                'overtime_pay' => 0, // Placeholder
-                'late_deductions' => 0, // Placeholder
+                'overtime_pay' => round($overtimePay, 2), // Populate overtime pay
+                'late_deductions' => round($lateDeductions, 2), // Populate late deductions
                 'absences_deductions' => 0, // Placeholder
-                'total_hours_worked' => round($totalActualWorkHours, 2), // Use actual accumulated work hours
-                'overtime_hours' => 0, // Placeholder
-                'late_minutes' => 0, // Placeholder
+                'total_hours_worked' => round($totalActualWorkHours, 2), // Total hours worked (regular + overtime)
+                'overtime_hours' => round($totalApprovedOvertimeHours, 2), // Populate total approved overtime hours
+                'late_minutes' => round($totalLateMinutes, 2), // Populate total late minutes
                 'absent_days' => ($actualWorkingDaysInPeriod - $presentDays), // Calculate absent days
                 'details' => json_encode([
                     'monthly_salary' => $effectiveMonthlySalary,
@@ -240,6 +265,9 @@ class PayrollService
                     'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
                     'hourly_rate_computed' => $hourlyRate,
                     'pay_period_days_count' => $this->getDaysInPayPeriod($payPeriodStart, $payPeriodEnd),
+                    'regular_work_hours' => round($totalRegularWorkHours, 2), // Add regular work hours to details
+                    'late_minutes_total' => round($totalLateMinutes, 2), // Add total late minutes to details
+                    'late_deduction_amount' => round($lateDeductions, 2), // Add late deduction amount to details
                 ]),
             ]
         );

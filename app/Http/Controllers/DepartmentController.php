@@ -8,18 +8,33 @@ use App\Models\Department;
 use App\Models\User;
 use App\Models\Shift; // Add this line
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth; // Add this line
 
 class DepartmentController extends Controller
 {
     public function index()
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view departments.');
+        }
         $departments = Department::all();
         $shifts = Shift::all(); // Fetch all shifts
         return view('department.index', compact('departments', 'shifts')); // Pass shifts to the view
     }
 
+    public function create()
+    {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to create departments.');
+        }
+        return view('departments.create');
+    }
+
     public function store(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to create departments.');
+        }
         $request->validate([
             'name' => 'required|unique:departments|max:255',
         ]);
@@ -35,9 +50,20 @@ class DepartmentController extends Controller
         return redirect()->route('department.index')->with('success', 'Department created successfully.');
     }
 
+    public function show(Department $department)
+    {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view departments.');
+        }
+        return view('departments.show', compact('department'));
+    }
+
     public function showEmployees(Department $department)
     {
-        $employees = $department->employees()->get(); // Ensure to eager load or explicitly get employees
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view employees in departments.');
+        }
+        $employees = $department->users()->where('role', 'employee')->get();
         $availableEmployees = User::whereDoesntHave('department')
                                   ->orWhereNull('department_id')
                                   ->where('role', 'employee')
@@ -50,6 +76,9 @@ class DepartmentController extends Controller
 
     public function addEmployeeToDepartment(Request $request, Department $department)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to add employees to departments.');
+        }
         $request->validate([
             'employee_id' => 'required|exists:users,id',
         ]);
@@ -67,6 +96,9 @@ class DepartmentController extends Controller
 
     public function addEmployee(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to add employees.');
+        }
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -103,6 +135,9 @@ class DepartmentController extends Controller
 
     public function removeEmployeeFromDepartment(Department $department, User $employee)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to remove employees from departments.');
+        }
         if ($employee->department_id === $department->id) {
             $employee->delete(); // Changed to delete the employee
             return redirect()->route('employees.index')->with('success', 'Employee account permanently deleted.');
@@ -113,6 +148,9 @@ class DepartmentController extends Controller
 
     public function removeEmployee(Department $department, User $employee)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to remove employees.');
+        }
         $employee->department_id = null;
         $employee->save();
         return redirect()->route('department.show_employees', $department->id)->with('success', 'Employee removed from department successfully.');
@@ -120,6 +158,9 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to edit departments.');
+        }
         // This method is typically used to show an edit form.
         // With modals, we're populating the form via JavaScript,
         // so this method might not be directly called for the modal itself,
@@ -129,6 +170,9 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to update departments.');
+        }
         $request->validate([
             'name' => 'required|unique:departments,name,' . $department->id . '|max:255',
         ]);
@@ -148,6 +192,9 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to delete departments.');
+        }
         $department->delete();
 
         return redirect()->route('department.index')->with('success', 'Department deleted successfully.');

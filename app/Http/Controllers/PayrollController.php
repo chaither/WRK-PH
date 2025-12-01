@@ -38,6 +38,10 @@ class PayrollController extends Controller
 
     public function index(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view payroll.');
+        }
+
         $payPeriods = PayPeriod::orderBy('end_date', 'desc')->get();
         $today = Carbon::today();
         $start = $request->input('start_date', $today->copy()->startOfMonth()->format('Y-m-d'));
@@ -112,11 +116,18 @@ class PayrollController extends Controller
 
         $departments = \App\Models\Department::all(); // Fetch all departments
 
-        return view('payroll.index', compact('payPeriods', 'currentPeriod', 'payrolls', 'totalEmployees', 'totalGrossPay', 'totalDeductions', 'totalNetPay', 'start', 'end', 'departments', 'groupedPayslips', 'isGroupedByDepartment'));
+        // Fetch a global overtime multiplier (e.g., from the first employee, since it's global)
+        $globalOvertimeMultiplier = User::where('role', 'employee')->first()->overtime_multiplier ?? 1.5;
+
+        return view('payroll.index', compact('payPeriods', 'currentPeriod', 'payrolls', 'totalEmployees', 'totalGrossPay', 'totalDeductions', 'totalNetPay', 'start', 'end', 'departments', 'groupedPayslips', 'isGroupedByDepartment', 'globalOvertimeMultiplier'));
     }
 
     public function createPayPeriod(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
+        }
+
         $validated = $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -128,6 +139,10 @@ class PayrollController extends Controller
 
     public function generatePayslips(PayPeriod $payPeriod)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
+        }
+
         // Call the PayrollService to generate payslips
         // Determine pay schedule filter based on the pay period duration
         $payScheduleFilter = null;
@@ -150,6 +165,10 @@ class PayrollController extends Controller
     // Generate for arbitrary date range submitted from the UI
     public function generateForRange(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
+        }
+
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -258,7 +277,7 @@ class PayrollController extends Controller
 
     public function downloadPdf(Request $request)
     {
-        if (!Auth::user()->hasRole(['admin', 'hr'])) {
+        if (!Auth::user()->isHRManager()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -323,5 +342,24 @@ class PayrollController extends Controller
         $pdf = Pdf::loadHtml($combinedHtml)->setPaper('a4', 'landscape');
         
         return $pdf->download('payroll_report_' . $start . '_' . $end . '.pdf');
+    }
+
+    public function updateGlobalOvertimeMultiplier(Request $request)
+    {
+        $request->validate([
+            'overtime_multiplier' => 'required|numeric|min:0.1',
+        ]);
+
+        // Ensure only HR/Admin can update the multiplier
+        if (!Auth::user()->isHRManager()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $newMultiplier = $request->input('overtime_multiplier');
+
+        // Update all employees' overtime_multiplier
+        User::where('role', 'employee')->update(['overtime_multiplier' => $newMultiplier]);
+
+        return redirect()->back()->with('success', 'Global overtime multiplier updated successfully for all employees.');
     }
 }

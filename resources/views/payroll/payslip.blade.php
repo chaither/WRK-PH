@@ -3,8 +3,76 @@
 @section('title', 'Payslip')
 
 @section('content')
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .bg-white, .bg-white * {
+            visibility: visible;
+        }
+        .bg-white {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            box-shadow: none;
+            border-radius: 0;
+        }
+        .flex.justify-between.items-center.mb-6 {
+            display: block;
+            text-align: center;
+        }
+        .flex.justify-between.items-center.mb-6 button {
+            display: none;
+        }
+        .header-print {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .header-print .logo {
+            text-align: center;
+            margin-right: 20px;
+        }
+        .header-print .logo img {
+            max-width: 80px;
+            height: auto;
+        }
+        .header-print .report-info {
+            text-align: center;
+        }
+        .header-print h1 {
+            font-size: 22px;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .header-print p {
+            font-size: 12px;
+            margin: 3px 0;
+            color: #555;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+<div class="header-print no-print">
+    <div class="logo">
+        <img src="{{ public_path('limehills.png') }}" alt="Company Logo">
+    </div>
+    <div class="report-info">
+        <h1>Payslip</h1>
+        <p>For Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</p>
+    </div>
+</div>
 <div class="bg-white rounded-lg shadow-md p-6">
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex justify-between items-center mb-6 no-print">
         <h1 class="text-2xl font-bold">Payslip</h1>
         <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             Print Payslip
@@ -58,7 +126,7 @@
                     @endif
                     <div class="flex justify-between font-semibold">
                         <span>Total Gross Pay:</span>
-                        <span>₱{{ number_format($payslip->gross_pay, 2) }}</span>
+                        <span>₱{{ number_format($payslip->gross_pay + $payslip->overtime_pay + (optional($details)['holiday_working_days']['regular']['count'] ?? 0 * optional($details)['daily_rate'] * 2) + (optional($details)['holiday_working_days']['special_non_working']['count'] ?? 0 * optional($details)['daily_rate'] * 1.3), 2) }}</span>
                     </div>
                 </div>
             </div>

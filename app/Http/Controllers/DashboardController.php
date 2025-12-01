@@ -9,6 +9,7 @@ use App\Models\Payslip;
 use App\Models\Department;
 use App\Models\Absence;
 use App\Models\Notification;
+use App\Models\OvertimeRequest;
 use App\Services\PayrollService;
 use Carbon\Carbon;
 
@@ -36,8 +37,14 @@ class DashboardController extends Controller
             $employeeQuery->where('department_id', $selectedDepartmentId);
         }
 
-        if ($user && $user->role === 'admin') {
+        if ($user && $user->isHRManager()) {
             $data['employeeCount'] = $employeeQuery->count();
+        }
+
+        if ($user && $user->isHRManager()) {
+            $data['pendingLeaveRequests'] = \App\Models\LeaveRequest::where('status', 'pending')->count();
+            $data['pendingNotifications'] = Notification::whereNull('read_at')->count();
+            $data['pendingOvertimeRequests'] = OvertimeRequest::where('status', 'pending')->count();
         }
 
         if ($user && in_array($user->role, ['admin', 'hr'])) {
