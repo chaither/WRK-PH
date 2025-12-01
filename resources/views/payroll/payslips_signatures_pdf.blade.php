@@ -8,12 +8,12 @@
             font-family: 'DejaVu Sans', sans-serif;
             margin: 0;
             padding: 0;
-            page-break-before: always; 
+            page-break-before: always;
         }
         .container {
-            margin: 10px auto; 
-            padding: 15px; 
-            width: 95%;
+            margin: 5px auto; /* Reduced margin */
+            padding: 10px; /* Reduced padding */
+            width: 98%; /* Increased width */
             max-width: 1100px;
             background: #fff;
             border: 1px solid #ddd;
@@ -21,22 +21,21 @@
             border-radius: 8px;
         }
         h1 {
-            text-align: center;
+            font-size: 18px; /* Reduced heading size */
             color: #2c3e50;
-            font-size: 22px; 
-            margin-bottom: 40px; 
+            margin: 0;
         }
-        
+
         .signature-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 30px;
+            margin-top: 15px;
         }
         .signature-table th, .signature-table td {
             border: 1px solid #e0e0e0;
-            padding: 12px 10px; 
+            padding: 8px; /* Reduced padding */
             text-align: left;
-            font-size: 12px; 
+            font-size: 10px; /* Reduced font size */
         }
         .signature-table th {
             background-color: #f8f8f8;
@@ -46,10 +45,11 @@
         .employee-name-cell {
             width: 25%; /* Adjust width for full name */
             text-align: left;
+            font-size: 10px;
         }
         .signature-cell {
             width: 35%; 
-            height: 40px; 
+            height: 20px; /* Reduced height */
             vertical-align: bottom;
             border-bottom: 1px solid #000;
             padding-left: 0;
@@ -61,6 +61,7 @@
             border-bottom: 1px solid #000;
             padding-left: 0;
             padding-right: 0;
+            font-size: 10px;
         }
     </style>
 </head>
@@ -70,7 +71,7 @@
         {{-- <h1>Payroll Acknowledgment for Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</h1> --}}
 
         @foreach($groupedPayrolls as $departmentName => $departmentPayslips)
-            <div style="margin-top: 20px; @if(!$loop->first) page-break-before: always; @endif">
+            <div style="margin-top: 10px; @if(!$loop->first) page-break-before: always; @endif">
                 <h1>Payroll Acknowledgment for {{ $departmentName }} <br> Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</h1>
 
                 <table class="signature-table">

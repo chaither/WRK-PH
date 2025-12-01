@@ -106,6 +106,11 @@ Route::prefix('payroll')->name('payroll.')->group(function() {
     Route::put('/payslips/{payslip}/deductions', [PayrollController::class, 'updateDeductions'])->name('payslips.update-deductions');
 });
 
+// Admin Payroll Routes
+Route::prefix('admin/payroll')->name('admin.payroll.')->middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    Route::put('/global-overtime-multiplier', [PayrollController::class, 'updateGlobalOvertimeMultiplier'])->name('update-global-overtime-multiplier');
+});
+
 // Leave Management Routes
 Route::get('/leave-management', [LeaveController::class, 'index'])->name('leave.index');
 Route::post('/leave-management/update-balance/{user}', [LeaveController::class, 'updateLeaveBalance'])->name('leave.updateBalance');

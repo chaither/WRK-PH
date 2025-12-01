@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->boolean('is_admin')->default(false);
             $table->rememberToken();
+            $table->decimal('overtime_multiplier', 4, 2)->default(1.5)->after('is_admin');
             $table->timestamps();
         });
 
@@ -46,5 +47,8 @@ return new class extends Migration
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('overtime_multiplier');
+        });
     }
 };

@@ -11,9 +11,9 @@
         }
 
         .container {
-            margin: 10px auto; 
-            padding: 15px; 
-            width: 95%;
+            margin: 5px auto; /* Reduced margin */
+            padding: 10px; /* Reduced padding */
+            width: 98%; /* Increased width */
             max-width: 1100px;
             background: #fff;
             border: 1px solid #ddd;
@@ -26,8 +26,8 @@
             display: flex;
             justify-content: center; 
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 15px; /* Reduced margin */
+            padding-bottom: 10px; /* Reduced padding */
             border-bottom: 2px solid #eee;
         }
 
@@ -37,7 +37,7 @@
         }
 
         .header .logo img {
-            max-width: 80px; 
+            max-width: 60px; /* Reduced logo size */
             height: auto;
         }
 
@@ -46,14 +46,14 @@
         }
 
         .header h1 {
-            font-size: 22px; 
+            font-size: 18px; /* Reduced heading size */
             color: #2c3e50;
             margin: 0;
         }
 
         .header p {
-            font-size: 12px; 
-            margin: 3px 0;
+            font-size: 10px; /* Reduced paragraph size */
+            margin: 2px 0;
             color: #555;
         }
 
@@ -65,9 +65,9 @@
 
         th, td {
             border: 1px solid #e0e0e0;
-            padding: 10px;
+            padding: 8px; /* Reduced padding */
             text-align: left;
-            font-size: 12px; 
+            font-size: 10px; /* Reduced font size */
             word-wrap: break-word;
         }
 
@@ -79,8 +79,8 @@
 
         .total-section {
             text-align: right;
-            margin-top: 30px;
-            padding-top: 20px;
+            margin-top: 20px; /* Reduced margin */
+            padding-top: 15px; /* Reduced padding */
             border-top: 1px solid #eee;
         }
 
@@ -110,7 +110,7 @@
         </div> --}}
 
         @forelse($groupedPayrolls as $departmentName => $departmentPayslips)
-            <div style="margin-bottom: 30px; @if(!$loop->first) page-break-before: always; @endif">
+            <div style="margin-bottom: 15px; @if(!$loop->first) page-break-before: always; @endif"> 
                 <div class="header">
                     <div class="logo">
                         <img src="{{ public_path('limehills.png') }}" alt="Company Logo">
@@ -120,7 +120,7 @@
                         <p>For Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</p>
                     </div>
                 </div>
-                <h2>Department: {{ $departmentName }}</h2>
+                <h2 style="font-size: 14px; margin-bottom: 10px;">Department: {{ $departmentName }}</h2> 
                 <table>
                     <thead>
                         <tr>
@@ -131,7 +131,6 @@
                             <th>SSS</th>
                             <th>Pag-IBIG</th>
                             <th>PhilHealth</th>
-                            <th>Other Deductions</th>
                             <th>Total Deductions</th>
                             <th>Net Pay</th>
                         </tr>
@@ -148,26 +147,25 @@
                                 $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
                                 $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
                                 $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
-                                $otherDetails = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+                                // $otherDetails = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
 
                                 // If the total deductions were manually updated (and stored in payslip->deductions),
                                 // show the remainder as "Other Deductions" so the PDF reflects what was actually deducted.
-                                $componentsSum = $sss + $phil + $pagibig + $otherDetails;
+                                // $componentsSum = $sss + $phil + $pagibig + $otherDetails;
                                 $totalDeductions = $payslip->deductions ?? 0;
-                                $manualRemainder = max(0, $totalDeductions - $componentsSum);
-                                $otherShown = $otherDetails + $manualRemainder;
+                                // $manualRemainder = max(0, $totalDeductions - $componentsSum);
+                                // $otherShown = $otherDetails + $manualRemainder;
                             @endphp
 
                             <td>₱{{ number_format($sss, 2) }}</td>
                             <td>₱{{ number_format($pagibig, 2) }}</td>
                             <td>₱{{ number_format($phil, 2) }}</td>
-                            <td>₱{{ number_format($otherShown, 2) }}</td>
                             <td>₱{{ number_format($totalDeductions, 2) }}</td>
                             <td>₱{{ number_format($payslip->net_pay ?? 0, 2) }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="text-center">No payroll records found for this department.</td>
+                            <td colspan="9" class="text-center">No payroll records found for this department.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -189,14 +187,13 @@
                         <th>SSS</th>
                         <th>Pag-IBIG</th>
                         <th>PhilHealth</th>
-                        <th>Other Deductions</th>
                         <th>Total Deductions</th>
                         <th>Net Pay</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="10" class="text-center">No payroll records found for the selected period.</td>
+                        <td colspan="9" class="text-center">No payroll records found for the selected period.</td>
                     </tr>
                 </tbody>
             </table>

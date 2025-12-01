@@ -64,6 +64,8 @@
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 1</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time In 2</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 2</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time In</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time Out</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Work Hours</th>
                     </tr>
@@ -89,6 +91,12 @@
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
                                 {{ $dtrRecord->time_out_2 ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out_2)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_out_2)->format('h:i A') : '-' }}
                             </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                                {{ $dtrRecord->overtime_time_in ? \Carbon\Carbon::parse($dtrRecord->overtime_time_in)->format('h:i A') : '-' }}
+                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                                {{ $dtrRecord->overtime_time_out ? \Carbon\Carbon::parse($dtrRecord->overtime_time_out)->format('h:i A') : '-' }}
+                            </td>
                             <td class="px-4 py-2 whitespace-nowrap text-center">
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold capitalize
                                     {{ $dtrRecord->status === 'present' ? 'bg-green-100 text-green-800' : '' }}
@@ -104,7 +112,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-4 text-center text-base text-gray-500 bg-white">
+                            <td colspan="9" class="px-4 py-4 text-center text-base text-gray-500 bg-white">
                                 <i class="fas fa-users-slash mr-2"></i> No employees found.
                             </td>
                         </tr>

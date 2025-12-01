@@ -12,8 +12,8 @@ class LeaveController extends Controller
 {
     public function index()
     {
-        if (!Auth::user()->hasRole(['admin', 'hr'])) {
-            abort(403, 'Unauthorized access.');
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to manage leave requests.');
         }
 
         $employees = User::where('role', 'employee')
@@ -25,8 +25,8 @@ class LeaveController extends Controller
 
     public function updateLeaveBalance(Request $request, User $user)
     {
-        if (!Auth::user()->hasRole(['admin', 'hr'])) {
-            abort(403, 'Unauthorized access.');
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to manage leave requests.');
         }
 
         $request->validate([
@@ -88,8 +88,8 @@ class LeaveController extends Controller
     {
         // Ensure only admin/hr can view this or the employee themselves
         $user = Auth::user();
-        if (!$user->hasRole(['admin', 'hr']) && $user->id !== $leaveRequest->user_id) {
-            abort(403, 'Unauthorized access.');
+        if (!$user->isHRManager() && $user->id !== $leaveRequest->user_id) {
+            return redirect()->route('leave.index')->with('error', 'You are not authorized to approve/reject this leave request.');
         }
 
         $pdf = Pdf::loadView('leave.reason_pdf', compact('leaveRequest'));
@@ -100,8 +100,8 @@ class LeaveController extends Controller
     // HR/Admin leave request review methods
     public function reviewLeaveRequests()
     {
-        if (!Auth::user()->hasRole(['admin', 'hr'])) {
-            abort(403, 'Unauthorized access.');
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to manage leave requests.');
         }
 
         $leaveRequests = LeaveRequest::with('user')->orderByDesc('created_at')->get();
@@ -110,8 +110,8 @@ class LeaveController extends Controller
 
     public function approveLeaveRequest(LeaveRequest $leaveRequest)
     {
-        if (!Auth::user()->hasRole(['admin', 'hr'])) {
-            abort(403, 'Unauthorized access.');
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to manage leave requests.');
         }
 
         $leaveRequest->status = 'approved';
@@ -134,8 +134,8 @@ class LeaveController extends Controller
 
     public function rejectLeaveRequest(LeaveRequest $leaveRequest)
     {
-        if (!Auth::user()->hasRole(['admin', 'hr'])) {
-            abort(403, 'Unauthorized access.');
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to manage leave requests.');
         }
 
         $leaveRequest->status = 'rejected';

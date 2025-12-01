@@ -20,6 +20,10 @@ class EmployeeController extends Controller
 
     public function index(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view employees.');
+        }
+
         // Removed redundant role check, now handled by route middleware.
 
         $query = User::query()->where('role', 'employee');
@@ -36,6 +40,9 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to create employees.');
+        }
         // Removed redundant role check, now handled by route middleware.
 
         // Sanitize salary inputs to accept comma-separated or currency-formatted values
@@ -156,6 +163,9 @@ class EmployeeController extends Controller
 
     public function update(Request $request, User $employee)
     {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to update employee information.');
+        }
         // Removed redundant role check, now handled by route middleware.
 
         // Sanitize salary inputs to accept comma-separated or currency-formatted values
@@ -397,11 +407,11 @@ class EmployeeController extends Controller
 
     public function destroy(User $employee)
     {
-        // Removed redundant role check, now handled by route middleware.
-
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to delete employees.');
+        }
         $employee->delete();
-
-        return redirect()->route('employees.index')->with('success', 'Employee deleted successfully');
+        return redirect()->route('employees.index')->with('success', 'Employee account permanently deleted.');
     }
 
     /**

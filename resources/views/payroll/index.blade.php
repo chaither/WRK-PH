@@ -87,6 +87,11 @@
                 <button type="button" onclick="openGovernmentContributionModal()" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center">
                     <i class="fas fa-hands-helping mr-1"></i> Manage Govt. Contributions
                 </button>
+                {{-- New Global Overtime Multiplier Button --}}
+                <button type="button" onclick="openOvertimeMultiplierModal(window.globalOvertimeMultiplier)" class="w-full sm:flex-1 bg-blue-500 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-blue-600 transition duration-150 shadow-sm flex items-center justify-center">
+                    <i class="fas fa-hourglass-half mr-1"></i> Set Global Overtime Multiplier
+                </button>
+                
                 <button type="button" onclick="openPayrollScheduleModal()" class="w-full sm:flex-1 bg-purple-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-purple-700 transition duration-150 shadow-sm flex items-center justify-center">
                     <i class="fas fa-calendar-alt mr-1"></i> Manage Payroll Schedules
                 </button>
@@ -103,7 +108,7 @@
 
                 {{-- Download PDF Button --}}
                 @if(!empty($period) && ($payrolls->count() ?? 0) > 0)
-                    <button type="button" onclick="downloadPayrollPdf('{{ $start }}', '{{ $end }}')" class="w-full sm:flex-1 bg-red-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center" @if ($period && $period->status === 'paid') disabled @endif>
+                    <button type="button" onclick="window.downloadPayrollPdf('{{ $start }}', '{{ $end }}')" class="w-full sm:flex-1 bg-red-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center" @if ($period && $period->status === 'paid') disabled @endif>
                         <i class="fas fa-file-pdf mr-2"></i> Download PDF
                     </button>
                 @endif
@@ -132,7 +137,9 @@
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
-                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -156,34 +163,16 @@
                                                 <span>{{ $payslip->user->name }}</span>
                                                 <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
                                                     <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
-                                                    <p><span class="font-medium">Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Regular Work Hours:</span> {{ round($details['regular_work_hours'] ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Overtime Hours:</span> {{ round($payslip->overtime_hours ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Total Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
                                                     <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
                                                     <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
-                                                    <p><span class="font-medium">Deductions:</span>
-                                                        @if($componentsTotal > 0)
-                                                            @if($sss > 0)
-                                                                <div class="text-xs text-gray-700">SSS: <span class="text-red-600">₱{{ number_format($sss, 2) }}</span></div>
-                                                            @endif
-                                                            @if($phil > 0)
-                                                                <div class="text-xs text-gray-700">PhilHealth: <span class="text-red-600">₱{{ number_format($phil, 2) }}</span></div>
-                                                            @endif
-                                                            @if($pagibig > 0)
-                                                                <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
-                                                            @endif
-                                                            @if($other > 0)
-                                                                <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
-                                                            @endif
-                                                            <div class="text-xs font-semibold mt-1">Total: <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span></div>
-                                                        @else
-                                                            <span class="text-red-600">₱{{ number_format($payslip->deductions, 2) }}</span>
-                                                        @endif
-                                                    </p>
-                                                    <p class="font-bold mt-2">Net Pay: ₱{{ number_format($payslip->net_pay, 2) }}</p>
                                                     <div class="flex flex-col sm:flex-row justify-end mt-3 gap-2">
                                                         <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="View Payslip">
                                                             <i class="fas fa-eye text-base mr-1"></i> View Payslip
                                                         </a>
-                                                        <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                                        <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150 w-full sm:w-auto" title="Set Deductions" @if($period && $period->status === 'paid') disabled @endif>
                                                             <i class="fas fa-coins text-base mr-1"></i> Set Deductions
                                                         </button>
                                                     </div>
@@ -192,6 +181,8 @@
                                         </td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->user->department->name ?? 'N/A' }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($details['regular_work_hours'] ?? 0, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->overtime_hours ?? 0, 2) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
@@ -206,6 +197,9 @@
                                                 @if($pagibig > 0)
                                                     <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
                                                 @endif
+                                                @if($details['late_deduction_amount'] ?? 0 > 0)
+                                                    <div class="text-xs text-gray-700">Late: <span class="text-red-600">₱{{ number_format($details['late_deduction_amount'], 2) }}</span></div>
+                                                @endif
                                                 @if($other > 0)
                                                     <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
                                                 @endif
@@ -219,14 +213,14 @@
                                             <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
                                                 <i class="fas fa-eye text-base"></i>
                                             </a>
-                                            <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                            <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" @if ($period && $period->status === 'paid') disabled @endif>
                                                 <i class="fas fa-coins text-base"></i>
                                             </button>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                        <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                             <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for this department.
                                         </td>
                                     </tr>
@@ -243,7 +237,9 @@
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -253,7 +249,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             <tr>
-                                <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                     <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                                 </td>
                             </tr>
@@ -271,7 +267,9 @@
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -295,7 +293,9 @@
                                             <span>{{ $payslip->user->name }}</span>
                                             <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
                                                 <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
-                                                <p><span class="font-medium">Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Regular Work Hours:</span> {{ round($details['regular_work_hours'] ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Overtime Hours:</span> {{ round($payslip->overtime_hours ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Total Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
                                                 <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
                                                 <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
                                             </div>
@@ -303,6 +303,8 @@
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->user->department->name ?? 'N/A' }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($details['regular_work_hours'] ?? 0, 2) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->overtime_hours ?? 0, 2) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
@@ -318,6 +320,9 @@
                                                 @if($pagibig > 0)
                                                     <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
                                                 @endif
+                                                @if($details['late_deduction_amount'] ?? 0 > 0)
+                                                    <div class="text-xs text-gray-700">Late: <span class="text-red-600">₱{{ number_format($details['late_deduction_amount'], 2) }}</span></div>
+                                                @endif
                                                 @if($other > 0)
                                                     <div class="text-xs text-gray-700">Other: <span class="text-red-600">₱{{ number_format($other, 2) }}</span></div>
                                                 @endif
@@ -327,21 +332,19 @@
                                             @endif
                                         </p>
                                     </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">
-                                        <p><span class="font-medium sm:hidden">Net Pay:</span> ₱{{ number_format($payslip->net_pay, 2) }}</p>
-                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 hidden sm:table-cell">₱{{ number_format($payslip->net_pay, 2) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-center hidden sm:table-cell">
                                         <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payslip->pay_period_id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="View Payslip">
                                             <i class="fas fa-eye text-base"></i>
                                         </a>
-                                        <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" {{ $period && $period->status === 'paid' ? 'disabled' : '' }}>
+                                        <button onclick="openEditDeductionsModal('{{ $payslip->id }}', '{{ $payslip->deductions }}')" class="text-red-600 hover:text-red-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition duration-150" title="Set Deductions" @if ($period && $period->status === 'paid') disabled @endif>
                                             <i class="fas fa-coins text-base"></i>
                                         </button>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                    <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                         <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                                     </td>
                                 </tr>
@@ -358,7 +361,9 @@
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Department</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Days</th>
-                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -368,7 +373,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             <tr>
-                                <td colspan="9" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                     <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                                 </td>
                             </tr>
@@ -388,6 +393,8 @@
 @include('components.payroll_schedule_modal')
 @include('components.government_contribution_modal')
 @include('components.generate_payroll_modal')
+@include('components.overtime_multiplier_modal') <!-- Include the new modal component -->
+<input type="hidden" id="globalOvertimeMultiplierData" value="{{ $globalOvertimeMultiplier ?? '1.5' }}">
 <div id="editDeductionsModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-2"> {{-- Reduced overall padding --}}
     <div class="bg-white rounded-xl shadow-2xl p-4 max-w-xs sm:max-w-2xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100"> {{-- Reduced max-width and padding --}}
         <div class="flex justify-between items-center mb-3 border-b pb-2"> {{-- Reduced margin and padding --}}
@@ -425,37 +432,5 @@
 @endpush
 
 @push('scripts')
-<script>
-    // Existing script remains the same for functionality
-    function openEditDeductionsModal(payslipId, totalDeductions) {
-        document.getElementById('edit_deductions_payslip_id').value = payslipId;
-        document.getElementById('deductions_amount').value = totalDeductions;
-
-        const form = document.getElementById('editDeductionsForm');
-        form.action = "{{ route('payroll.payslips.update-deductions', '_PAYSLIP_ID_') }}".replace('_PAYSLIP_ID_', payslipId);
-
-        document.getElementById('editDeductionsModal').classList.remove('hidden');
-        document.getElementById('editDeductionsModal').classList.add('flex');
-    }
-
-    function closeEditDeductionsModal() {
-        document.getElementById('editDeductionsModal').classList.add('hidden');
-        document.getElementById('editDeductionsModal').classList.remove('flex');
-    }
-
-    function downloadPayrollPdf(startDate, endDate) {
-        const departmentCheckboxes = document.querySelectorAll('#generatePayrollModal .department-checkbox:checked');
-        const selectedDepartmentIds = Array.from(departmentCheckboxes).map(cb => cb.value);
-
-        let url = `{{ route('payroll.download_pdf') }}?start_date=${startDate}&end_date=${endDate}`;
-
-        if (selectedDepartmentIds.length > 0) {
-            selectedDepartmentIds.forEach(id => {
-                url += `&department_ids[]=${id}`;
-            });
-        }
-
-        window.open(url, '_blank');
-    }
-</script>
+    @vite(['resources/js/payroll.js'])
 @endpush
