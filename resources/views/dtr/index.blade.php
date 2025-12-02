@@ -127,7 +127,7 @@
     </div>
 </div>
 <!-- Modal for camera preview and capture -->
-<div id="faceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+<div id="faceModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-4 w-full max-w-lg">
         <div class="flex justify-between items-center mb-2">
             <h3 class="text-lg font-semibold">Face Verification</h3>
