@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->boolean('is_admin')->default(false);
             $table->rememberToken();
-            $table->decimal('overtime_multiplier', 4, 2)->default(1.5)->after('is_admin');
+            $table->decimal('overtime_multiplier', 4, 2)->default(1.5);
             $table->timestamps();
         });
 
