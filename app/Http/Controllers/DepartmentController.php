@@ -63,10 +63,10 @@ class DepartmentController extends Controller
         if (!Auth::user()->isHRManager()) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to view employees in departments.');
         }
-        $employees = $department->employees()->where('role', 'employee')->get();
+        $employees = $department->employees()->get(); // Removed ->where('role', 'employee')
         $availableEmployees = User::whereDoesntHave('department')
                                   ->orWhereNull('department_id')
-                                  ->where('role', 'employee')
+                                  // ->where('role', 'employee') // Removed role filter
                                   ->get();
                                   
         $departments = Department::all(); // Fetch all departments

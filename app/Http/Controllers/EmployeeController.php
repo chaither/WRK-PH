@@ -71,6 +71,7 @@ class EmployeeController extends Controller
             'rest_days' => 'nullable|array', // Add rest_days validation
             'department_id' => 'nullable|exists:departments,id',
             'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
+            'role' => 'required|in:employee,hr,admin', // Add role validation
         ]);
 
         // Handle password separately: only hash if provided
@@ -114,7 +115,8 @@ class EmployeeController extends Controller
         $validated['daily_rate'] = round($dailyRate, 2);
         $validated['hourly_rate'] = round($hourlyRate, 2);
 
-        $validated['role'] = 'employee';
+        // The role is now directly taken from the validated input
+        // $validated['role'] = 'employee'; // Removed hardcoded role
         $validated['working_days'] = $request->input('working_days', []);
         $validated['rest_days'] = $request->input('rest_days', []); // Save rest_days
         
