@@ -140,6 +140,7 @@
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Late Minutes/Hours</th> {{-- New Column --}}
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                     <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -163,9 +164,10 @@
                                                 <span>{{ $payslip->user->name }}</span>
                                                 <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
                                                     <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
-                                                    <p><span class="font-medium">Regular Work Hours:</span> {{ round($details['regular_work_hours'] ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Regular Work Hours:</span> {{ round($details['regular_work_hours'] ?? 0, 0) }}</p>
                                                     <p><span class="font-medium">Overtime Hours:</span> {{ round($payslip->overtime_hours ?? 0, 2) }}</p>
-                                                    <p><span class="font-medium">Total Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                                    <p><span class="font-medium">Total Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 0) }}</p>
+                                                    <p><span class="font-medium">Total Late Minutes/Hours:</span> {{ floor(($payslip->late_minutes ?? 0) / 60) }} hrs ({{ floor($payslip->late_minutes ?? 0) }} mins)</p> {{-- New row for mobile --}}
                                                     <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
                                                     <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
                                                     <div class="flex flex-col sm:flex-row justify-end mt-3 gap-2">
@@ -181,9 +183,10 @@
                                         </td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->user->department->name ?? 'N/A' }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($details['regular_work_hours'] ?? 0, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($details['regular_work_hours'] ?? 0, 0) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->overtime_hours ?? 0, 2) }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 0) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ floor(($payslip->late_minutes ?? 0) / 60) }} hrs ({{ floor($payslip->late_minutes ?? 0) }} mins)</td> {{-- New Data Cell --}}
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm hidden sm:table-cell">
@@ -220,7 +223,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                        <td colspan="12" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                             <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for this department.
                                         </td>
                                     </tr>
@@ -240,6 +243,7 @@
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Late Minutes/Hours</th> {{-- New Column --}}
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -249,7 +253,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             <tr>
-                                <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                <td colspan="12" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                     <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                                 </td>
                             </tr>
@@ -270,6 +274,7 @@
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Late Minutes/Hours</th> {{-- New Column --}}
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -293,9 +298,10 @@
                                             <span>{{ $payslip->user->name }}</span>
                                             <div class="sm:hidden text-xs text-gray-700 mt-1 space-y-1">
                                                 <p><span class="font-medium">Work Days:</span> {{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</p>
-                                                <p><span class="font-medium">Regular Work Hours:</span> {{ round($details['regular_work_hours'] ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Regular Work Hours:</span> {{ round($details['regular_work_hours'] ?? 0, 0) }}</p>
                                                 <p><span class="font-medium">Overtime Hours:</span> {{ round($payslip->overtime_hours ?? 0, 2) }}</p>
-                                                <p><span class="font-medium">Total Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 2) }}</p>
+                                                <p><span class="font-medium">Total Work Hours:</span> {{ round($payslip->total_hours_worked ?? 0, 0) }}</p>
+                                                <p><span class="font-medium">Total Late Minutes/Hours:</span> {{ floor(($payslip->late_minutes ?? 0) / 60) }} hrs ({{ floor($payslip->late_minutes ?? 0) }} mins)</p> {{-- New row for mobile --}}
                                                 <p><span class="font-medium">Rate/Hour:</span> ₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</p>
                                                 <p><span class="font-medium">Gross Pay:</span> ₱{{ number_format($payslip->gross_pay, 2) }}</p>
                                             </div>
@@ -303,9 +309,10 @@
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">{{ $payslip->user->department->name ?? 'N/A' }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($details['regular_work_hours'] ?? 0, 2) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($details['regular_work_hours'] ?? 0, 0) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->overtime_hours ?? 0, 2) }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 2) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ round($payslip->total_hours_worked ?? 0, 0) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">{{ floor(($payslip->late_minutes ?? 0) / 60) }} hrs ({{ floor($payslip->late_minutes ?? 0) }} mins)</td> {{-- New Data Cell --}}
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700 hidden sm:table-cell">₱{{ number_format($payslip->gross_pay, 2) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm hidden sm:table-cell">
@@ -344,7 +351,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                    <td colspan="12" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                         <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                                     </td>
                                 </tr>
@@ -364,6 +371,7 @@
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Regular Work Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Overtime Hours</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Work Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Total Late Minutes/Hours</th> {{-- New Column --}}
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Rate/Hour</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Gross Pay</th>
                                 <th class="px-3 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Deductions</th>
@@ -373,7 +381,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             <tr>
-                                <td colspan="11" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
+                                <td colspan="12" class="px-3 py-3 text-center text-base text-gray-500 bg-white">
                                     <i class="fas fa-file-invoice-dollar mr-2"></i> No payroll records found for the selected period.
                                 </td>
                             </tr>

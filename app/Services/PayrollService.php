@@ -152,8 +152,20 @@ class PayrollService
                     $totalActualWorkHours += $dtrForDay->work_hours;
                     $totalApprovedOvertimeHours += $dtrForDay->overtime_hours; // Accumulate approved overtime hours
 
-                    // Calculate regular work hours for this day and round to 2 decimal places
-                    $dailyRegularWorkHours = round(max(0, $dtrForDay->work_hours - $dtrForDay->overtime_hours), 2);
+                    // Calculate expected regular work hours for the day based on user's shift
+                    $expectedRegularHours = 0;
+                    if ($employee->work_start && $employee->work_end) {
+                        $start = Carbon::parse($employee->work_start);
+                        $end = Carbon::parse($employee->work_end);
+                        
+                        // Calculate total hours in the shift, then subtract 1 hour for lunch break
+                        $shiftDurationHours = $start->diffInHours($end);
+                        $expectedRegularHours = max(0, $shiftDurationHours); // Assuming a 1-hour unpaid lunch break
+                    }
+
+                    // Use the regular_work_hours directly from the DTR record
+                    $dailyRegularWorkHours = $dtrForDay->regular_work_hours;
+                    
                     $totalRegularWorkHours += $dailyRegularWorkHours;
                     $totalLateMinutes += $dtrForDay->late_minutes; // Accumulate late minutes
 
@@ -213,7 +225,8 @@ class PayrollService
         Log::info('PayrollService: Calculated Gross Pay: ' . $grossPay);
 
         // Calculate Late Deductions
-        $lateDeductions = ($totalLateMinutes / 60) * $hourlyRate; // Convert minutes to hours and multiply by hourly rate
+        $minuteRate = $hourlyRate / 60;
+        $lateDeductions = $totalLateMinutes * $minuteRate; // Calculate late deductions per minute
 
         // Calculate Government Contributions
         $sssDeduction = $this->calculateContribution('sss', $effectivePeriodSalary, $governmentContributions, $employee);
@@ -242,9 +255,9 @@ class PayrollService
                 'overtime_pay' => round($overtimePay, 2), // Populate overtime pay
                 'late_deductions' => round($lateDeductions, 2), // Populate late deductions
                 'absences_deductions' => 0, // Placeholder
-                'total_hours_worked' => round($totalActualWorkHours, 2), // Total hours worked (regular + overtime)
+                'total_hours_worked' => round($totalRegularWorkHours + $totalApprovedOvertimeHours, 0), // Total hours worked (regular + overtime)
                 'overtime_hours' => round($totalApprovedOvertimeHours, 2), // Populate total approved overtime hours
-                'late_minutes' => round($totalLateMinutes, 2), // Populate total late minutes
+                'late_minutes' => floor($totalLateMinutes), // Populate total late minutes
                 'absent_days' => ($actualWorkingDaysInPeriod - $presentDays), // Calculate absent days
                 'details' => json_encode([
                     'monthly_salary' => $effectiveMonthlySalary,
@@ -265,9 +278,10 @@ class PayrollService
                     'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
                     'hourly_rate_computed' => $hourlyRate,
                     'pay_period_days_count' => $this->getDaysInPayPeriod($payPeriodStart, $payPeriodEnd),
-                    'regular_work_hours' => round($totalRegularWorkHours, 2), // Add regular work hours to details
-                    'late_minutes_total' => round($totalLateMinutes, 2), // Add total late minutes to details
+                    'regular_work_hours' => round($totalRegularWorkHours, 0), // Add regular work hours to details
+                    'late_minutes_total' => floor($totalLateMinutes), // Add total late minutes to details
                     'late_deduction_amount' => round($lateDeductions, 2), // Add late deduction amount to details
+                    'formatted_regular_work_hours' => sprintf('%02d:%02d:%02d', floor($totalRegularWorkHours), floor(($totalRegularWorkHours * 60) % 60), 0),
                 ]),
             ]
         );

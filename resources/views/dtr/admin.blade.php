@@ -66,8 +66,9 @@
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 2</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time In</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time Out</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Regular Work Hours</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Work Hours</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Total Work Hours</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -97,6 +98,9 @@
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
                                 {{ $dtrRecord->overtime_time_out ? \Carbon\Carbon::parse($dtrRecord->overtime_time_out)->format('h:i A') : '-' }}
                             </td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-700 text-center">
+                                {{ $dtrRecord->formatted_regular_work_hours ?? '00:00:00' }}
+                            </td>
                             <td class="px-4 py-2 whitespace-nowrap text-center">
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold capitalize
                                     {{ $dtrRecord->status === 'present' ? 'bg-green-100 text-green-800' : '' }}
@@ -107,7 +111,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 text-center">
-                                {{ round($dtrRecord->work_hours ?? 0, 2) }}
+                                {{ round($dtrRecord->total_work_hours ?? 0, 2) }}
                             </td>
                         </tr>
                     @empty
