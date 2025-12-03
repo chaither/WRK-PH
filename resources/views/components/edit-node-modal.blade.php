@@ -1,4 +1,4 @@
-<div id="editNodeModal" class="fixed inset-0 bg-black bg-opacity-25 hidden items-center justify-center z-50 p-4">
+<div id="editNodeModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h3 class="text-2xl font-bold text-gray-800">Edit Organizational Node</h3>

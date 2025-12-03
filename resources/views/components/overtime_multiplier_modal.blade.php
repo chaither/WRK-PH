@@ -1,5 +1,5 @@
 <!-- resources/views/components/overtime_multiplier_modal.blade.php -->
-<div id="overtimeMultiplierModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 p-2">
+<div id="overtimeMultiplierModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-2">
     <div class="bg-white rounded-xl shadow-2xl p-4 max-w-sm w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100">
         <div class="flex justify-between items-center mb-3 border-b pb-2">
             <h2 class="text-lg font-bold text-gray-800">⚙️ Set Overtime Multiplier</h2>
