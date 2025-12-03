@@ -1,4 +1,4 @@
-<div id="employeeModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
+<div id="employeeModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col"> {{-- Sharper modal styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Employee</h3>
