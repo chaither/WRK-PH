@@ -14,8 +14,21 @@
     </header>
 
     <div class="bg-white rounded-lg shadow-xl p-6">
+        <div class="mb-4 flex justify-end">
+            <form action="{{ route('dtr.employees.index') }}" method="GET" class="flex items-center space-x-2 w-full md:w-1/4">
+                <input type="text" name="search" id="employeeSearchInput" placeholder="Search by name..." class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{ $search ?? '' }}">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-search"></i>
+                </button>
+                @if($search)
+                    <a href="{{ route('dtr.employees.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-times mr-2"></i> Clear
+                    </a>
+                @endif
+            </form>
+        </div>
         <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table id="employeesTable" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee Name</th>
@@ -47,3 +60,29 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.querySelector('input[name="search"]');
+        const employeeTableBody = document.querySelector('#employeesTable tbody'); // Assuming an ID for the tbody
+        const employeeRows = employeeTableBody ? Array.from(employeeTableBody.querySelectorAll('tr')) : [];
+
+        searchInput.addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase().trim();
+
+            employeeRows.forEach(row => {
+                const employeeNameCell = row.querySelector('td:first-child'); // Assuming employee name is in the first td
+                if (employeeNameCell) {
+                    const employeeName = employeeNameCell.textContent.toLowerCase();
+                    if (employeeName.includes(searchTerm)) {
+                        row.style.display = ''; // Show row
+                    } else {
+                        row.style.display = 'none'; // Hide row
+                    }
+                }
+            });
+        });
+    });
+</script>
+@endpush

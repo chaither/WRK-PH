@@ -27,8 +27,8 @@
                     <input type="hidden" name="face_descriptor" id="clockin_face_descriptor">
                     <button id="clockInBtn" type="submit" 
                         class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 w-full 
-                            {{ ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        {{ ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2) ? 'disabled' : '' }}>
+                            {{ ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2) || $onLeave ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        {{ ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2) || $onLeave ? 'disabled' : '' }}>
                         <i class="fas fa-sign-in-alt mr-2"></i>
                         Clock In
                     </button>
@@ -61,8 +61,8 @@
                     <input type="hidden" name="face_descriptor" id="clockout_face_descriptor">
                     <button id="clockOutBtn" type="submit" 
                         class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 w-full 
-                            {{ (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2) || ($dtrRecord->time_out && $dtrRecord->time_out_2)) ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        {{ (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2) || ($dtrRecord->time_out && $dtrRecord->time_out_2)) ? 'disabled' : '' }}>
+                            {{ (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2) || ($dtrRecord->time_out && $dtrRecord->time_out_2)) || $onLeave ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        {{ (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2) || ($dtrRecord->time_out && $dtrRecord->time_out_2)) || $onLeave ? 'disabled' : '' }}>
                         <i class="fas fa-sign-out-alt mr-2"></i>
                         Clock Out
                     </button>
