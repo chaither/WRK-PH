@@ -8,17 +8,18 @@
             font-family: 'DejaVu Sans', sans-serif;
             margin: 0;
             padding: 0;
+            font-size: 9px; /* Base font size for the PDF */
         }
 
         .container {
             margin: 5px auto; /* Reduced margin */
-            padding: 10px; /* Reduced padding */
-            width: 98%; /* Increased width */
-            max-width: 1100px;
+            padding: 8px; /* Further reduced padding */
+            width: 99%; /* Maximize width */
+            max-width: 1200px; /* Allow wider content */
             background: #fff;
             border: 1px solid #ddd;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+            border-radius: 6px;
             
         }
 
@@ -26,18 +27,18 @@
             display: flex;
             justify-content: center; 
             align-items: center;
-            margin-bottom: 15px; /* Reduced margin */
-            padding-bottom: 10px; /* Reduced padding */
-            border-bottom: 2px solid #eee;
+            margin-bottom: 12px; /* Reduced margin */
+            padding-bottom: 8px; /* Reduced padding */
+            border-bottom: 1px solid #eee; /* Lighter border */
         }
 
         .header .logo {
             text-align: center; 
-            margin-right: 20px; 
+            margin-right: 15px; /* Reduced margin */
         }
 
         .header .logo img {
-            max-width: 60px; /* Reduced logo size */
+            max-width: 50px; /* Further reduced logo size */
             height: auto;
         }
 
@@ -46,53 +47,64 @@
         }
 
         .header h1 {
-            font-size: 18px; /* Reduced heading size */
+            font-size: 16px; /* Further reduced heading size */
             color: #2c3e50;
             margin: 0;
         }
 
         .header p {
-            font-size: 10px; /* Reduced paragraph size */
-            margin: 2px 0;
+            font-size: 9px; /* Further reduced paragraph size */
+            margin: 1px 0;
             color: #555;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Reduced margin */
+            table-layout: fixed; /* Ensures columns respect width */
         }
 
         th, td {
             border: 1px solid #e0e0e0;
-            padding: 8px; /* Reduced padding */
+            padding: 6px; /* Further reduced padding */
             text-align: left;
-            font-size: 10px; /* Reduced font size */
+            font-size: 9px; /* Further reduced font size */
             word-wrap: break-word;
         }
 
         th {
-            background-color: #f8f8f8;
+            background-color: #f2f2f2; /* Lighter background */
             font-weight: bold;
-            color: #333;
+            color: #444;
+        }
+
+        td div {
+            font-size: 8.5px; /* Smaller font for deduction details */
         }
 
         .total-section {
             text-align: right;
-            margin-top: 20px; /* Reduced margin */
-            padding-top: 15px; /* Reduced padding */
+            margin-top: 15px; /* Reduced margin */
+            padding-top: 10px; /* Reduced padding */
             border-top: 1px solid #eee;
         }
 
         .total-section p {
-            font-size: 16px; 
+            font-size: 14px; /* Reduced font size */
             font-weight: bold;
-            margin: 5px 0;
+            margin: 3px 0;
             color: #2c3e50;
         }
 
         .text-center {
             text-align: center;
+        }
+
+        h2 {
+            font-size: 13px !important; /* Adjusted for department heading */
+            margin-bottom: 8px !important;
+            color: #333;
         }
     </style>
 </head>
@@ -110,7 +122,7 @@
         </div> --}}
 
         @forelse($groupedPayrolls as $departmentName => $departmentPayslips)
-            <div style="margin-bottom: 15px; @if(!$loop->first) page-break-before: always; @endif"> 
+            <div @if(!$loop->first) style="page-break-before: always;" @endif style="margin-bottom: 12px;"> 
                 <div class="header">
                     <div class="logo">
                         <img src="{{ public_path('limehills.png') }}" alt="Company Logo">
@@ -120,18 +132,19 @@
                         <p>For Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</p>
                     </div>
                 </div>
-                <h2 style="font-size: 14px; margin-bottom: 10px;">Department: {{ $departmentName }}</h2> 
+                <h2 style="font-size: 13px; margin-bottom: 8px;">Department: {{ $departmentName }}</h2> 
                 <table>
                     <thead>
                         <tr>
                             <th>Employee</th>
-                            <th>Basic Pay</th>
-                            <th>Overtime Pay</th>
-                            <th>Late Deductions</th>
-                            <th>SSS</th>
-                            <th>Pag-IBIG</th>
-                            <th>PhilHealth</th>
-                            <th>Total Deductions</th>
+                            <th>Work Days</th>
+                            <th>Regular Work Hours</th>
+                            <th>Overtime Hours</th>
+                            <th>Total Work Hours</th>
+                            <th>Total Late Minutes/Hours</th>
+                            <th>Rate/Hour</th>
+                            <th>Gross Pay</th>
+                            <th>Deductions</th>
                             <th>Net Pay</th>
                         </tr>
                     </thead>
@@ -139,33 +152,49 @@
                         @forelse($departmentPayslips as $payslip)
                         <tr>
                             <td style="font-weight: bold;">{{ $payslip->user->name }}</td>
-                            <td>₱{{ number_format((($payslip->gross_pay ?? 0) - ($payslip->overtime_pay ?? 0)), 2) }}</td>
-                            <td>₱{{ number_format($payslip->overtime_pay ?? 0, 2) }}</td>
-                            <td>₱{{ number_format($payslip->late_deductions ?? 0, 2) }}</td>
                             @php
                                 $details = is_array($payslip->details) ? $payslip->details : (json_decode($payslip->details, true) ?? []);
                                 $sss = $details['sss_deduction'] ?? $details['sss'] ?? 0;
                                 $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
                                 $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
-                                // $otherDetails = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
-
-                                // If the total deductions were manually updated (and stored in payslip->deductions),
-                                // show the remainder as "Other Deductions" so the PDF reflects what was actually deducted.
-                                // $componentsSum = $sss + $phil + $pagibig + $otherDetails;
-                                $totalDeductions = $payslip->deductions ?? 0;
-                                // $manualRemainder = max(0, $totalDeductions - $componentsSum);
-                                // $otherShown = $otherDetails + $manualRemainder;
+                                $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
+                                $lateDeductionAmount = $details['late_deduction_amount'] ?? 0;
+                                $componentsTotal = $sss + $phil + $pagibig + $other + $lateDeductionAmount;
                             @endphp
-
-                            <td>₱{{ number_format($sss, 2) }}</td>
-                            <td>₱{{ number_format($pagibig, 2) }}</td>
-                            <td>₱{{ number_format($phil, 2) }}</td>
-                            <td>₱{{ number_format($totalDeductions, 2) }}</td>
-                            <td>₱{{ number_format($payslip->net_pay ?? 0, 2) }}</td>
+                            <td>{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
+                            <td>{{ round($details['regular_work_hours'] ?? 0, 0) }}</td>
+                            <td>{{ round($payslip->overtime_hours ?? 0, 2) }}</td>
+                            <td>{{ round($payslip->total_hours_worked ?? 0, 0) }}</td>
+                            <td>{{ floor(($payslip->late_minutes ?? 0) / 60) }} hrs ({{ floor($payslip->late_minutes ?? 0) }} mins)</td>
+                            <td>₱{{ number_format($details['hourly_rate_computed'] ?? 0, 2) }}</td>
+                            <td>₱{{ number_format($payslip->gross_pay, 2) }}</td>
+                            <td>
+                                @if($componentsTotal > 0)
+                                    @if($sss > 0)
+                                        <div>SSS: ₱{{ number_format($sss, 2) }}</div>
+                                    @endif
+                                    @if($phil > 0)
+                                        <div>PhilHealth: ₱{{ number_format($phil, 2) }}</div>
+                                    @endif
+                                    @if($pagibig > 0)
+                                        <div>Pag-IBIG: ₱{{ number_format($pagibig, 2) }}</div>
+                                    @endif
+                                    @if($lateDeductionAmount > 0)
+                                        <div>Late: ₱{{ number_format($lateDeductionAmount, 2) }}</div>
+                                    @endif
+                                    @if($other > 0)
+                                        <div>Other: ₱{{ number_format($other, 2) }}</div>
+                                    @endif
+                                    <div>Total: ₱{{ number_format($payslip->deductions, 2) }}</div>
+                                @else
+                                    ₱{{ number_format($payslip->deductions, 2) }}
+                                @endif
+                            </td>
+                            <td>₱{{ number_format($payslip->net_pay, 2) }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center">No payroll records found for this department.</td>
+                            <td colspan="10" class="text-center">No payroll records found for this department.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -181,19 +210,20 @@
                 <thead>
                     <tr>
                         <th>Employee</th>
-                        <th>Basic Pay</th>
-                        <th>Overtime Pay</th>
-                        <th>Late Deductions</th>
-                        <th>SSS</th>
-                        <th>Pag-IBIG</th>
-                        <th>PhilHealth</th>
-                        <th>Total Deductions</th>
+                        <th>Work Days</th>
+                        <th>Regular Work Hours</th>
+                        <th>Overtime Hours</th>
+                        <th>Total Work Hours</th>
+                        <th>Total Late Minutes/Hours</th>
+                        <th>Rate/Hour</th>
+                        <th>Gross Pay</th>
+                        <th>Deductions</th>
                         <th>Net Pay</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td colspan="9" class="text-center">No payroll records found for the selected period.</td>
+                        <td colspan="10" class="text-center">No payroll records found for the selected period.</td>
                     </tr>
                 </tbody>
             </table>

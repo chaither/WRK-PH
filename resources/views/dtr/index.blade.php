@@ -92,8 +92,9 @@
                         <th class="px-4 py-2">Time Out 1</th>
                         <th class="px-4 py-2">Time In 2</th>
                         <th class="px-4 py-2">Time Out 2</th>
-                        <th class="px-4 py-2">Work Hours</th>
+                        <th class="px-4 py-2">Regular Work Hours</th>
                         <th class="px-4 py-2">Overtime Hours</th>
+                        <th class="px-4 py-2">Total Work Hours</th>
                         <th class="px-4 py-2">Status</th>
                     </tr>
                 </thead>
@@ -105,8 +106,9 @@
                             <td class="px-4 py-2 text-center">{{ $record->time_out ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_out)) . ': ' . \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->time_in_2 ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_in_2)) . ': ' . \Carbon\Carbon::parse($record->time_in_2)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->time_out_2 ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_out_2)) . ': ' . \Carbon\Carbon::parse($record->time_out_2)->format('h:i A') : '-' }}</td>
-                            <td class="px-4 py-2 text-center">{{ round($record->work_hours, 2) }}</td>
+                            <td class="px-4 py-2 text-center">{{ $record->formatted_regular_work_hours }}</td>
                             <td class="px-4 py-2 text-center">{{ round($record->overtime_hours, 2) }}</td>
+                            <td class="px-4 py-2 text-center">{{ round($record->total_work_hours, 2) }}</td>
                             <td class="px-4 py-2 text-center">
                                 <span class="px-2 py-1 rounded-full text-xs capitalize
                                     {{ $record->status === 'present' ? 'bg-green-100 text-green-800' : '' }}

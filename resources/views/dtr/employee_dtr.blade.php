@@ -73,8 +73,9 @@
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Afternoon Time Out</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time In</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time Out</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Work Hours</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Regular Work Hours</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Hours</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Total Work Hours</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
@@ -88,8 +89,9 @@
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">{{ $record->time_out_2 ? \Carbon\Carbon::parse($record->time_out_2)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">{{ $record->overtime_time_in ? \Carbon\Carbon::parse($record->overtime_time_in)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">{{ $record->overtime_time_out ? \Carbon\Carbon::parse($record->overtime_time_out)->format('h:i A') : '-' }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 text-center">{{ round($record->work_hours, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-700 text-center">{{ $record->formatted_regular_work_hours }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 text-center">{{ round($record->overtime_hours, 2) }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 text-center">{{ round($record->total_work_hours, 2) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-center">
                                 <span class="px-3 py-1 rounded-full text-xs font-semibold capitalize
                                     {{ $record->status === 'present' ? 'bg-green-100 text-green-800' : '' }}
