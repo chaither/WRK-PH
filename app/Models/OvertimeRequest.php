@@ -16,6 +16,12 @@ class OvertimeRequest extends Model
         'status',
     ];
 
+    protected $casts = [
+        'date' => 'datetime',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+    ];
+
     /**
      * Get the user that owns the OvertimeRequest
      *

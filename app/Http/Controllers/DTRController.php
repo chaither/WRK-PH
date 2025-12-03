@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use App\Helpers\TimeHelper;
+use App\Models\LeaveRequest; // Add this import for LeaveRequest model
 
 class DTRController extends Controller
 {
@@ -29,11 +30,11 @@ class DTRController extends Controller
         
         $user = Auth::user();
         // If employee hasn't registered face, redirect them to one-time face registration
-        if ($user->isEmployee() && empty($user->face_embedding)) {
+        if ($user->role === 'employee' && empty($user->face_embedding)) {
             return redirect()->route('face.register')->with('info', 'Please register your face before accessing Daily Time Record.');
         }
         $today = Carbon::today();
-        
+
         $dtrRecord = DTRRecord::where('user_id', $user->id)
             ->where('date', $today)
             ->first();
@@ -44,14 +45,45 @@ class DTRController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
-        return view('dtr.index', compact('dtrRecord', 'monthlyRecords'));
+        // Initialize $onLeave to false by default
+        $onLeave = false;
+
+        // Check if the employee is on an approved leave today
+        $leaveRequest = LeaveRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->first();
+
+        if ($leaveRequest) {
+            $onLeave = true;
+        }
+
+        if ($onLeave) {
+            return view('dtr.index', compact('dtrRecord', 'monthlyRecords', 'onLeave'))->with('error', 'You are on an approved leave today and cannot clock in or out.');
+        }
+        
+        return view('dtr.index', compact('dtrRecord', 'monthlyRecords', 'onLeave'));
     }
 
     public function clockIn(Request $request)
     {
         $user = Auth::user();
+
+        // Check if the employee is on an approved leave today before allowing clock-in
+        $today = Carbon::today();
+        $onLeave = LeaveRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->first();
+
+        if ($onLeave) {
+            return back()->with('error', 'You are on an approved leave today and cannot clock in.');
+        }
+
         // Require face registration
-        if (empty($user->face_embedding)) {
+        if ($user->role === 'employee' && empty($user->face_embedding)) {
             return back()->with('error', 'Face not registered. Please register your face before clocking in.')->with('show_face_register', true);
         }
 
@@ -165,9 +197,22 @@ class DTRController extends Controller
     public function clockOut(Request $request)
     {
         $user = Auth::user();
+
+        // Check if the employee is on an approved leave today before allowing clock-out
+        $today = Carbon::today();
+        $onLeave = LeaveRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->first();
+
+        if ($onLeave) {
+            return back()->with('error', 'You are on an approved leave today and cannot clock out.');
+        }
+
         // Require face registration
-        if (empty($user->face_embedding)) {
-            return back()->with('error', 'Face not registered. Please register your face before clocking out.')->with('show_face_register', true);
+        if ($user->role === 'employee' && empty($user->face_embedding)) {
+            return back()->with('error', 'Please register your face before clocking out.');
         }
 
         $probe = $request->input('face_descriptor');
@@ -248,59 +293,111 @@ class DTRController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $today = Carbon::today();
+        // Get dates from request, default to today if not provided or empty
+        $startDate = $request->filled('start_date') ? Carbon::parse($request->input('start_date')) : Carbon::today();
+        $endDate = $request->filled('end_date') ? Carbon::parse($request->input('end_date')) : Carbon::today();
+        $selectedEmployeeId = $request->input('employee_id');
+        $filterStatus = $request->input('status'); // Keep the status filter
 
-        // Calculate counts directly from DTR records for today
-        $allDtrToday = DTRRecord::whereDate('date', $today)->get();
+        // Fetch all employees for the dropdown
+        $allEmployees = User::where('role', 'employee')
+                            ->orderBy('first_name')
+                            ->orderBy('last_name')
+                            ->get();
 
-		$presentCount = $allDtrToday->where('status', 'present')->count();
-		$lateCount = $allDtrToday->where('status', 'late')->count();
-		$halfDayCount = $allDtrToday->where('status', 'half_day')->count();
+        $dtrRecordsQuery = DTRRecord::query();
 
-		$totalEmployees = User::where('role', 'employee')->count();
-		$employeesWithDTR = $allDtrToday->pluck('user_id')->unique()->count();
-		$absentCount = $totalEmployees - $employeesWithDTR;
+        // Apply date range filter
+        $dtrRecordsQuery->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()]);
 
-        $filterStatus = $request->input('status', 'present');
+        // Apply employee filter
+        if ($selectedEmployeeId) {
+            $dtrRecordsQuery->where('user_id', $selectedEmployeeId);
+        }
 
+        $allDtrRecords = $dtrRecordsQuery->get();
+
+        // Calculate counts based on the filtered records
+        $presentCount = $allDtrRecords->where('status', 'present')->count();
+        $lateCount = $allDtrRecords->where('status', 'late')->count();
+        $halfDayCount = $allDtrRecords->where('status', 'half_day')->count();
+
+        $totalEmployeesInFilter = User::where('role', 'employee');
+        if ($selectedEmployeeId) {
+            $totalEmployeesInFilter->where('id', $selectedEmployeeId);
+        }
+        $totalEmployeesInFilter = $totalEmployeesInFilter->count();
+
+        // For absent count, we need to consider all employees if no specific employee is selected
+        // and then subtract those who have a DTR record within the filtered date range.
+        // If a specific employee is selected, then only check for that employee.
+        $absentCount = 0;
+        if ($selectedEmployeeId) {
+            $hasDtr = DTRRecord::where('user_id', $selectedEmployeeId)
+                                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                                ->exists();
+            if (!$hasDtr) {
+                $absentCount = 1;
+            }
+        } else {
+            $employeesWithDTR = $allDtrRecords->pluck('user_id')->unique()->count();
+            $absentCount = $totalEmployeesInFilter - $employeesWithDTR;
+        }
+        
+        // Prepare the main employee list for the table, applying status filter if present
         $employees = User::where('role', 'employee')
                         ->orderBy('first_name')
-                        ->orderBy('last_name')
-                        ->with(['dtrRecords' => function ($query) use ($today) {
-                            $query->whereDate('date', $today);
-                        }]);
+                        ->orderBy('last_name');
+
+        if ($selectedEmployeeId) {
+            $employees->where('id', $selectedEmployeeId);
+        }
+        
+        // This is the collection of employees and their DTR records that will be displayed in the table
+        $employeesToDisplay = $employees->with(['dtrRecords' => function ($query) use ($startDate, $endDate) {
+                                $query->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()]);
+                            }]);
 
         if ($filterStatus == 'present' || $filterStatus == 'late' || $filterStatus == 'half_day') {
-            $employees->whereHas('dtrRecords', function ($query) use ($today, $filterStatus) {
-                $query->whereDate('date', $today)->where('status', $filterStatus);
+            $employeesToDisplay->whereHas('dtrRecords', function ($query) use ($startDate, $endDate, $filterStatus) {
+                $query->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])->where('status', $filterStatus);
             });
         } elseif ($filterStatus == 'absent') {
-            $employees->whereDoesntHave('dtrRecords', function ($query) use ($today) {
-                $query->whereDate('date', $today);
+            $employeesToDisplay->whereDoesntHave('dtrRecords', function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()]);
             });
         }
 
-        $employees = $employees->get();
+        $employeesToDisplay = $employeesToDisplay->get();
 
-        $startDate = null;
-        $endDate = null;
-
-        return view('dtr.admin', compact('presentCount', 'lateCount', 'absentCount', 'halfDayCount', 'employees', 'today', 'startDate', 'endDate', 'filterStatus'));
+        return view('dtr.admin', compact(
+            'presentCount', 'lateCount', 'absentCount', 'halfDayCount', 
+            'employeesToDisplay', 'startDate', 'endDate', 'filterStatus',
+            'allEmployees', 'selectedEmployeeId'
+        ));
     }
 
-    public function employeesIndex()
+    public function employeesIndex(Request $request)
     {
         $user = Auth::user();
         if (!$user || !in_array($user->role, ['admin', 'hr'])) {
             abort(403, 'Unauthorized access.');
         }
 
+        $search = $request->input('search');
+
         $employees = User::where('role', 'employee')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('first_name', 'like', '%' . $search . '%')
+                          ->orWhere('last_name', 'like', '%' . $search . '%');
+                });
+            })
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
 
-        return view('dtr.employees_list', compact('employees'));
+        return view('dtr.employees_list', compact('employees', 'search'));
     }
 
     public function showEmployeeDTR(Request $request, User $employee)
@@ -326,5 +423,58 @@ class DTRController extends Controller
         $records = $query->orderBy('date', 'desc')->get();
 
         return view('dtr.employee_dtr', compact('employee', 'records', 'selectedDate', 'startDate', 'endDate'));
+    }
+
+    public function showDetailedEmployeeDTRHistory(Request $request, User $employee)
+    {
+        // Ensure only admin/hr can view other employee's DTR
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $startDate = null;
+        $endDate = null;
+        $isFiltered = false;
+
+        $period = $request->input('period');
+        $specificDate = $request->input('specific_date');
+        $requestStartDate = $request->input('start_date');
+        $requestEndDate = $request->input('end_date');
+
+        if ($period) {
+            $currentMonth = Carbon::today()->month;
+            $currentYear = Carbon::today()->year;
+
+            if ($period === 'first_half') {
+                $startDate = Carbon::createFromDate($currentYear, $currentMonth, 1);
+                $endDate = Carbon::createFromDate($currentYear, $currentMonth, 15);
+            } elseif ($period === 'second_half') {
+                $startDate = Carbon::createFromDate($currentYear, $currentMonth, 16);
+                $endDate = Carbon::createFromDate($currentYear, $currentMonth)->endOfMonth();
+            } elseif ($period === 'whole_month') {
+                $startDate = Carbon::createFromDate($currentYear, $currentMonth, 1);
+                $endDate = Carbon::createFromDate($currentYear, $currentMonth)->endOfMonth();
+            }
+            $isFiltered = true;
+        } elseif ($specificDate) {
+            $startDate = Carbon::parse($specificDate);
+            $endDate = Carbon::parse($specificDate);
+            $isFiltered = true;
+        } elseif ($requestStartDate && $requestEndDate) {
+            $startDate = Carbon::parse($requestStartDate);
+            $endDate = Carbon::parse($requestEndDate);
+            $isFiltered = true;
+        } else {
+            $startDate = Carbon::today()->startOfMonth();
+            $endDate = Carbon::today()->endOfMonth();
+        }
+
+        $dtrRecords = DTRRecord::where('user_id', $employee->id)
+                                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                                ->orderBy('date', 'desc')
+                                ->get();
+
+        return view('dtr.employee_dtr_detailed_history', compact('employee', 'dtrRecords', 'startDate', 'endDate', 'isFiltered'));
     }
 }

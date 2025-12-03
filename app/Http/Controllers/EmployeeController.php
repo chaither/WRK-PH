@@ -10,6 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\DTRRecord; // Add this line
+use App\Models\OvertimeRequest; // Add this line
+use App\Models\LeaveRequest; // Add this line
+use App\Models\ChangeRestdayRequest;
+use App\Models\ChangeShiftRequest;
+use App\Models\NoBioRequest;
 
 class EmployeeController extends Controller
 {
@@ -36,6 +42,22 @@ class EmployeeController extends Controller
         $shifts = Shift::all(); // Fetch all shifts
         $departments = Department::all(); // Fetch all departments
         return view('department.index', compact('employees', 'shifts', 'departments')); // Pass shifts and departments to the view
+    }
+
+    public function showProfile(User $employee)
+    {
+        if (!Auth::user()->isHRManager() && !Auth::user()->isAdmin()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view employee profiles.');
+        }
+
+        $dtrRecords = DTRRecord::where('user_id', $employee->id)->orderBy('date', 'desc')->get();
+        $overtimeRequests = OvertimeRequest::where('user_id', $employee->id)->orderBy('created_at', 'desc')->get();
+        $leaveRequests = LeaveRequest::where('user_id', $employee->id)->orderBy('created_at', 'desc')->get();
+        $changeShiftRequests = ChangeShiftRequest::where('user_id', $employee->id)->orderBy('created_at', 'desc')->get();
+        $changeRestdayRequests = ChangeRestdayRequest::where('user_id', $employee->id)->orderBy('created_at', 'desc')->get();
+        $noBioRequests = NoBioRequest::where('user_id', $employee->id)->orderBy('created_at', 'desc')->get();
+
+        return view('employee.profile', compact('employee', 'dtrRecords', 'overtimeRequests', 'leaveRequests', 'changeShiftRequests', 'changeRestdayRequests', 'noBioRequests'));
     }
 
     public function store(Request $request)

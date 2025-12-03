@@ -92,6 +92,18 @@ Route::delete('department/{department}/employees/{employee}', [DepartmentControl
 Route::post('/departments/{department}/employees/add', [DepartmentController::class, 'addEmployeeToDepartment'])->name('departments.add_employee');
 Route::delete('/departments/{department}/employees/{employee}/remove', [DepartmentController::class, 'removeEmployeeFromDepartment'])->name('departments.remove_employee');
 
+Route::get('/employees/{employee}/profile', [EmployeeController::class, 'showProfile'])->name('employees.profile');
+
+// Employee Request History Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/employees/{employee}/dtr-history', [DTRController::class, 'showDetailedEmployeeDTRHistory'])->name('employee.dtr.history');
+    Route::get('/employees/{employee}/overtime-history', [OvertimeRequestController::class, 'showEmployeeOvertimeHistory'])->name('employee.overtime.history');
+    Route::get('/employees/{employee}/leave-history', [LeaveController::class, 'showEmployeeLeaveHistory'])->name('employee.leave.history');
+    Route::get('/employees/{employee}/shift-history', [ChangeShiftController::class, 'showEmployeeShiftHistory'])->name('employee.shift.history');
+    Route::get('/employees/{employee}/restday-history', [ChangeRestdayController::class, 'showEmployeeRestdayHistory'])->name('employee.restday.history');
+    Route::get('/employees/{employee}/nobio-history', [NoBioRequestController::class, 'showEmployeeNoBioHistory'])->name('employee.nobio.history');
+});
+
 // Payroll Routes
 Route::prefix('payroll')->name('payroll.')->group(function() {
     Route::get('/', [PayrollController::class, 'index'])->name('index');
