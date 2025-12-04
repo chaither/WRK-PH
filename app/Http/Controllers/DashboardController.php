@@ -283,4 +283,121 @@ class DashboardController extends Controller
 
         return response()->json(['message' => 'Selected notifications deleted successfully'], 200);
     }
+
+    public function getNotifications(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Get user's own notifications
+        $userNotifications = Notification::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+        
+        // For admin/HR, also show pending requests count
+        if (in_array($user->role, ['admin', 'hr'])) {
+            // Get pending leave requests count for admin notifications
+            $pendingLeaveRequests = \App\Models\LeaveRequest::where('status', 'pending')->count();
+            $pendingOvertimeRequests = OvertimeRequest::where('status', 'pending')->count();
+            
+            // Create admin notifications if there are pending requests
+            $adminNotifications = collect();
+            if ($pendingLeaveRequests > 0) {
+                $adminNotifications->push((object)[
+                    'id' => 'admin-leave-' . $user->id,
+                    'message' => "You have {$pendingLeaveRequests} pending leave request(s) to review.",
+                    'type' => 'admin_pending_leave',
+                    'read_at' => null,
+                    'created_at' => Carbon::now(),
+                    'time_ago' => 'Just now',
+                    'link' => route('leave.review')
+                ]);
+            }
+            if ($pendingOvertimeRequests > 0) {
+                $adminNotifications->push((object)[
+                    'id' => 'admin-overtime-' . $user->id,
+                    'message' => "You have {$pendingOvertimeRequests} pending overtime request(s) to review.",
+                    'type' => 'admin_pending_overtime',
+                    'read_at' => null,
+                    'created_at' => Carbon::now(),
+                    'time_ago' => 'Just now',
+                    'link' => route('admin.attendance.overtime-request.review')
+                ]);
+            }
+            
+            // Merge admin notifications with user notifications
+            $allNotifications = $adminNotifications->merge($userNotifications);
+        } else {
+            // For employees, get their own notifications
+            $allNotifications = $userNotifications;
+        }
+        
+        // Format notifications
+        $formattedNotifications = $allNotifications->map(function ($notification) use ($user) {
+            $link = '#'; // Default link
+            if (isset($notification->link)) {
+                $link = $notification->link;
+            } elseif ($notification->type === 'leave_request_submitted' || $notification->type === 'leave_request_approved' || $notification->type === 'leave_request_rejected') {
+                $link = route('employee.leave.index'); // General employee leave history
+            } elseif ($notification->type === 'overtime_request_submitted' || $notification->type === 'overtime_request_approved' || $notification->type === 'overtime_request_rejected') {
+                $link = route('attendance.overtime-request.index'); // General employee overtime history
+            }
+            // Add other conditions for links as needed for specific notification types
+            
+            return [
+                'id' => isset($notification->id) ? (string)$notification->id : (string)$notification->id,
+                'message' => $notification->message,
+                'type' => $notification->type ?? 'general',
+                'read_at' => $notification->read_at ?? null,
+                'created_at' => $notification->created_at instanceof Carbon ? $notification->created_at : Carbon::parse($notification->created_at),
+                'time_ago' => ($notification->created_at instanceof Carbon ? $notification->created_at : Carbon::parse($notification->created_at))->diffForHumans(),
+                'link' => $link
+            ];
+        });
+        
+        $unreadCount = $formattedNotifications->where('read_at', null)->count();
+        
+        return response()->json([
+            'notifications' => $formattedNotifications->values(),
+            'unread_count' => $unreadCount
+        ]);
+    }
+
+    public function markAsRead(Request $request, $notificationId)
+    {
+        $user = Auth::user();
+        
+        // Handle admin notifications (which don't have real IDs)
+        if (strpos($notificationId, 'admin-') === 0) {
+            // Admin notifications are virtual, just return success
+            return response()->json(['message' => 'Notification marked as read'], 200);
+        }
+        
+        $notification = Notification::find($notificationId);
+        
+        if (!$notification) {
+            return response()->json(['message' => 'Notification not found'], 404);
+        }
+        
+        // Ensure the authenticated user owns the notification
+        if ($notification->user_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        
+        $notification->read_at = Carbon::now();
+        $notification->save();
+        
+        return response()->json(['message' => 'Notification marked as read'], 200);
+    }
+
+    public function markAllAsRead(Request $request)
+    {
+        $user = Auth::user();
+        
+        Notification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => Carbon::now()]);
+        
+        return response()->json(['message' => 'All notifications marked as read'], 200);
+    }
 }

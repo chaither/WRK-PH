@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Models\LeaveRequest; // Added this import
+use App\Models\Notification;
 use Barryvdh\DomPDF\Facade\Pdf; // Import the PDF facade
 
 class LeaveController extends Controller
@@ -73,12 +74,29 @@ class LeaveController extends Controller
             'reason' => 'required|string|max:1000',
         ]);
 
-        LeaveRequest::create([
+        $leaveRequest = LeaveRequest::create([
             'user_id' => $user->id,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'reason' => $request->reason,
             'status' => 'pending',
+        ]);
+
+        // Create notification for admin/HR about new leave request
+        $adminUsers = User::whereIn('role', ['admin', 'hr'])->get();
+        foreach ($adminUsers as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'message' => "{$user->first_name} {$user->last_name} submitted a leave request from " . \Carbon\Carbon::parse($request->start_date)->format('M d, Y') . " to " . \Carbon\Carbon::parse($request->end_date)->format('M d, Y') . ".",
+                'type' => 'leave_request_submitted',
+            ]);
+        }
+
+        // Create notification for employee
+        Notification::create([
+            'user_id' => $user->id,
+            'message' => 'Your leave request from ' . \Carbon\Carbon::parse($request->start_date)->format('M d, Y') . ' to ' . \Carbon\Carbon::parse($request->end_date)->format('M d, Y') . ' has been submitted and is pending approval.',
+            'type' => 'leave_request_pending',
         ]);
 
         return redirect()->route('employee.leave.index')->with('success', 'Leave request submitted successfully.');
@@ -187,6 +205,14 @@ class LeaveController extends Controller
         if ($user->leave_balance >= $leaveDays) {
             $user->leave_balance -= $leaveDays;
             $user->save();
+            
+            // Create notification for employee
+            Notification::create([
+                'user_id' => $user->id,
+                'message' => 'Your leave request from ' . $startDate->format('M d, Y') . ' to ' . $endDate->format('M d, Y') . ' has been approved.',
+                'type' => 'leave_request_approved',
+            ]);
+            
             return redirect()->route('leave.review')->with('success', 'Leave request approved and leave balance updated.');
         } else {
             return redirect()->route('leave.review')->with('error', 'Not enough leave balance for this request.');
@@ -201,6 +227,17 @@ class LeaveController extends Controller
 
         $leaveRequest->status = 'rejected';
         $leaveRequest->save();
+
+        // Create notification for employee
+        $user = $leaveRequest->user;
+        $startDate = \Carbon\Carbon::parse($leaveRequest->start_date);
+        $endDate = \Carbon\Carbon::parse($leaveRequest->end_date);
+        
+        Notification::create([
+            'user_id' => $user->id,
+            'message' => 'Your leave request from ' . $startDate->format('M d, Y') . ' to ' . $endDate->format('M d, Y') . ' has been rejected.',
+            'type' => 'leave_request_rejected',
+        ]);
 
         return redirect()->route('leave.review')->with('success', 'Leave request rejected.');
     }

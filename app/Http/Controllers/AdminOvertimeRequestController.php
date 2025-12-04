@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\OvertimeRequest;
 use App\Models\DTRRecord;
+use App\Models\Notification;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log; // Added Log facade
 
@@ -44,6 +46,13 @@ class AdminOvertimeRequestController extends Controller
         $dtrRecord->save();
         Log::info('AdminOvertimeRequestController: DTRRecord overtime_hours after save: ' . $dtrRecord->overtime_hours);
 
+        // Create notification for employee
+        Notification::create([
+            'user_id' => $overtimeRequest->user_id,
+            'message' => 'Your overtime request for ' . Carbon::parse($overtimeRequest->date)->format('M d, Y') . ' has been approved.',
+            'type' => 'overtime_request_approved',
+        ]);
+
         return redirect()->back()->with('success', 'Overtime Request approved and DTR updated.');
     }
 
@@ -52,6 +61,13 @@ class AdminOvertimeRequestController extends Controller
         $overtimeRequest = OvertimeRequest::findOrFail($id);
         $overtimeRequest->status = 'rejected';
         $overtimeRequest->save();
+
+        // Create notification for employee
+        Notification::create([
+            'user_id' => $overtimeRequest->user_id,
+            'message' => 'Your overtime request for ' . Carbon::parse($overtimeRequest->date)->format('M d, Y') . ' has been rejected.',
+            'type' => 'overtime_request_rejected',
+        ]);
 
         return redirect()->back()->with('error', 'Overtime Request rejected.');
     }

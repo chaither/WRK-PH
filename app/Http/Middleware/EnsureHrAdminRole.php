@@ -15,6 +15,10 @@ class EnsureHrAdminRole
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (!auth()->check() || (!auth()->user()->isAdmin() && !auth()->user()->isHRManager())) {
+            abort(403, 'Unauthorized access.');
+        }
+
         return $next($request);
     }
 }
