@@ -1,5 +1,5 @@
-<div id="employeeModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col"> {{-- Sharper modal styling --}}
+<div id="employeeModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 sm:p-2 md:p-4"> {{-- Consistent dark overlay --}}
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto sm:p-3 md:p-5 transform transition-all duration-300 scale-100 flex flex-col max-h-[95vh] overflow-y-auto" x-data="{ currentStep: 1, totalSteps: 3 }"> {{-- Sharper modal styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Employee</h3>
             <button onclick="closeEmployeeModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100">
@@ -7,17 +7,17 @@
             </button>
         </div>
 
-        <form id="employeeForm" method="POST" action="{{ route('employees.store') }}" class="space-y-6">
+        <form id="employeeForm" method="POST" action="{{ route('employees.store') }}" class="space-y-4 flex flex-col">
             @csrf
             <input type="hidden" name="_method" value="POST" id="_methodField">
-            <div class="flex-grow overflow-y-auto pr-2">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {{-- Personal Information --}}
-                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
+            <div class="flex-grow pr-2">
+                {{-- Step 1: Personal Information --}}
+                <div x-show="currentStep === 1" class="grid grid-cols-1 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner">
                         <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
                             <i class="fas fa-address-card mr-2 text-lg"></i> Personal Information
                         </h4>
-                        <div class="space-y-4">
+                        <div class="space-y-2">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="col-span-1">
                                     <label for="first_name" class="block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
@@ -38,7 +38,7 @@
                             <div id="passwordFields">
                                 <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                                 <div class="relative">
-                                    <input type="password" name="password" id="password" required 
+                                    <input type="password" name="password" id="password" required
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md pr-10 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter password">
                                     <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password')">
                                         <i class="fas fa-eye"></i>
@@ -49,7 +49,7 @@
                             <div id="passwordConfirmationField">
                                 <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                                 <div class="relative">
-                                    <input type="password" name="password_confirmation" id="password_confirmation" required 
+                                    <input type="password" name="password_confirmation" id="password_confirmation" required
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md pr-10 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Confirm password">
                                     <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password_confirmation')">
                                         <i class="fas fa-eye"></i>
@@ -58,12 +58,12 @@
                             </div>
                             <div>
                                 <label for="position" class="block text-sm font-medium text-gray-700 mb-1">Position</label>
-                                <input type="text" name="position" id="position" required 
+                                <input type="text" name="position" id="position" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter job position">
                             </div>
                             <div>
                                 <label for="role" class="block text-sm font-medium text-gray-700 mb-1">System Role</label>
-                                <select name="role" id="role" required 
+                                <select name="role" id="role" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="employee">Employee (Default)</option>
                                     <option value="hr">HR Manager</option>
@@ -80,33 +80,35 @@
                                     @endforeach
                                 </select>
                             </div>
-                           
+
                         </div>
                     </div>
-                    
-                    {{-- Schedule --}}
-                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
+                </div>
+
+                {{-- Step 2: Work Schedule --}}
+                <div x-show="currentStep === 2" class="grid grid-cols-1 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner">
                         <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
                             <i class="fas fa-clock mr-2 text-lg"></i> Work Schedule
                         </h4>
-                         <div>
-                                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                                <input type="date" name="start_date" id="start_date" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                        
-                            <div class="mt-4">
-                                <label for="shift_id" class="block text-sm font-medium text-gray-700 mb-1">Shift</label>
-                                <select name="shift_id" id="shift_id" required 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                                    <option value="">Select Shift</option>
-                                    @foreach($shifts as $shift)
-                                        <option value="{{ $shift->id }}">{{ $shift->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <div>
+                            <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                            <input type="date" name="start_date" id="start_date" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
 
-                        <div class="mt-4" x-data="{ open: false, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" data-working-days-dropdown>
+                        <div class="mt-3">
+                            <label for="shift_id" class="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+                            <select name="shift_id" id="shift_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Select Shift</option>
+                                @foreach($shifts as $shift)
+                                    <option value="{{ $shift->id }}">{{ $shift->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mt-3" x-data="{ open: false, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" data-working-days-dropdown>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
                             <div class="relative">
                                 <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -130,7 +132,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-4" x-data="{ open: false, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" data-rest-days-dropdown>
+                        <div class="mt-3" x-data="{ open: false, days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] }" data-rest-days-dropdown>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Rest Days</label>
                             <div class="relative">
                                 <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -154,29 +156,31 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-8 mt-4">
+                        <div class="grid grid-cols-2 gap-4 mt-3">
                             <div>
                                 <label for="work_start" class="block text-sm font-medium text-gray-700 mb-1">Work Start Time</label>
-                                <input type="time" name="work_start" id="work_start" required 
+                                <input type="time" name="work_start" id="work_start" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div>
                                 <label for="work_end" class="block text-sm font-medium text-gray-700 mb-1">Work End Time</label>
-                                <input type="time" name="work_end" id="work_end" required 
+                                <input type="time" name="work_end" id="work_end" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
                     </div>
-                    
-                    {{-- Salary --}}
-                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
+                </div>
+
+                {{-- Step 3: Payroll Details --}}
+                <div x-show="currentStep === 3" class="grid grid-cols-1 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner">
                         <h4 class="text-xl font-semibold mb-4 text-indigo-700 flex items-center border-b pb-2">
                             <i class="fas fa-money-bill-wave mr-2 text-lg"></i> Payroll Details
                         </h4>
-                        <div class="space-y-4">
+                        <div class="space-y-2">
                             <div>
                                 <label for="pay_period_modal" class="block text-sm font-medium text-gray-700 mb-1">Pay Period</label>
-                                <select name="pay_period" id="pay_period_modal" required 
+                                <select name="pay_period" id="pay_period_modal" required
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                     <option value="">Select pay period</option>
                                     @foreach(['semi-monthly', 'monthly'] as $period)
@@ -189,7 +193,7 @@
                                 <label for="monthly_salary" class="block text-sm font-medium text-gray-700 mb-1">Monthly Salary</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="monthly_salary" id="monthly_salary" 
+                                    <input type="number" name="monthly_salary" id="monthly_salary"
                                         class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
                                 </div>
                             </div>
@@ -198,7 +202,7 @@
                                 <label for="semi_monthly_salary" class="block text-sm font-medium text-gray-700 mb-1">Semi-Monthly Salary</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="semi_monthly_salary" id="semi_monthly_salary" 
+                                    <input type="number" name="semi_monthly_salary" id="semi_monthly_salary"
                                         class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" step="0.01" min="0" placeholder="0.00">
                                 </div>
                             </div>
@@ -207,7 +211,7 @@
                                 <label for="daily_rate_modal" class="block text-sm font-medium text-gray-700 mb-1">Daily Rate (Auto)</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="daily_rate" id="daily_rate_modal" required readonly 
+                                    <input type="number" name="daily_rate" id="daily_rate_modal" required readonly
                                         class="w-full pl-8 pr-3 py-2 border border-dashed border-gray-400 rounded-md shadow-inner bg-gray-100 text-gray-700 cursor-not-allowed" step="0.01" value="0.00">
                                 </div>
                             </div>
@@ -216,22 +220,29 @@
                                 <label for="hourly_rate_modal" class="block text-sm font-medium text-gray-700 mb-1">Hourly Rate (Auto)</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2.5 text-gray-600 text-sm font-medium">₱</span>
-                                    <input type="number" name="hourly_rate" id="hourly_rate_modal" required readonly 
+                                    <input type="number" name="hourly_rate" id="hourly_rate_modal" required readonly
                                         class="w-full pl-8 pr-3 py-2 border border-dashed border-gray-400 rounded-md shadow-inner bg-gray-100 text-gray-700 cursor-not-allowed" step="0.01" value="0.00">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {{-- Form Actions --}}
-                <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                    <button type="button" onclick="closeEmployeeModal()" class="px-6 py-2 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
-                        Cancel
-                    </button>
-                    <button type="submit" id="saveEmployeeBtn" class="px-6 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-lg shadow-indigo-200">
-                        <i class="fas fa-save mr-1"></i> Save Changes
-                    </button>
-                </div>
+            </div>
+
+            {{-- Form Actions (Navigation) --}}
+            <div class="flex justify-end gap-4 pt-6 border-t border-gray-200 mt-auto">
+                <button type="button" onclick="closeEmployeeModal()" class="px-6 py-2 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
+                    Cancel
+                </button>
+                <button type="button" x-show="currentStep > 1" @click="currentStep--" class="px-6 py-2 text-sm bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 transition duration-150">
+                    Previous
+                </button>
+                <button type="button" x-show="currentStep < totalSteps" @click="currentStep++" class="px-6 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-lg shadow-indigo-200">
+                    Next
+                </button>
+                <button type="submit" x-show="currentStep === totalSteps" id="saveEmployeeBtn" class="px-6 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-lg shadow-indigo-200">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
             </div>
         </form>
     </div>

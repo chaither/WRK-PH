@@ -83,6 +83,9 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
     Route::get('/api/departments', function () {
         return response()->json(App\Models\Department::select('id', 'name')->get());
     })->name('api.departments');
+
+    // New API route for payroll history
+    Route::get('/api/payroll-history', [App\Http\Controllers\PayrollHistoryController::class, 'getPayrollHistory']);
 });
 
 // Department Employee Routes
@@ -112,6 +115,7 @@ Route::prefix('payroll')->name('payroll.')->group(function() {
     // Generate payroll for a selected date range (start_date, end_date)
     Route::post('/generate', [PayrollController::class, 'generateForRange'])->name('generate.range');
     Route::post('/pay-periods/{payPeriod}/complete', [PayrollController::class, 'completePayPeriod'])->name('pay-periods.complete');
+    Route::post('/pay-periods/{payPeriod}/close', [PayrollController::class, 'closePayPeriod'])->name('pay-periods.close');
     Route::get('/employees/{employee}/pay-periods/{payPeriod}/payslip', [PayrollController::class, 'showPayslip'])->name('show-payslip');
     Route::get('/download-pdf', [PayrollController::class, 'downloadPdf'])->name('download_pdf');
     Route::put('/payslip/{payslip}/deduction', [PayrollController::class, 'updateOtherDeduction'])->name('payroll.payslip.deduction');
@@ -121,6 +125,8 @@ Route::prefix('payroll')->name('payroll.')->group(function() {
 // Admin Payroll Routes
 Route::prefix('admin/payroll')->name('admin.payroll.')->middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
     Route::put('/global-overtime-multiplier', [PayrollController::class, 'updateGlobalOvertimeMultiplier'])->name('update-global-overtime-multiplier');
+    Route::get('/history', [PayrollController::class, 'indexHistory'])->name('history.index');
+    Route::get('/history/{payPeriod}/details', [PayrollController::class, 'showPayrollDetails'])->name('history.details');
 });
 
 // Leave Management Routes
