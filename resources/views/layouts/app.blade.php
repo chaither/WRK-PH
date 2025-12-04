@@ -210,10 +210,10 @@
                                 <p>No notifications</p>
                             </div>
                             <div class="px-4 py-2 border-t border-gray-200 text-center">
-                                @if(auth()->user()->role === 'employee')
-                                    <a href="{{ route('employee.dashboard') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
+                                @if(Auth::check() && Auth::user()->role === 'employee')
+                                    <a href="{{ route('employee.notifications.history') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
                                 @else
-                                    <a href="{{ route('dashboard') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
+                                    <a href="{{ route('notifications.history') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
                                 @endif
                             </div>
                         </div>

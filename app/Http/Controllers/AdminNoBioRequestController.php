@@ -9,9 +9,13 @@ use Carbon\Carbon;
 
 class AdminNoBioRequestController extends Controller
 {
-    public function index()
+    public function index(NoBioRequest $noBioRequest = null)
     {
-        $noBioRequests = NoBioRequest::with('user')->where('status', 'pending')->get();
+        if ($noBioRequest) {
+            $noBioRequests = collect([$noBioRequest]); // Show only the specific no bio request
+        } else {
+            $noBioRequests = NoBioRequest::with('user')->where('status', 'pending')->get();
+        }
         return view('admin.attendance.no_bio_request.index', compact('noBioRequests'));
     }
 
@@ -61,6 +65,13 @@ class AdminNoBioRequestController extends Controller
         $dtrRecord->recalculateAllHours();
         $dtrRecord->save();
 
+        // Create notification for employee
+        \App\Models\Notification::create([
+            'user_id' => $noBioRequest->user_id,
+            'message' => 'Your no bio request for ' . Carbon::parse($noBioRequest->date)->format('M d, Y') . ' (Type: ' . str_replace('_', ' ', $noBioRequest->type) . ') has been approved.',
+            'type' => 'no_bio_request_approved',
+        ]);
+
         return redirect()->back()->with('success', 'No Bio Request approved and DTR updated.');
     }
 
@@ -69,6 +80,13 @@ class AdminNoBioRequestController extends Controller
         $noBioRequest = NoBioRequest::findOrFail($id);
         $noBioRequest->status = 'rejected';
         $noBioRequest->save();
+
+        // Create notification for employee
+        \App\Models\Notification::create([
+            'user_id' => $noBioRequest->user->id,
+            'message' => 'Your no bio request for ' . Carbon::parse($noBioRequest->date)->format('M d, Y') . ' (Type: ' . str_replace('_', ' ', $noBioRequest->type) . ') has been rejected.',
+            'type' => 'no_bio_request_rejected',
+        ]);
 
         return redirect()->back()->with('error', 'No Bio Request rejected.');
     }

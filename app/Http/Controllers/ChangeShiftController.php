@@ -27,13 +27,23 @@ class ChangeShiftController extends Controller
 
         $user = Auth::user();
 
-        ChangeShiftRequest::create([
+        $changeShiftRequest = ChangeShiftRequest::create([
             'user_id' => $user->id,
             'current_shift_id' => $user->shift_id,
             'requested_shift_id' => $request->requested_shift,
             'reason' => $request->reason,
             'status' => 'pending',
         ]);
+
+        // Create notification for admin/HR about new change shift request
+        $adminUsers = \App\Models\User::whereIn('role', ['admin', 'hr'])->get();
+        foreach ($adminUsers as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'message' => "{$user->first_name} {$user->last_name} submitted a change shift request for " . $changeShiftRequest->requestedShift->name . ".",
+                'type' => 'change_shift_request_submitted',
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Change shift request submitted successfully and is awaiting approval!');
     }

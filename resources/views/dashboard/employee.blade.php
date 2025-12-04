@@ -133,7 +133,13 @@
                                         <input type="checkbox" name="selected_notifications[]" value="{{ $notification->id }}" class="notification-checkbox form-checkbox text-blue-600 rounded mr-2"/>
                                     @endif
                                     <div>
-                                        <p class="font-semibold">{{ $notification->message }}</p>
+                                        @if(isset($notification->link))
+                                            <a href="{{ $notification->link }}" class="font-semibold text-blue-800 hover:text-blue-600" onclick="markNotificationAsReadAndRedirect('{{ $notification->id }}', '{{ $notification->link }}')">
+                                                {{ $notification->message }}
+                                            </a>
+                                        @else
+                                            <p class="font-semibold">{{ $notification->message }}</p>
+                                        @endif
                                         <p class="text-xs text-blue-600 mt-1">{{ \Illuminate\Support\Carbon::parse($notification->created_at)->diffForHumans() }}</p>
                                     </div>
                                 </div>
@@ -152,6 +158,11 @@
                 @else
                     <p class="text-gray-600">No new notifications at this time.</p>
                 @endif
+                <div class="mt-4 text-center">
+                    <a href="{{ route('employee.notifications.history') }}" class="inline-block text-blue-600 hover:text-blue-800 font-medium">
+                        View all notifications
+                    </a>
+                </div>
             </div>
         </div>
         <div class="bg-white rounded-lg shadow-md p-6 mt-8">
@@ -349,5 +360,38 @@
             });
         }
     });
+
+    function markNotificationAsReadAndRedirect(notificationId, redirectUrl) {
+        // Mark the notification as read (e.g., update its status in the database)
+        // This is a placeholder. In a real application, you would send an AJAX request
+        // to update the notification's 'is_read' status.
+        // For now, we'll just redirect.
+
+        // Example AJAX call (if you have a backend endpoint for marking as read)
+        // fetch(`/api/notifications/${notificationId}/read`, {
+        //     method: 'POST',
+        //     headers: {
+        //         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        //         'Content-Type': 'application/json',
+        //         'Accept': 'application/json',
+        //     },
+        //     body: JSON.stringify({ _method: 'PUT' })
+        // })
+        // .then(response => response.json())
+        // .then(data => {
+        //     if (data.success) {
+        //         // Redirect to the desired URL
+        //         window.location.href = redirectUrl;
+        //     } else {
+        //         console.error('Error marking notification as read:', data.error);
+        //     }
+        // })
+        // .catch(error => {
+        //     console.error('Error during notification read:', error);
+        // });
+
+        // For now, we'll just redirect
+        window.location.href = redirectUrl;
+    }
 </script>
 @endpush

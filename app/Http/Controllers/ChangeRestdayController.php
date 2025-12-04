@@ -35,6 +35,16 @@ class ChangeRestdayController extends Controller
             'status' => 'pending',
         ]);
 
+        // Create notification for admin/HR about new change restday request
+        $adminUsers = \App\Models\User::whereIn('role', ['admin', 'hr'])->get();
+        foreach ($adminUsers as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'message' => "{$user->first_name} {$user->last_name} submitted a change restday request for " . implode(', ', $request->requested_restdays) . ".",
+                'type' => 'change_restday_request_submitted',
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Change restday request submitted successfully and is awaiting approval!');
     }
 
