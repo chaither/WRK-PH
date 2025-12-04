@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\OvertimeRequest;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class OvertimeRequestController extends Controller
 {
@@ -23,13 +26,30 @@ class OvertimeRequestController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
-        OvertimeRequest::create([
+        $overtimeRequest = OvertimeRequest::create([
             'user_id' => Auth::id(),
             'date' => $request->date,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'reason' => $request->reason,
             'status' => 'pending',
+        ]);
+
+        // Create notification for admin/HR about new overtime request
+        $adminUsers = User::whereIn('role', ['admin', 'hr'])->get();
+        foreach ($adminUsers as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'message' => Auth::user()->first_name . ' ' . Auth::user()->last_name . ' submitted an overtime request for ' . Carbon::parse($request->date)->format('M d, Y') . '.',
+                'type' => 'overtime_request_submitted',
+            ]);
+        }
+
+        // Create notification for employee
+        Notification::create([
+            'user_id' => Auth::id(),
+            'message' => 'Your overtime request for ' . Carbon::parse($request->date)->format('M d, Y') . ' has been submitted and is pending approval.',
+            'type' => 'overtime_request_pending',
         ]);
 
         return redirect()->back()->with('success', 'Overtime Request submitted successfully!');

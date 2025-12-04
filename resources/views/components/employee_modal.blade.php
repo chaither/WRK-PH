@@ -1,5 +1,5 @@
 <div id="employeeModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4"> {{-- Consistent dark overlay --}}
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col"> {{-- Sharper modal styling --}}
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 p-6 transform transition-all duration-300 scale-100 max-h-[90vh] flex flex-col overflow-hidden"> {{-- Sharper modal styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Employee</h3>
             <button onclick="closeEmployeeModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100">
@@ -10,7 +10,7 @@
         <form id="employeeForm" method="POST" action="{{ route('employees.store') }}" class="space-y-6">
             @csrf
             <input type="hidden" name="_method" value="POST" id="_methodField">
-            <div class="flex-grow overflow-y-auto pr-2">
+            <div class="flex-grow overflow-y-auto pr-2 overflow-x-hidden">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {{-- Personal Information --}}
                     <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 shadow-inner">
@@ -73,7 +73,7 @@
                             <div>
                                 <label for="department_id" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
                                 <select name="department_id" id="department_id" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 max-w-full">
                                     <option value="">Select Department</option>
                                     @foreach($departments as $dept)
                                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>

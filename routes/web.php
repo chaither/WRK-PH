@@ -39,6 +39,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/employee/organization', [EmployeeOrganizationChartController::class, 'index'])->name('employee.organization.index');
     Route::delete('/employee/notifications/{notification}', [DashboardController::class, 'destroyNotification'])->name('employee.notifications.destroy');
     Route::delete('/employee/notifications', [DashboardController::class, 'bulkDestroyNotifications'])->name('employee.notifications.bulkDestroy');
+    
+    // Notification routes for all users
+    Route::get('/notifications', [DashboardController::class, 'getNotifications'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [DashboardController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllAsRead'])->name('notifications.markAllRead');
 });
 
 // Employee Management Routes (Protected)

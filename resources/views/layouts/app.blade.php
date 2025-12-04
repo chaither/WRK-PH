@@ -188,7 +188,38 @@
                     <div class="flex-1">
                     </div>
                     
-                    <div class="relative ml-auto">
+                    <!-- Notifications Dropdown -->
+                    <div class="relative ml-auto mr-4">
+                        <button id="notificationDropdownToggle" class="relative rounded-full p-3 focus:outline-none hover:bg-blue-800 transition-colors">
+                            <i class="fas fa-bell text-2xl text-white"></i>
+                            <span id="notificationBadge" class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-xl py-1 z-[999] hidden max-h-96 overflow-hidden flex flex-col">
+                            <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-gray-800">Notifications</h3>
+                                <button id="markAllReadBtn" class="text-xs text-blue-600 hover:text-blue-800 hidden">Mark all as read</button>
+                            </div>
+                            <div id="notificationList" class="overflow-y-auto max-h-80">
+                                <div class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Loading notifications...</p>
+                                </div>
+                            </div>
+                            <div id="notificationEmpty" class="px-4 py-8 text-center text-gray-500 hidden">
+                                <i class="fas fa-bell-slash text-2xl mb-2"></i>
+                                <p>No notifications</p>
+                            </div>
+                            <div class="px-4 py-2 border-t border-gray-200 text-center">
+                                @if(auth()->user()->role === 'employee')
+                                    <a href="{{ route('employee.dashboard') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
+                                @else
+                                    <a href="{{ route('dashboard') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
                         <button id="profileDropdownToggle" class="rounded-full p-3 focus:outline-none">
                             <i class="fas fa-user-circle text-3xl text-white"></i>
                         </button>
@@ -219,18 +250,147 @@
         document.addEventListener('DOMContentLoaded', function() {
             const profileDropdownToggle = document.getElementById('profileDropdownToggle');
             const profileDropdown = document.getElementById('profileDropdown');
+            const notificationDropdownToggle = document.getElementById('notificationDropdownToggle');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationList = document.getElementById('notificationList');
+            const notificationBadge = document.getElementById('notificationBadge');
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            const notificationEmpty = document.getElementById('notificationEmpty');
 
-            
+            // Profile dropdown
             profileDropdownToggle.addEventListener('click', function() {
                 profileDropdown.classList.toggle('hidden');
+                notificationDropdown.classList.add('hidden');
             });
 
-            // Close the dropdown if the user clicks outside of it
+            // Notification dropdown
+            notificationDropdownToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('hidden');
+                profileDropdown.classList.add('hidden');
+                if (!notificationDropdown.classList.contains('hidden')) {
+                    loadNotifications();
+                }
+            });
+
+            // Close dropdowns if the user clicks outside of them
             window.addEventListener('click', function(e) {
                 if (!profileDropdownToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
                     profileDropdown.classList.add('hidden');
                 }
+                if (!notificationDropdownToggle.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.add('hidden');
+                }
             });
+
+            // Load notifications function
+            function loadNotifications() {
+                fetch('{{ route("notifications.index") }}', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    notificationList.innerHTML = '';
+                    notificationEmpty.classList.add('hidden');
+                    
+                    if (data.notifications && data.notifications.length > 0) {
+                        data.notifications.forEach(notification => {
+                            const notificationItem = document.createElement('a'); // Changed to <a> tag
+                            notificationItem.href = notification.link || '#'; // Use the link from the notification data
+                            notificationItem.className = `block px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notification.read_at ? 'bg-blue-50' : ''}`;
+                            notificationItem.innerHTML = `
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-800 ${!notification.read_at ? 'font-semibold' : ''}">${notification.message}</p>
+                                        <p class="text-xs text-gray-500 mt-1">${notification.time_ago}</p>
+                                    </div>
+                                    ${!notification.read_at ? '<span class="ml-2 w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}
+                                </div>
+                            `;
+                            notificationItem.addEventListener('click', function(e) {
+                                if (notification.link) {
+                                    e.preventDefault(); // Prevent default if a link is present, handle redirection manually
+                                    window.location.href = notification.link;
+                                }
+                                markAsRead(notification.id);
+                            });
+                            notificationList.appendChild(notificationItem);
+                        });
+                        
+                        if (data.unread_count > 0) {
+                            notificationBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                            notificationBadge.classList.remove('hidden');
+                            markAllReadBtn.classList.remove('hidden');
+                        } else {
+                            notificationBadge.classList.add('hidden');
+                            markAllReadBtn.classList.add('hidden');
+                        }
+                    } else {
+                        notificationEmpty.classList.remove('hidden');
+                        notificationBadge.classList.add('hidden');
+                        markAllReadBtn.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    notificationList.innerHTML = '<div class="px-4 py-8 text-center text-red-500">Error loading notifications</div>';
+                });
+            }
+
+            // Mark notification as read
+            function markAsRead(notificationId) {
+                // Skip admin notifications (they're virtual)
+                if (notificationId.toString().startsWith('admin-')) {
+                    return;
+                }
+                
+                fetch(`{{ url('notifications') }}/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadNotifications();
+                })
+                .catch(error => {
+                    console.error('Error marking notification as read:', error);
+                });
+            }
+
+            // Mark all as read
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    fetch('{{ route("notifications.markAllRead") }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        loadNotifications();
+                    })
+                    .catch(error => {
+                        console.error('Error marking all notifications as read:', error);
+                    });
+                });
+            }
+
+            // Load notifications on page load
+            loadNotifications();
+            
+            // Refresh notifications every 30 seconds
+            setInterval(loadNotifications, 30000);
 
             const sidebar = document.getElementById('sidebar');
             const sidebarTitle = document.getElementById('sidebarTitle');
