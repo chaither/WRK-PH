@@ -11,7 +11,10 @@ class PayPeriod extends Model
         'start_date',
         'end_date',
         'status',
-        'pay_period_type'
+        'pay_period_type',
+        'generated_by_user_id',
+        'regenerated_by_user_id',
+        'marked_paid_by_user_id'
     ];
 
     protected $casts = [
@@ -22,5 +25,20 @@ class PayPeriod extends Model
     public function payslips(): HasMany
     {
         return $this->hasMany(Payslip::class);
+    }
+
+    public function generatedBy()
+    {
+        return $this->belongsTo(User::class, 'generated_by_user_id');
+    }
+
+    public function regeneratedBy()
+    {
+        return $this->belongsTo(User::class, 'regenerated_by_user_id');
+    }
+
+    public function markedPaidBy()
+    {
+        return $this->belongsTo(User::class, 'marked_paid_by_user_id');
     }
 }

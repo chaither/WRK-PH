@@ -3,6 +3,7 @@
 @section('title', 'Payroll')
 
 @section('content')
+@php $period = $currentPeriod; @endphp {{-- Moved this line to the very top --}}
 <div class="container mx-auto px-6 py-6"> {{-- Reduced vertical padding to py-6 --}}
     <header class="mb-6">
         <h1 class="text-3xl font-bold text-gray-800 flex items-center">
@@ -50,22 +51,30 @@
             </a>
         </div>
 
-        {{-- Date Filter Form --}}
-        <form method="GET" class="mb-6 flex flex-wrap gap-2 items-end p-3 bg-gray-50 rounded-lg sm:flex-nowrap sm:gap-4"> {{-- More compact form area, allow wrapping on small screens --}}
-            <div class="w-full sm:w-auto">
-                <label for="start_date" class="block text-xs font-medium text-gray-600 mb-1">Start Date</label> {{-- Smaller label text --}}
-                <input type="date" name="start_date" id="start_date" value="{{ $start ?? '' }}" class="w-full border-gray-300 rounded-md px-2 py-1.5 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <div class="w-full sm:w-auto">
-                <label for="end_date" class="block text-xs font-medium text-gray-600 mb-1">End Date</label> {{-- Smaller label text --}}
-                <input type="date" name="end_date" id="end_date" value="{{ $end ?? '' }}" class="w-full border-gray-300 rounded-md px-2 py-1.5 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
-            <button type="submit" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-1.5 text-sm rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
-                <i class="fas fa-filter mr-1"></i> Filter
-            </button>
-        </form>
+        <div class="mb-6 flex flex-wrap gap-2 items-end p-3 bg-gray-50 rounded-lg sm:flex-nowrap sm:gap-4">
+            <a href="{{ route('admin.payroll.history.index') }}" class="w-full sm:w-auto bg-blue-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-md flex items-center justify-center">
+                <i class="fas fa-history mr-1"></i> Payroll History
+            </a>
+            @if(!empty($period) && ($payrolls->count() ?? 0) > 0 && $period->status !== 'paid' && $period->status !== 'closed') {{-- Added condition to hide when closed --}}
+                 <form method="POST" action="{{ route('payroll.pay-periods.complete', ['payPeriod' => $period->id]) }}" onsubmit="return confirm('Are you sure you want to mark this payroll period as paid? This action cannot be undone.');">
+                     @csrf
+                    <button type="submit" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-indigo-700 transition duration-150 shadow-sm flex items-center justify-center">
+                     <i class="fas fa-dollar-sign mr-1"></i> Done Payment
+                     </button>
+                   </form>
+                @endif
 
-        @php $period = $currentPeriod; @endphp
+                {{-- Close Payroll Button --}}
+                @if(!empty($period) && ($payrolls->count() ?? 0) > 0 && $period->status === 'paid' && $period->status !== 'closed')
+                <form method="POST" action="{{ route('payroll.pay-periods.close', ['payPeriod' => $period->id]) }}" onsubmit="return confirm('Are you sure you want to CLOSE this payroll period? This will prevent further regeneration and mark it as final.');">
+                    @csrf
+                   <button type="submit" class="w-full sm:w-auto bg-red-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center">
+                    <i class="fas fa-times-circle mr-1"></i> Close Payroll
+                    </button>
+                  </form>
+               @endif
+        </div>
+
         <div class="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-3 bg-white border-t border-b border-gray-400 gap-3"> {{-- Sticky behavior removed, padding reduced, flex-col on small screens --}}
             <div>
                 @if($period && $period->status === 'paid')
@@ -76,6 +85,10 @@
                     <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
                         <i class="fas fa-clock mr-1"></i> Unpaid
                     </span>
+                @elseif($period && $period->status === 'closed') {{-- New status for closed payroll --}}
+                    <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                        <i class="fas fa-ban mr-1"></i> Closed
+                    </span>
                 @else
                     <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">
                         <i class="fas fa-info-circle mr-1"></i> Not generated
@@ -84,43 +97,33 @@
             </div>
 
             <div class="flex flex-col sm:flex-row gap-3">
-                <button type="button" onclick="openGovernmentContributionModal()" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center">
+                <button type="button" onclick="openGovernmentContributionModal()" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                     <i class="fas fa-hands-helping mr-1"></i> Manage Govt. Contributions
                 </button>
                 {{-- New Global Overtime Multiplier Button --}}
-                <button type="button" onclick="openOvertimeMultiplierModal(window.globalOvertimeMultiplier)" class="w-full sm:flex-1 bg-blue-500 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-blue-600 transition duration-150 shadow-sm flex items-center justify-center">
+                <button type="button" onclick="openOvertimeMultiplierModal(window.globalOvertimeMultiplier)" class="w-full sm:flex-1 bg-blue-500 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-600 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                     <i class="fas fa-hourglass-half mr-1"></i> Set Global Overtime Multiplier
                 </button>
                 
-                <button type="button" onclick="openPayrollScheduleModal()" class="w-full sm:flex-1 bg-purple-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-purple-700 transition duration-150 shadow-sm flex items-center justify-center">
+                <button type="button" onclick="openPayrollScheduleModal()" class="w-full sm:flex-1 bg-purple-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-purple-700 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                     <i class="fas fa-calendar-alt mr-1"></i> Manage Payroll Schedules
                 </button>
                 {{-- Generate Payroll Button --}}
                 @if($period && in_array($period->status, ['unpaid', 'paid']))
-                    <button type="button" onclick="openGeneratePayrollModal('{{ $start }}', '{{ $end }}', true)" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center">
+                    <button type="button" onclick="openGeneratePayrollModal('{{ $start }}', '{{ $end }}', true)" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                         <i class="fas fa-redo mr-1"></i> Regenerate Payroll
                     </button>
                 @else
-                    <button type="button" onclick="openGeneratePayrollModal('{{ $start }}', '{{ $end }}', false)" class="w-full sm:flex-1 bg-blue-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-sm flex items-center justify-center">
+                    <button type="button" onclick="openGeneratePayrollModal('{{ $start }}', '{{ $end }}', false)" class="w-full sm:flex-1 bg-blue-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                         <i class="fas fa-calculator mr-1"></i> Generate Payroll
                     </button>
                 @endif
 
                 {{-- Download PDF Button --}}
                 @if(!empty($period) && ($payrolls->count() ?? 0) > 0)
-                    <button type="button" onclick="window.downloadPayrollPdf('{{ $start }}', '{{ $end }}')" class="w-full sm:flex-1 bg-red-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center" @if ($period && $period->status === 'paid') disabled @endif>
+                    <button type="button" onclick="window.downloadPayrollPdf('{{ $start }}', '{{ $end }}')" class="w-full sm:flex-1 bg-red-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-red-700 transition duration-150 shadow-sm flex items-center justify-center">
                         <i class="fas fa-file-pdf mr-2"></i> Download PDF
                     </button>
-                @endif
-
-                {{-- Done Payment Button --}}
-                @if(!empty($period) && ($payrolls->count() ?? 0) > 0 && $period->status !== 'paid')
-                    <form method="POST" action="{{ route('payroll.pay-periods.complete', ['payPeriod' => $period->id]) }}" class="w-full sm:flex-1">
-                        @csrf
-                        <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-1.5 h-10 text-sm rounded-md font-medium hover:bg-indigo-700 transition duration-150 shadow-sm flex items-center justify-center">
-                            <i class="fas fa-dollar-sign mr-1"></i> Done Payment
-                        </button>
-                    </form>
                 @endif
             </div>
         </div>
@@ -403,6 +406,7 @@
 @include('components.generate_payroll_modal')
 @include('components.overtime_multiplier_modal') <!-- Include the new modal component -->
 <input type="hidden" id="globalOvertimeMultiplierData" value="{{ $globalOvertimeMultiplier ?? '1.5' }}">
+{{-- @include('components.payroll-filter-modal') --}} {{-- No longer passing availablePayPeriods here --}}
 <div id="editDeductionsModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 p-2"> {{-- Reduced overall padding --}}
     <div class="bg-white rounded-xl shadow-2xl p-4 max-w-xs sm:max-w-2xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100"> {{-- Reduced max-width and padding --}}
         <div class="flex justify-between items-center mb-3 border-b pb-2"> {{-- Reduced margin and padding --}}

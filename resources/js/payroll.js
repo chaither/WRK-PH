@@ -50,4 +50,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Read global overtime multiplier from the hidden input
     window.globalOvertimeMultiplier = document.getElementById('globalOvertimeMultiplierData').value;
+
 });
