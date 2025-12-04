@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\PayrollService;
+use Illuminate\Support\Facades\Log; // Added for debugging
 
 class PayrollController extends Controller
 {
@@ -79,16 +80,11 @@ class PayrollController extends Controller
         $currentPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
 
         if ($currentPeriod) {
+            Log::info('Current PayPeriod status before view: ' . $currentPeriod->status); // Add this line for debugging
             $payslipQuery = Payslip::with(['user', 'payPeriod'])
                 ->where('pay_period_id', $currentPeriod->id);
             $payrolls = $payslipQuery->get();
             
-            // totalEmployees is already set based on eligible users; do not override it here unless specific requirement.
-            // If you want totalEmployees to *only* show those with payslips when a period is found,
-            // you would uncomment and adjust the line below.
-            // if ($payrolls->isNotEmpty()) {
-            //     $totalEmployees = $payrolls->unique('user_id')->count();
-            // }
         } else {
             // If no currentPeriod is found, there are no existing payroll records for this range.
             // Therefore, ensure $payrolls is an empty collection so sums are 0.
@@ -197,16 +193,23 @@ class PayrollController extends Controller
         $payPeriod = PayPeriod::firstOrCreate([
             'start_date' => $start,
             'end_date' => $end
-        ], ['status' => 'draft', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']);
+        ], ['status' => 'draft', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly', 'generated_by_user_id' => Auth::id()]);
 
-        // Do not regenerate if already generated/unpaid or paid
-        if (in_array($payPeriod->status, ['unpaid', 'paid']) && !$request->has('force_regenerate')) {
-            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+        // Do not regenerate if already generated/unpaid or paid, or closed
+        if (in_array($payPeriod->status, ['unpaid', 'paid', 'closed']) && !$request->has('force_regenerate')) {
+            if ($payPeriod->status === 'closed') {
+                return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+            } else {
+                return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+            }
         }
 
         // If forced regeneration, set status to draft to allow re-generation
-        if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid'])) {
-            $payPeriod->update(['status' => 'draft']);
+        if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid', 'closed'])) {
+            if ($payPeriod->status === 'closed') {
+                return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+            }
+            $payPeriod->update(['status' => 'draft', 'regenerated_by_user_id' => Auth::id()]);
         }
 
         // Call existing generator, pass departmentId array
@@ -221,10 +224,20 @@ class PayrollController extends Controller
     public function completePayPeriod(PayPeriod $payPeriod)
     {
         if ($payPeriod->status !== 'paid') {
-            $payPeriod->update(['status' => 'paid']);
+            $payPeriod->update(['status' => 'paid', 'marked_paid_by_user_id' => Auth::id()]);
         }
 
         return redirect()->route('payroll.index', ['start_date' => $payPeriod->start_date, 'end_date' => $payPeriod->end_date])->with('success', 'Pay period marked as paid.');
+    }
+
+    // Mark pay period as closed
+    public function closePayPeriod(PayPeriod $payPeriod)
+    {
+        if ($payPeriod->status !== 'closed') {
+            $payPeriod->update(['status' => 'closed', 'closed_by_user_id' => Auth::id()]);
+        }
+
+        return redirect()->route('payroll.index', ['start_date' => $payPeriod->start_date, 'end_date' => $payPeriod->end_date])->with('success', 'Pay period marked as closed and final.');
     }
 
     public function showPayslip(User $employee, PayPeriod $payPeriod)
@@ -361,5 +374,32 @@ class PayrollController extends Controller
         User::where('role', 'employee')->update(['overtime_multiplier' => $newMultiplier]);
 
         return redirect()->back()->with('success', 'Global overtime multiplier updated successfully for all employees.');
+    }
+
+    public function indexHistory(Request $request)
+    {
+        if (!Auth::user()->isHRManager()) {
+            return redirect()->route('dashboard')->with('error', 'You are not authorized to view payroll history.');
+        }
+
+        $type = $request->query('type', 'all'); // Default to 'all'
+
+        $payPeriodsQuery = PayPeriod::with('generatedBy', 'regeneratedBy', 'markedPaidBy');
+
+        if ($type === 'semiMonthly') {
+            $payPeriodsQuery->where('pay_period_type', 'semi-monthly');
+        } elseif ($type === 'monthly') {
+            $payPeriodsQuery->where('pay_period_type', 'monthly');
+        }
+
+        $payPeriods = $payPeriodsQuery->orderByDesc('end_date')->get();
+
+        return view('payroll.history.index', compact('payPeriods'));
+    }
+
+    public function showPayrollDetails(PayPeriod $payPeriod)
+    {
+        $payPeriod->load('generatedBy', 'regeneratedBy', 'markedPaidBy', 'payslips.user');
+        return view('payroll.payroll_details', compact('payPeriod'));
     }
 }
