@@ -92,6 +92,16 @@ class NoBioRequestController extends Controller
             'status' => 'pending',
         ]);
 
+        // Create notification for admin/HR about new no bio request
+        $adminUsers = \App\Models\User::whereIn('role', ['admin', 'hr'])->get();
+        foreach ($adminUsers as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'message' => "{$user->first_name} {$user->last_name} submitted a no bio request for " . \Carbon\Carbon::parse($request->date)->format('M d, Y') . ". Type: " . str_replace('_', ' ', $request->type) . ".",
+                'type' => 'no_bio_request_submitted',
+            ]);
+        }
+
         return redirect()->back()->with('success', 'No Bio Request submitted successfully!');
     }
 

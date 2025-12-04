@@ -44,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [DashboardController::class, 'getNotifications'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [DashboardController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::post('/notifications/mark-all-read', [DashboardController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+    Route::get('/notifications/history', [DashboardController::class, 'history'])->name('notifications.history');
+    Route::get('/employee/notifications/history', [DashboardController::class, 'employeeHistory'])->name('employee.notifications.history');
 });
 
 // Employee Management Routes (Protected)
@@ -148,6 +150,7 @@ Route::get('/leave-requests-review', [LeaveController::class, 'reviewLeaveReques
 Route::post('/leave-requests/{leaveRequest}/approve', [LeaveController::class, 'approveLeaveRequest'])->name('leave.approve');
 Route::post('/leave-requests/{leaveRequest}/reject', [LeaveController::class, 'rejectLeaveRequest'])->name('leave.reject');
 Route::get('/leave-requests/{leaveRequest}/reason-pdf', [LeaveController::class, 'generatePdfReason'])->name('leave.reason.pdf');
+Route::post('/notifications/{notification}/read', [DashboardController::class, 'markAsRead'])->name('notification.read');
 
 // Attendance Routes
 Route::middleware(['auth'])->group(function () {

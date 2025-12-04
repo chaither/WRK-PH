@@ -12,9 +12,14 @@ use Illuminate\Support\Facades\Log; // Added Log facade
 
 class AdminOvertimeRequestController extends Controller
 {
-    public function index()
+    public function index(OvertimeRequest $overtimeRequest = null)
     {
-        $overtimeRequests = OvertimeRequest::with('user')->where('status', 'pending')->get();
+        if ($overtimeRequest) {
+            $overtimeRequests = collect([$overtimeRequest]); // Show only the specific overtime request
+        } else {
+            $overtimeRequests = OvertimeRequest::with('user')->where('status', 'pending')->get();
+        }
+        
         return view('admin.attendance.overtime_request.index', compact('overtimeRequests'));
     }
 

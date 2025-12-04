@@ -177,13 +177,18 @@ class LeaveController extends Controller
     }
 
     // HR/Admin leave request review methods
-    public function reviewLeaveRequests()
+    public function reviewLeaveRequests(LeaveRequest $leaveRequest = null)
     {
         if (!Auth::user()->isHRManager()) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to manage leave requests.');
         }
 
-        $leaveRequests = LeaveRequest::with('user')->orderByDesc('created_at')->get();
+        if ($leaveRequest) {
+            $leaveRequests = collect([$leaveRequest]); // Show only the specific leave request
+        } else {
+            $leaveRequests = LeaveRequest::with('user')->orderByDesc('created_at')->get();
+        }
+        
         return view('leave.review', compact('leaveRequests'));
     }
 

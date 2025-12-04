@@ -337,10 +337,26 @@ class DashboardController extends Controller
             $link = '#'; // Default link
             if (isset($notification->link)) {
                 $link = $notification->link;
+            } elseif (in_array($user->role, ['admin', 'hr']) && $notification->type === 'leave_request_submitted') {
+                $link = route('leave.review', ['leaveRequest' => $notification->id]);
+            } elseif (in_array($user->role, ['admin', 'hr']) && $notification->type === 'overtime_request_submitted') {
+                $link = route('admin.attendance.overtime-request.review', ['overtimeRequest' => $notification->id]);
+            } elseif (in_array($user->role, ['admin', 'hr']) && $notification->type === 'change_shift_request_submitted') {
+                $link = route('admin.attendance.change-shift.review', ['changeShiftRequest' => $notification->id]);
+            } elseif (in_array($user->role, ['admin', 'hr']) && $notification->type === 'change_restday_request_submitted') {
+                $link = route('admin.attendance.change-restday.review', ['changeRestdayRequest' => $notification->id]);
+            } elseif (in_array($user->role, ['admin', 'hr']) && $notification->type === 'no_bio_request_submitted') {
+                $link = route('admin.attendance.no-bio-request.review', ['noBioRequest' => $notification->id]);
             } elseif ($notification->type === 'leave_request_submitted' || $notification->type === 'leave_request_approved' || $notification->type === 'leave_request_rejected') {
                 $link = route('employee.leave.index'); // General employee leave history
             } elseif ($notification->type === 'overtime_request_submitted' || $notification->type === 'overtime_request_approved' || $notification->type === 'overtime_request_rejected') {
                 $link = route('attendance.overtime-request.index'); // General employee overtime history
+            } elseif ($notification->type === 'change_shift_request_submitted' || $notification->type === 'change_shift_request_approved' || $notification->type === 'change_shift_request_rejected') {
+                $link = route('attendance.change-shift.index'); // General employee change shift history
+            } elseif ($notification->type === 'change_restday_request_submitted' || $notification->type === 'change_restday_request_approved' || $notification->type === 'change_restday_request_rejected') {
+                $link = route('attendance.change-restday.index'); // General employee change restday history
+            } elseif ($notification->type === 'no_bio_request_submitted' || $notification->type === 'no_bio_request_approved' || $notification->type === 'no_bio_request_rejected') {
+                $link = route('attendance.no-bio-request.index'); // General employee no bio history
             }
             // Add other conditions for links as needed for specific notification types
             
@@ -363,30 +379,10 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function markAsRead(Request $request, $notificationId)
+    public function markAsRead(Notification $notification)
     {
-        $user = Auth::user();
-        
-        // Handle admin notifications (which don't have real IDs)
-        if (strpos($notificationId, 'admin-') === 0) {
-            // Admin notifications are virtual, just return success
-            return response()->json(['message' => 'Notification marked as read'], 200);
-        }
-        
-        $notification = Notification::find($notificationId);
-        
-        if (!$notification) {
-            return response()->json(['message' => 'Notification not found'], 404);
-        }
-        
-        // Ensure the authenticated user owns the notification
-        if ($notification->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-        
-        $notification->read_at = Carbon::now();
+        $notification->read_at = now();
         $notification->save();
-        
         return response()->json(['message' => 'Notification marked as read'], 200);
     }
 
@@ -399,5 +395,22 @@ class DashboardController extends Controller
             ->update(['read_at' => Carbon::now()]);
         
         return response()->json(['message' => 'All notifications marked as read'], 200);
+    }
+
+    public function history()
+    {
+        $user = Auth::user();
+        $notifications = Notification::where('user_id', $user->id)->orderByDesc('created_at')->get();
+        return view('notifications.history', compact('notifications'));
+    }
+
+    public function employeeHistory()
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'employee') {
+            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
+        }
+        $notifications = Notification::where('user_id', $user->id)->orderByDesc('created_at')->get();
+        return view('employee.notifications.history', compact('notifications'));
     }
 }
