@@ -76,7 +76,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
     Route::get('/api/employees', function () {
         return response()->json(
             App\Models\User::where('role', 'employee')
-                ->select('id', 'first_name', 'last_name')
+                ->select('id', 'first_name', 'last_name', 'pay_schedule', 'department_id')
                 ->get()
                 ->map(function ($user) {
                     $fullName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));

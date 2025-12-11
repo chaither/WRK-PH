@@ -276,7 +276,7 @@
                                     <div class="px-2 py-1" @click.stop="">
                                         <input type="text" x-model="search" placeholder="Search employees..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search employees">
                                     </div>
-                                    <template x-for="employee in allEmployees.filter(employee => getEmployeeName(employee).toLowerCase().includes(search.toLowerCase()))" :key="employee.id">
+                                    <template x-for="employee in filteredEmployees.filter(employee => getEmployeeName(employee).toLowerCase().includes(search.toLowerCase()))" :key="employee.id">
                                         <li @click.stop="event => {
                                                 const employeeId = employee.id;
                                                 const index = selectedDfEmployees.indexOf(employeeId);
@@ -340,7 +340,7 @@
                                     <div class="px-2 py-1" @click.stop="">
                                         <input type="text" x-model="search" placeholder="Search departments..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" @keydown.escape.stop="open = false" @keydown.tab="open = false" aria-label="Search departments">
                                     </div>
-                                    <template x-for="department in allDepartments.filter(d => d.name.toLowerCase().includes(search.toLowerCase()))" :key="department.id">
+                                    <template x-for="department in filteredDepartments.filter(d => d.name.toLowerCase().includes(search.toLowerCase()))" :key="department.id">
                                         <li @click.stop="event => {
                                                 const departmentId = department.id;
                                                 const index = selectedDfDepartments.indexOf(departmentId);
@@ -366,7 +366,7 @@
                             <div class="mt-2 flex flex-wrap gap-1" x-show="selectedDfDepartments.length > 0" role="list" aria-label="Selected departments for deduction frequency">
                                 <template x-for="departmentId in selectedDfDepartments" :key="departmentId">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" role="listitem">
-                                        <span x-text="allDepartments.find(d => d.id === departmentId)?.name"></span>
+                                        <span x-text="getDepartmentNameById(departmentId)"></span>
                                         <button type="button" @click.stop="event => {
                                             const index = selectedDfDepartments.indexOf(departmentId);
                                             if (index > -1) {
@@ -374,7 +374,7 @@
                                             }
                                             form.deduction_frequency_applies_to = selectedDfDepartments;
                                             $dispatch('input', form.deduction_frequency_applies_to);
-                                        }" class="flex-shrink-0 ml-1 h-3 w-3 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${allDepartments.find(d => d.id === departmentId)?.name}`">
+                                        }" class="flex-shrink-0 ml-1 h-3 w-3 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500" :aria-label="`Remove ${getDepartmentNameById(departmentId)}`">
                                             <span class="sr-only">Remove department</span>
                                             <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
                                                 <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
@@ -440,6 +440,31 @@
             },
             isEditMode: false,
 
+            // Computed property for filtered employees based on deduction frequency
+            get filteredEmployees() {
+                if (this.form.deduction_frequency === 'semi_monthly') {
+                    return this.allEmployees.filter(employee => employee.pay_schedule === 'semi-monthly');
+                } else if (this.form.deduction_frequency === 'first_half_monthly') {
+                    return this.allEmployees; // Show all employees for full monthly deduction
+                }
+                return [];
+            },
+
+            // Computed property for filtered departments based on deduction frequency
+            get filteredDepartments() {
+                if (this.form.deduction_frequency === 'semi_monthly') {
+                    const semiMonthlyDepartmentIds = new Set(this.allEmployees
+                        .filter(employee => employee.pay_schedule === 'semi-monthly')
+                        .map(employee => employee.department_id)
+                        .filter(id => id !== null)
+                    );
+                    return this.allDepartments.filter(department => semiMonthlyDepartmentIds.has(department.id));
+                } else if (this.form.deduction_frequency === 'first_half_monthly') {
+                    return this.allDepartments; // Show all departments for full monthly deduction
+                }
+                return [];
+            },
+
             init() {
                 this.fetchEmployees();
                 this.fetchDepartments();
@@ -457,6 +482,12 @@
                     if (value === 'all') {
                         this.form.deduction_frequency_applies_to = [];
                     }
+                });
+
+                // Watch for changes in deduction_frequency to reset its targeting fields
+                this.$watch('form.deduction_frequency', (value) => {
+                    this.form.deduction_frequency_applies_to = [];
+                    this.form.deduction_frequency_target_type = 'all';
                 });
 
                 // Initialize selectedEmployees and selectedDepartment after fetching data
