@@ -229,9 +229,9 @@ class PayrollService
         $lateDeductions = $totalLateMinutes * $minuteRate; // Calculate late deductions per minute
 
         // Calculate Government Contributions
-        $sssDeduction = $this->calculateContribution('sss', $effectivePeriodSalary, $governmentContributions, $employee);
-        $philhealthDeduction = $this->calculateContribution('philhealth', $effectivePeriodSalary, $governmentContributions, $employee);
-        $pagibigDeduction = $this->calculateContribution('pagibig', $effectivePeriodSalary, $governmentContributions, $employee);
+        $sssDeduction = $this->calculateContribution('sss', $effectivePeriodSalary, $governmentContributions, $employee, $payPeriodStart, $payPeriodEnd);
+        $philhealthDeduction = $this->calculateContribution('philhealth', $effectivePeriodSalary, $governmentContributions, $employee, $payPeriodStart, $payPeriodEnd);
+        $pagibigDeduction = $this->calculateContribution('pagibig', $effectivePeriodSalary, $governmentContributions, $employee, $payPeriodStart, $payPeriodEnd);
 
         // Total deductions from government contributions
         $governmentDeductions = $sssDeduction + $philhealthDeduction + $pagibigDeduction;
@@ -268,14 +268,14 @@ class PayrollService
                     'holiday_working_days' => $totalHolidayWorkingDays,
                     'pay_period_type' => $employee->pay_schedule,
                     'sss_deduction' => round($sssDeduction, 2),
-                    'sss_is_percentage' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
-                    'sss_employee_share_rate' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
+                    'sss_is_percentage' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee, $payPeriodStart, $payPeriodEnd),
+                    'sss_employee_share_rate' => $this->getContributionDetail('sss', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee, $payPeriodStart, $payPeriodEnd),
                     'philhealth_deduction' => round($philhealthDeduction, 2),
-                    'philhealth_is_percentage' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
-                    'philhealth_employee_share_rate' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
+                    'philhealth_is_percentage' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee, $payPeriodStart, $payPeriodEnd),
+                    'philhealth_employee_share_rate' => $this->getContributionDetail('philhealth', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee, $payPeriodStart, $payPeriodEnd),
                     'pagibig_deduction' => round($pagibigDeduction, 2),
-                    'pagibig_is_percentage' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee),
-                    'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee),
+                    'pagibig_is_percentage' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee, $payPeriodStart, $payPeriodEnd),
+                    'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee, $payPeriodStart, $payPeriodEnd),
                     'hourly_rate_computed' => $hourlyRate,
                     'pay_period_days_count' => $this->getDaysInPayPeriod($payPeriodStart, $payPeriodEnd),
                     'regular_work_hours' => round($totalRegularWorkHours, 0), // Add regular work hours to details
@@ -307,7 +307,7 @@ class PayrollService
      * @param \Illuminate\Support\Collection $governmentContributions
      * @return float
      */
-    private function calculateContribution(string $type, float $salary, \Illuminate\Support\Collection $governmentContributions, User $employee): float
+    private function calculateContribution(string $type, float $salary, \Illuminate\Support\Collection $governmentContributions, User $employee, Carbon $payPeriodStart, Carbon $payPeriodEnd): float
     {
         $contributionsOfType = $governmentContributions->get($type);
         if (!$contributionsOfType) {
@@ -324,14 +324,37 @@ class PayrollService
                     return 0.00; // Employee not eligible for this fixed deduction
                 }
 
+                $deductionAmount = 0.00;
                 if ($contribution->is_percentage) {
                     // Calculate as percentage of salary, capped at max_salary if defined
                     $applicableSalary = ($max !== null && $salary > $max) ? $max : $salary;
-                    return ($applicableSalary * $contribution->employee_share) / 100;
+                    $deductionAmount = ($applicableSalary * $contribution->employee_share) / 100;
                 } else {
                     // Fixed amount deduction
-                    return $contribution->employee_share;
+                    $deductionAmount = $contribution->employee_share;
                 }
+
+                // Apply deduction frequency logic based on employee's pay schedule
+                if ($employee->pay_schedule === 'monthly') {
+                    return $deductionAmount; // Always deduct full amount for monthly paid employees
+                }
+
+                // For semi-monthly employees, apply deduction frequency targeting
+                if (!$this->isEmployeeEligibleForDeductionFrequency($employee, $contribution)) {
+                    return 0.00; // Employee not eligible for this deduction frequency based on targeting
+                }
+
+                if ($contribution->deduction_frequency === 'semi_monthly') {
+                    return $deductionAmount / 2;
+                } elseif ($contribution->deduction_frequency === 'first_half_monthly') {
+                    // Only deduct in the first half of the month for semi-monthly paid employees
+                    if ($payPeriodStart->day <= 15) {
+                        return $deductionAmount;
+                    } else {
+                        return 0.00;
+                    }
+                }
+                return $deductionAmount;
             }
         }
         return 0.00;
@@ -346,7 +369,7 @@ class PayrollService
      * @param string $detailKey
      * @return mixed
      */
-    private function getContributionDetail(string $type, float $salary, \Illuminate\Support\Collection $governmentContributions, string $detailKey, User $employee): mixed
+    private function getContributionDetail(string $type, float $salary, \Illuminate\Support\Collection $governmentContributions, string $detailKey, User $employee, Carbon $payPeriodStart, Carbon $payPeriodEnd): mixed
     {
         $contributionsOfType = $governmentContributions->get($type);
         if (!$contributionsOfType) {
@@ -363,6 +386,27 @@ class PayrollService
                     return null; // Employee not eligible for this fixed deduction
                 }
 
+                // Return the detail, considering deduction frequency if it's employee_share
+                if ($detailKey === 'employee_share') {
+                    $deductionAmount = $contribution->employee_share;
+
+                    if ($employee->pay_schedule === 'monthly') {
+                        return $deductionAmount; // Always show full amount for monthly paid employees
+                    }
+
+                    // For semi-monthly employees, check deduction frequency eligibility for display
+                    if (!$this->isEmployeeEligibleForDeductionFrequency($employee, $contribution)) {
+                        return 0.00; // Not eligible for this deduction frequency, so show 0
+                    }
+
+                    if ($contribution->deduction_frequency === 'semi_monthly') {
+                        return $deductionAmount / 2; // Show semi-monthly share
+                    } elseif ($contribution->deduction_frequency === 'first_half_monthly') {
+                        // For display, it's better to show the full amount if it's a first_half_monthly deduction
+                        // The actual deduction logic is handled in calculateContribution.
+                        return $deductionAmount;
+                    }
+                }
                 return $contribution->$detailKey;
             }
         }
@@ -388,6 +432,30 @@ class PayrollService
 
         if ($contribution->target_type === 'departments') {
             return in_array($employee->department_id, $contribution->applies_to ?? []);
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if an employee is eligible for a specific deduction frequency based on target_type and applies_to.
+     *
+     * @param User $employee
+     * @param GovernmentContribution $contribution
+     * @return bool
+     */
+    private function isEmployeeEligibleForDeductionFrequency(User $employee, GovernmentContribution $contribution): bool
+    {
+        if ($contribution->deduction_frequency_target_type === 'all') {
+            return true;
+        }
+
+        if ($contribution->deduction_frequency_target_type === 'employees') {
+            return in_array($employee->id, $contribution->deduction_frequency_applies_to ?? []);
+        }
+
+        if ($contribution->deduction_frequency_target_type === 'departments') {
+            return in_array($employee->department_id, $contribution->deduction_frequency_applies_to ?? []);
         }
 
         return false;

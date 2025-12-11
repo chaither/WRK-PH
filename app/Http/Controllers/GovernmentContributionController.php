@@ -33,12 +33,23 @@ class GovernmentContributionController extends Controller
                 'required_if:target_type,employees',
                 'required_if:target_type,departments'],
             'applies_to.*' => 'integer',
+            'deduction_frequency' => ['required', 'string', Rule::in(['semi_monthly', 'first_half_monthly'])],
+            'deduction_frequency_target_type' => ['required', 'string', Rule::in(['all', 'employees', 'departments'])],
+            'deduction_frequency_applies_to' => ['nullable', 'array',
+                'required_if:deduction_frequency_target_type,employees',
+                'required_if:deduction_frequency_target_type,departments'],
+            'deduction_frequency_applies_to.*' => 'integer',
         ]);
 
         // If is_percentage is true, or target_type is 'all', then applies_to should be null
         if ($validated['is_percentage'] || (isset($validated['target_type']) && $validated['target_type'] === 'all')) {
             $validated['applies_to'] = null;
             $validated['target_type'] = 'all'; // Reset to all if percentage based
+        }
+
+        // If deduction_frequency_target_type is 'all', then deduction_frequency_applies_to should be null
+        if ($validated['deduction_frequency_target_type'] === 'all') {
+            $validated['deduction_frequency_applies_to'] = null;
         }
 
         $contribution = GovernmentContribution::create($validated);
@@ -76,12 +87,23 @@ class GovernmentContributionController extends Controller
                 'required_if:target_type,employees',
                 'required_if:target_type,departments'],
             'applies_to.*' => 'integer',
+            'deduction_frequency' => ['required', 'string', Rule::in(['semi_monthly', 'first_half_monthly'])],
+            'deduction_frequency_target_type' => ['required', 'string', Rule::in(['all', 'employees', 'departments'])],
+            'deduction_frequency_applies_to' => ['nullable', 'array',
+                'required_if:deduction_frequency_target_type,employees',
+                'required_if:deduction_frequency_target_type,departments'],
+            'deduction_frequency_applies_to.*' => 'integer',
         ]);
 
         // If is_percentage is true, or target_type is 'all', then applies_to should be null
         if ($validated['is_percentage'] || (isset($validated['target_type']) && $validated['target_type'] === 'all')) {
             $validated['applies_to'] = null;
             $validated['target_type'] = 'all'; // Reset to all if percentage based
+        }
+
+        // If deduction_frequency_target_type is 'all', then deduction_frequency_applies_to should be null
+        if ($validated['deduction_frequency_target_type'] === 'all') {
+            $validated['deduction_frequency_applies_to'] = null;
         }
 
         $contribution->update($validated);
