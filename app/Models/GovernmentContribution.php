@@ -18,6 +18,9 @@ class GovernmentContribution extends Model
         'employer_share',
         'target_type',
         'applies_to',
+        'deduction_frequency',
+        'deduction_frequency_target_type',
+        'deduction_frequency_applies_to',
     ];
 
     protected $casts = [
@@ -25,6 +28,9 @@ class GovernmentContribution extends Model
         'max_salary' => 'decimal:2',
         'is_percentage' => 'boolean',
         'applies_to' => 'array',
+        'deduction_frequency' => 'string',
+        'deduction_frequency_target_type' => 'string',
+        'deduction_frequency_applies_to' => 'array',
         'employee_share' => 'decimal:2',
         'employer_share' => 'decimal:2',
     ];
