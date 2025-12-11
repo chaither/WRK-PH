@@ -22,7 +22,7 @@ class GovernmentContributionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['sss', 'philhealth', 'pagibig']), 'unique:government_contributions,type,NULL,id,min_salary,' . ($request->min_salary ?? 'NULL') . ',max_salary,' . ($request->max_salary ?? 'NULL')],
+            'type' => ['required', 'string', Rule::in(['sss', 'philhealth', 'pagibig'])],
             'min_salary' => 'nullable|numeric|min:0',
             'max_salary' => 'nullable|numeric|min:0|gt:min_salary',
             'is_percentage' => 'required|boolean',
@@ -73,10 +73,7 @@ class GovernmentContributionController extends Controller
         $contribution = GovernmentContribution::findOrFail($id);
 
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['sss', 'philhealth', 'pagibig']), Rule::unique('government_contributions', 'type')->ignore($contribution->id, 'id')->where(function ($query) use ($request, $contribution) {
-                $query->where('min_salary', $request->min_salary ?? null);
-                $query->where('max_salary', $request->max_salary ?? null);
-            })],
+            'type' => ['required', 'string', Rule::in(['sss', 'philhealth', 'pagibig'])],
             'is_percentage' => 'required|boolean',
             'min_salary' => 'nullable|numeric|min:0',
             'max_salary' => 'nullable|numeric|min:0|gt:min_salary',

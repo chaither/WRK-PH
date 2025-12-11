@@ -16,35 +16,71 @@
                         <p class="text-gray-600 text-sm">No government contributions configured yet.</p>
                     </template>
                     <template x-for="contribution in contributions" :key="contribution.id">
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                            <div>
-                                <p class="font-medium text-gray-800 text-sm" x-text="formatContributionType(contribution.type)"></p>
-                                <p class="text-xs text-gray-600">
-                                    Salary Range: <span x-text="formatSalaryRange(contribution.min_salary, contribution.max_salary)"></span>
-                                </p>
-                                <p class="text-xs text-gray-600">
-                                    Employee Share: <span x-text="formatCurrency(contribution.employee_share)"></span>
-                                    <template x-if="contribution.employer_share !== null">
-                                        <span> | Employer Share: <span x-text="formatCurrency(contribution.employer_share)"></span></span>
-                                    </template>
-                                </p>
-                                <template x-if="contribution.is_percentage === 1">
-                                    <span class="text-xs text-blue-500">(Percentage)</span>
-                                </template>
-                                <template x-if="contribution.is_percentage === 0">
-                                    <span class="text-xs text-green-500">(Fixed Amount)</span>
-                                </template>
-                                <template x-if="contribution.target_type !== 'all' && contribution.applies_to && contribution.applies_to.length > 0">
-                                    <span class="text-xs text-purple-500" x-text="`(${formatTargetType(contribution.target_type)}: ${contribution.applies_to.join(', ')})`"></span>
-                                </template>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 ">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 cursor-pointer" @click="expandedContributionId = (expandedContributionId === contribution.id ? null : contribution.id)">
+                                <div>
+                                    <p class="font-medium text-gray-800 text-sm" x-text="formatContributionType(contribution.type)"></p>
+                                    <p class="text-xs text-gray-600">
+                                        Salary Range: <span x-text="formatSalaryRange(contribution.min_salary, contribution.max_salary)"></span>
+                                    </p>
+                                    <p class="text-xs text-gray-600">
+                                        Employee Share: <span x-text="formatCurrency(contribution.employee_share)"></span>
+                                        <template x-if="contribution.employer_share !== null">
+                                            <span> | Employer Share: <span x-text="formatCurrency(contribution.employer_share)"></span></span>
+                                        </template>
+                                    </p>
+                                </div>
+                                <div class="flex space-x-2 mt-2 sm:mt-0">
+                                    <button type="button" @click.stop="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                    <button type="button" @click.stop="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
+                                        <i class="fas fa-trash-alt text-sm"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex space-x-2 mt-2 sm:mt-0">
-                                <button type="button" @click="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
-                                    <i class="fas fa-edit text-sm"></i>
-                                </button>
-                                <button type="button" @click="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
-                                    <i class="fas fa-trash-alt text-sm"></i>
-                                </button>
+
+                            <!-- Expandable Details Section -->
+                            <div x-show="expandedContributionId === contribution.id" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-700">
+                                <p class="font-semibold mb-1">Details:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Amount Type: <span x-text="contribution.is_percentage ? 'Percentage Based' : 'Fixed Amount'"></span></li>
+                                    <template x-if="!contribution.is_percentage">
+                                        <li>Applies To: <span x-text="formatTargetType(contribution.target_type)"></span>
+                                            <template x-if="contribution.target_type === 'employees' && contribution.applies_to && contribution.applies_to.length > 0">
+                                                <ul class="list-disc list-inside ml-4">
+                                                    <template x-for="employeeId in contribution.applies_to" :key="`emp-${employeeId}`">
+                                                        <li x-text="getEmployeeNameById(employeeId)"></li>
+                                                    </template>
+                                                </ul>
+                                            </template>
+                                            <template x-if="contribution.target_type === 'departments' && contribution.applies_to && contribution.applies_to.length > 0">
+                                                <ul class="list-disc list-inside ml-4">
+                                                    <template x-for="departmentId in contribution.applies_to" :key="`dept-${departmentId}`">
+                                                        <li x-text="getDepartmentNameById(departmentId)"></li>
+                                                    </template>
+                                                </ul>
+                                            </template>
+                                        </li>
+                                    </template>
+                                    <li>Deduction Frequency: <span x-text="contribution.deduction_frequency === 'semi_monthly' ? 'Semi-Monthly Deduction' : 'Full Monthly Deduction (First Half Payroll)'"></span></li>
+                                    <li>Frequency Applies To: <span x-text="formatTargetType(contribution.deduction_frequency_target_type)"></span>
+                                        <template x-if="contribution.deduction_frequency_target_type === 'employees' && contribution.deduction_frequency_applies_to && contribution.deduction_frequency_applies_to.length > 0">
+                                            <ul class="list-disc list-inside ml-4">
+                                                <template x-for="employeeId in contribution.deduction_frequency_applies_to" :key="`df-emp-${employeeId}`">
+                                                    <li x-text="getEmployeeNameById(employeeId)"></li>
+                                                </template>
+                                            </ul>
+                                        </template>
+                                        <template x-if="contribution.deduction_frequency_target_type === 'departments' && contribution.deduction_frequency_applies_to && contribution.deduction_frequency_applies_to.length > 0">
+                                            <ul class="list-disc list-inside ml-4">
+                                                <template x-for="departmentId in contribution.deduction_frequency_applies_to" :key="`df-dept-${departmentId}`">
+                                                    <li x-text="getDepartmentNameById(departmentId)"></li>
+                                                </template>
+                                            </ul>
+                                        </template>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </template>
@@ -439,30 +475,29 @@
                 deduction_frequency_applies_to: [],
             },
             isEditMode: false,
+            expandedContributionId: null, // New state to track expanded item
 
             // Computed property for filtered employees based on deduction frequency
             get filteredEmployees() {
-                if (this.form.deduction_frequency === 'semi_monthly') {
+                // If deduction frequency is selected, filter for semi-monthly employees
+                if (this.form.deduction_frequency === 'semi_monthly' || this.form.deduction_frequency === 'first_half_monthly') {
                     return this.allEmployees.filter(employee => employee.pay_schedule === 'semi-monthly');
-                } else if (this.form.deduction_frequency === 'first_half_monthly') {
-                    return this.allEmployees; // Show all employees for full monthly deduction
                 }
-                return [];
+                return this.allEmployees; // Default to all if no specific frequency is chosen
             },
 
             // Computed property for filtered departments based on deduction frequency
             get filteredDepartments() {
-                if (this.form.deduction_frequency === 'semi_monthly') {
+                // If deduction frequency is selected, filter for departments with semi-monthly employees
+                if (this.form.deduction_frequency === 'semi_monthly' || this.form.deduction_frequency === 'first_half_monthly') {
                     const semiMonthlyDepartmentIds = new Set(this.allEmployees
                         .filter(employee => employee.pay_schedule === 'semi-monthly')
                         .map(employee => employee.department_id)
                         .filter(id => id !== null)
                     );
                     return this.allDepartments.filter(department => semiMonthlyDepartmentIds.has(department.id));
-                } else if (this.form.deduction_frequency === 'first_half_monthly') {
-                    return this.allDepartments; // Show all departments for full monthly deduction
                 }
-                return [];
+                return this.allDepartments; // Default to all if no specific frequency is chosen
             },
 
             init() {
