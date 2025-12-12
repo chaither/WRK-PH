@@ -21,6 +21,7 @@ use App\Http\Controllers\AdminOvertimeRequestController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\PayrollScheduleController;
 use App\Http\Controllers\GovernmentContributionController;
+use App\Http\Controllers\HmoDeductionController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\EmployeeOrganizationChartController;
 use App\Http\Controllers\ChangePasswordController;
@@ -62,8 +63,10 @@ Route::resource('department', DepartmentController::class);
 // Holiday Management Routes (Protected)
 Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
     Route::resource('holidays', HolidayController::class);
+    Route::post('holidays/import-philippines', [HolidayController::class, 'importPhilippineHolidays'])->name('holidays.import-philippines');
     Route::resource('payroll-schedules', PayrollScheduleController::class)->except(['create', 'edit']);
     Route::resource('government-contributions', GovernmentContributionController::class)->except(['create', 'edit']);
+    Route::resource('hmo-deductions', HmoDeductionController::class)->except(['create', 'edit']);
 });
 
 // Organization Chart Routes

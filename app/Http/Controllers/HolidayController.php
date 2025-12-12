@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Holiday;
+use App\Services\PhilippineHolidayService;
 
 class HolidayController extends Controller
 {
@@ -87,5 +88,41 @@ class HolidayController extends Controller
         $holiday->delete();
 
         return redirect()->route('holidays.index')->with('success', 'Holiday deleted successfully.');
+    }
+
+    /**
+     * Import Philippine holidays for a given year
+     */
+    public function importPhilippineHolidays(Request $request)
+    {
+        $validated = $request->validate([
+            'year' => 'required|integer|min:2000|max:2100',
+        ]);
+
+        $year = $validated['year'];
+        $service = new PhilippineHolidayService();
+        $holidays = $service->getHolidaysForYear($year);
+
+        $created = 0;
+        $skipped = 0;
+
+        foreach ($holidays as $holidayData) {
+            try {
+                Holiday::firstOrCreate(
+                    ['date' => $holidayData['date']],
+                    [
+                        'name' => $holidayData['name'],
+                        'type' => $holidayData['type'],
+                        'rate_multiplier' => $holidayData['rate_multiplier'],
+                    ]
+                );
+                $created++;
+            } catch (\Exception $e) {
+                $skipped++;
+            }
+        }
+
+        $message = "Successfully imported Philippine holidays for {$year}. Created: {$created}, Skipped: {$skipped} (already exist).";
+        return redirect()->route('holidays.index')->with('success', $message);
     }
 }

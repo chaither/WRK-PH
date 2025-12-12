@@ -8,6 +8,7 @@ use App\Models\Payslip;
 use App\Models\PayPeriod;
 use Carbon\Carbon;
 use App\Models\GovernmentContribution;
+use App\Models\HmoDeduction;
 use Illuminate\Support\Facades\Log;
 
 class PayrollService
@@ -45,12 +46,13 @@ class PayrollService
         $employees = $employeesQuery->get();
         $holidays = Holiday::whereBetween('date', [$payPeriodStart, $payPeriodEnd])->get()->keyBy('date');
         $governmentContributions = GovernmentContribution::all()->groupBy('type');
+        $hmoDeductions = HmoDeduction::all();
 
         foreach ($employees as $employee) {
             $payPeriodDates = $this->getPayPeriodDates($employee->pay_schedule, $payPeriodStart, $payPeriodEnd, $payScheduleFilter);
 
             foreach ($payPeriodDates as $period) {
-                $this->generateEmployeePayslip($employee, $payPeriod, $period['start'], $period['end'], $holidays, $governmentContributions);
+                $this->generateEmployeePayslip($employee, $payPeriod, $period['start'], $period['end'], $holidays, $governmentContributions, $hmoDeductions);
             }
         }
     }
@@ -111,7 +113,7 @@ class PayrollService
      * @param \Illuminate\Support\Collection $holidays
      * @return void
      */
-    private function generateEmployeePayslip(User $employee, PayPeriod $payPeriod, Carbon $payPeriodStart, Carbon $payPeriodEnd, \Illuminate\Support\Collection $holidays, \Illuminate\Support\Collection $governmentContributions): void
+    private function generateEmployeePayslip(User $employee, PayPeriod $payPeriod, Carbon $payPeriodStart, Carbon $payPeriodEnd, \Illuminate\Support\Collection $holidays, \Illuminate\Support\Collection $governmentContributions, \Illuminate\Database\Eloquent\Collection $hmoDeductions): void
     {
         // Determine the actual days in the pay period
         $currentDate = $payPeriodStart->copy();
@@ -236,8 +238,11 @@ class PayrollService
         // Total deductions from government contributions
         $governmentDeductions = $sssDeduction + $philhealthDeduction + $pagibigDeduction;
 
+        // Calculate HMO Deductions
+        $hmoDeductionTotal = $this->calculateHmoDeductions($effectivePeriodSalary, $hmoDeductions, $employee, $payPeriodStart, $payPeriodEnd);
+
         // Deductions (simplified for now)
-        $deductions = $governmentDeductions + $lateDeductions; // Add late deductions to total deductions
+        $deductions = $governmentDeductions + $lateDeductions + $hmoDeductionTotal; // Add late deductions and HMO deductions to total deductions
 
         $netPay = $grossPay - $deductions;
 
@@ -276,6 +281,8 @@ class PayrollService
                     'pagibig_deduction' => round($pagibigDeduction, 2),
                     'pagibig_is_percentage' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'is_percentage', $employee, $payPeriodStart, $payPeriodEnd),
                     'pagibig_employee_share_rate' => $this->getContributionDetail('pagibig', $effectiveMonthlySalary, $governmentContributions, 'employee_share', $employee, $payPeriodStart, $payPeriodEnd),
+                    'hmo_deduction_total' => round($hmoDeductionTotal, 2),
+                    'hmo_deductions' => $this->getHmoDeductionDetails($effectiveMonthlySalary, $hmoDeductions, $employee, $payPeriodStart, $payPeriodEnd),
                     'hourly_rate_computed' => $hourlyRate,
                     'pay_period_days_count' => $this->getDaysInPayPeriod($payPeriodStart, $payPeriodEnd),
                     'regular_work_hours' => round($totalRegularWorkHours, 0), // Add regular work hours to details
@@ -315,47 +322,41 @@ class PayrollService
         }
 
         foreach ($contributionsOfType as $contribution) {
-            $min = $contribution->min_salary;
-            $max = $contribution->max_salary;
-
-            if (($min === null || $salary >= $min) && ($max === null || $salary <= $max)) {
-                // Check if the current employee is eligible for this fixed deduction
-                if (!$contribution->is_percentage && !$this->isEmployeeEligibleForFixedContribution($employee, $contribution)) {
-                    return 0.00; // Employee not eligible for this fixed deduction
-                }
-
-                $deductionAmount = 0.00;
-                if ($contribution->is_percentage) {
-                    // Calculate as percentage of salary, capped at max_salary if defined
-                    $applicableSalary = ($max !== null && $salary > $max) ? $max : $salary;
-                    $deductionAmount = ($applicableSalary * $contribution->employee_share) / 100;
-                } else {
-                    // Fixed amount deduction
-                    $deductionAmount = $contribution->employee_share;
-                }
-
-                // Apply deduction frequency logic based on employee's pay schedule
-                if ($employee->pay_schedule === 'monthly') {
-                    return $deductionAmount; // Always deduct full amount for monthly paid employees
-                }
-
-                // For semi-monthly employees, apply deduction frequency targeting
-                if (!$this->isEmployeeEligibleForDeductionFrequency($employee, $contribution)) {
-                    return 0.00; // Employee not eligible for this deduction frequency based on targeting
-                }
-
-                if ($contribution->deduction_frequency === 'semi_monthly') {
-                    return $deductionAmount / 2;
-                } elseif ($contribution->deduction_frequency === 'first_half_monthly') {
-                    // Only deduct in the first half of the month for semi-monthly paid employees
-                    if ($payPeriodStart->day <= 15) {
-                        return $deductionAmount;
-                    } else {
-                        return 0.00;
-                    }
-                }
-                return $deductionAmount;
+            // Check if the current employee is eligible for this fixed deduction
+            if (!$contribution->is_percentage && !$this->isEmployeeEligibleForFixedContribution($employee, $contribution)) {
+                continue; // Employee not eligible for this fixed deduction
             }
+
+            $deductionAmount = 0.00;
+            if ($contribution->is_percentage) {
+                // Calculate as percentage of salary
+                $deductionAmount = ($salary * $contribution->employee_share) / 100;
+            } else {
+                // Fixed amount deduction
+                $deductionAmount = $contribution->employee_share;
+            }
+
+            // Apply deduction frequency logic based on employee's pay schedule
+            if ($employee->pay_schedule === 'monthly') {
+                return $deductionAmount; // Always deduct full amount for monthly paid employees
+            }
+
+            // For semi-monthly employees, apply deduction frequency targeting
+            if (!$this->isEmployeeEligibleForDeductionFrequency($employee, $contribution)) {
+                continue; // Employee not eligible for this deduction frequency based on targeting
+            }
+
+            if ($contribution->deduction_frequency === 'semi_monthly') {
+                return $deductionAmount / 2;
+            } elseif ($contribution->deduction_frequency === 'first_half_monthly') {
+                // Only deduct in the first half of the month for semi-monthly paid employees
+                if ($payPeriodStart->day <= 15) {
+                    return $deductionAmount;
+                } else {
+                    return 0.00;
+                }
+            }
+            return $deductionAmount;
         }
         return 0.00;
     }
@@ -377,38 +378,33 @@ class PayrollService
         }
 
         foreach ($contributionsOfType as $contribution) {
-            $min = $contribution->min_salary;
-            $max = $contribution->max_salary;
-
-            if (($min === null || $salary >= $min) && ($max === null || $salary <= $max)) {
-                // Check if the current employee is eligible for this fixed deduction
-                if (!$contribution->is_percentage && !$this->isEmployeeEligibleForFixedContribution($employee, $contribution)) {
-                    return null; // Employee not eligible for this fixed deduction
-                }
-
-                // Return the detail, considering deduction frequency if it's employee_share
-                if ($detailKey === 'employee_share') {
-                    $deductionAmount = $contribution->employee_share;
-
-                    if ($employee->pay_schedule === 'monthly') {
-                        return $deductionAmount; // Always show full amount for monthly paid employees
-                    }
-
-                    // For semi-monthly employees, check deduction frequency eligibility for display
-                    if (!$this->isEmployeeEligibleForDeductionFrequency($employee, $contribution)) {
-                        return 0.00; // Not eligible for this deduction frequency, so show 0
-                    }
-
-                    if ($contribution->deduction_frequency === 'semi_monthly') {
-                        return $deductionAmount / 2; // Show semi-monthly share
-                    } elseif ($contribution->deduction_frequency === 'first_half_monthly') {
-                        // For display, it's better to show the full amount if it's a first_half_monthly deduction
-                        // The actual deduction logic is handled in calculateContribution.
-                        return $deductionAmount;
-                    }
-                }
-                return $contribution->$detailKey;
+            // Check if the current employee is eligible for this fixed deduction
+            if (!$contribution->is_percentage && !$this->isEmployeeEligibleForFixedContribution($employee, $contribution)) {
+                continue; // Employee not eligible for this fixed deduction
             }
+
+            // Return the detail, considering deduction frequency if it's employee_share
+            if ($detailKey === 'employee_share') {
+                $deductionAmount = $contribution->employee_share;
+
+                if ($employee->pay_schedule === 'monthly') {
+                    return $deductionAmount; // Always show full amount for monthly paid employees
+                }
+
+                // For semi-monthly employees, check deduction frequency eligibility for display
+                if (!$this->isEmployeeEligibleForDeductionFrequency($employee, $contribution)) {
+                    continue; // Not eligible for this deduction frequency, so skip
+                }
+
+                if ($contribution->deduction_frequency === 'semi_monthly') {
+                    return $deductionAmount / 2; // Show semi-monthly share
+                } elseif ($contribution->deduction_frequency === 'first_half_monthly') {
+                    // For display, it's better to show the full amount if it's a first_half_monthly deduction
+                    // The actual deduction logic is handled in calculateContribution.
+                    return $deductionAmount;
+                }
+            }
+            return $contribution->$detailKey;
         }
         return null;
     }
@@ -456,6 +452,166 @@ class PayrollService
 
         if ($contribution->deduction_frequency_target_type === 'departments') {
             return in_array($employee->department_id, $contribution->deduction_frequency_applies_to ?? []);
+        }
+
+        return false;
+    }
+
+    /**
+     * Calculates total HMO deductions for an employee based on their salary and applicable HMO deductions.
+     *
+     * @param float $salary
+     * @param \Illuminate\Database\Eloquent\Collection $hmoDeductions
+     * @param User $employee
+     * @param Carbon $payPeriodStart
+     * @param Carbon $payPeriodEnd
+     * @return float
+     */
+    private function calculateHmoDeductions(float $salary, \Illuminate\Database\Eloquent\Collection $hmoDeductions, User $employee, Carbon $payPeriodStart, Carbon $payPeriodEnd): float
+    {
+        $totalHmoDeduction = 0.00;
+
+        foreach ($hmoDeductions as $deduction) {
+            // Check if the current employee is eligible for this fixed deduction
+            if (!$deduction->is_percentage && !$this->isEmployeeEligibleForFixedHmoDeduction($employee, $deduction)) {
+                continue; // Employee not eligible for this fixed deduction
+            }
+
+            $deductionAmount = 0.00;
+            if ($deduction->is_percentage) {
+                // Calculate as percentage of salary
+                $deductionAmount = ($salary * $deduction->employee_share) / 100;
+            } else {
+                // Fixed amount deduction
+                $deductionAmount = $deduction->employee_share;
+            }
+
+            // Apply deduction frequency logic based on employee's pay schedule
+            if ($employee->pay_schedule === 'monthly') {
+                $totalHmoDeduction += $deductionAmount; // Always deduct full amount for monthly paid employees
+                continue;
+            }
+
+            // For semi-monthly employees, apply deduction frequency targeting
+            if (!$this->isEmployeeEligibleForHmoDeductionFrequency($employee, $deduction)) {
+                continue; // Employee not eligible for this deduction frequency based on targeting
+            }
+
+            if ($deduction->deduction_frequency === 'semi_monthly') {
+                $totalHmoDeduction += $deductionAmount / 2;
+            } elseif ($deduction->deduction_frequency === 'first_half_monthly') {
+                // Only deduct in the first half of the month for semi-monthly paid employees
+                if ($payPeriodStart->day <= 15) {
+                    $totalHmoDeduction += $deductionAmount;
+                }
+            }
+        }
+
+        return $totalHmoDeduction;
+    }
+
+    /**
+     * Gets detailed HMO deduction information for payslip display.
+     *
+     * @param float $salary
+     * @param \Illuminate\Database\Eloquent\Collection $hmoDeductions
+     * @param User $employee
+     * @param Carbon $payPeriodStart
+     * @param Carbon $payPeriodEnd
+     * @return array
+     */
+    private function getHmoDeductionDetails(float $salary, \Illuminate\Database\Eloquent\Collection $hmoDeductions, User $employee, Carbon $payPeriodStart, Carbon $payPeriodEnd): array
+    {
+        $details = [];
+
+        foreach ($hmoDeductions as $deduction) {
+            // Check if the current employee is eligible for this fixed deduction
+            if (!$deduction->is_percentage && !$this->isEmployeeEligibleForFixedHmoDeduction($employee, $deduction)) {
+                continue;
+            }
+
+            $deductionAmount = 0.00;
+            if ($deduction->is_percentage) {
+                $deductionAmount = ($salary * $deduction->employee_share) / 100;
+            } else {
+                $deductionAmount = $deduction->employee_share;
+            }
+
+            // Calculate actual deduction based on frequency
+            $actualDeduction = 0.00;
+            if ($employee->pay_schedule === 'monthly') {
+                $actualDeduction = $deductionAmount;
+            } else {
+                if (!$this->isEmployeeEligibleForHmoDeductionFrequency($employee, $deduction)) {
+                    continue;
+                }
+
+                if ($deduction->deduction_frequency === 'semi_monthly') {
+                    $actualDeduction = $deductionAmount / 2;
+                } elseif ($deduction->deduction_frequency === 'first_half_monthly') {
+                    if ($payPeriodStart->day <= 15) {
+                        $actualDeduction = $deductionAmount;
+                    }
+                }
+            }
+
+            if ($actualDeduction > 0) {
+                $details[] = [
+                    'name' => $deduction->name,
+                    'amount' => round($actualDeduction, 2),
+                    'is_percentage' => $deduction->is_percentage,
+                    'employee_share_rate' => $deduction->employee_share,
+                    'deduction_frequency' => $deduction->deduction_frequency,
+                ];
+            }
+        }
+
+        return $details;
+    }
+
+    /**
+     * Checks if an employee is eligible for a fixed HMO deduction based on target_type and applies_to.
+     *
+     * @param User $employee
+     * @param HmoDeduction $deduction
+     * @return bool
+     */
+    private function isEmployeeEligibleForFixedHmoDeduction(User $employee, HmoDeduction $deduction): bool
+    {
+        if ($deduction->target_type === 'all') {
+            return true;
+        }
+
+        if ($deduction->target_type === 'employees') {
+            return in_array($employee->id, $deduction->applies_to ?? []);
+        }
+
+        if ($deduction->target_type === 'departments') {
+            return in_array($employee->department_id, $deduction->applies_to ?? []);
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if an employee is eligible for a specific HMO deduction frequency based on target_type and applies_to.
+     *
+     * @param User $employee
+     * @param HmoDeduction $deduction
+     * @return bool
+     */
+    private function isEmployeeEligibleForHmoDeductionFrequency(User $employee, HmoDeduction $deduction): bool
+    {
+        if ($deduction->deduction_frequency_target_type === 'all') {
+            return true;
+        }
+
+        if ($deduction->deduction_frequency_target_type === 'employees') {
+            return in_array($employee->id, $deduction->deduction_frequency_applies_to ?? []);
+        }
+
+        if ($deduction->deduction_frequency_target_type === 'departments') {
+            return in_array($employee->department_id, $deduction->deduction_frequency_applies_to ?? []);
         }
 
         return false;

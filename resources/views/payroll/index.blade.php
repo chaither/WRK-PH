@@ -100,6 +100,9 @@
                 <button type="button" onclick="openGovernmentContributionModal()" class="w-full sm:flex-1 bg-orange-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-orange-700 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                     <i class="fas fa-hands-helping mr-1"></i> Manage Govt. Contributions
                 </button>
+                <button type="button" onclick="openHmoDeductionModal()" class="w-full sm:flex-1 bg-teal-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-teal-700 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
+                    <i class="fas fa-heartbeat mr-1"></i> Manage HMO Deductions
+                </button>
                 {{-- New Global Overtime Multiplier Button --}}
                 <button type="button" onclick="openOvertimeMultiplierModal(window.globalOvertimeMultiplier)" class="w-full sm:flex-1 bg-blue-500 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-600 transition duration-150 shadow-sm flex items-center justify-center" @if($period && $period->status === 'closed') disabled @endif>
                     <i class="fas fa-hourglass-half mr-1"></i> Set Global Overtime Multiplier
@@ -159,7 +162,12 @@
                                         $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
                                         $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
                                         $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
-                                        $componentsTotal = $sss + $phil + $pagibig + $other;
+                                        $hmoDeductions = $details['hmo_deductions'] ?? [];
+                                        $hmoTotal = 0;
+                                        if (is_array($hmoDeductions)) {
+                                            $hmoTotal = array_sum(array_column($hmoDeductions, 'amount'));
+                                        }
+                                        $componentsTotal = $sss + $phil + $pagibig + $other + $hmoTotal;
                                     @endphp
                                     <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
                                         <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -202,6 +210,13 @@
                                                 @endif
                                                 @if($pagibig > 0)
                                                     <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
+                                                @endif
+                                                @if(is_array($hmoDeductions) && count($hmoDeductions) > 0)
+                                                    @foreach($hmoDeductions as $hmoDeduction)
+                                                        @if(isset($hmoDeduction['amount']) && $hmoDeduction['amount'] > 0)
+                                                            <div class="text-xs text-gray-700">HMO ({{ $hmoDeduction['name'] ?? 'N/A' }}): <span class="text-red-600">₱{{ number_format($hmoDeduction['amount'], 2) }}</span></div>
+                                                        @endif
+                                                    @endforeach
                                                 @endif
                                                 @if($details['late_deduction_amount'] ?? 0 > 0)
                                                     <div class="text-xs text-gray-700">Late: <span class="text-red-600">₱{{ number_format($details['late_deduction_amount'], 2) }}</span></div>
@@ -293,7 +308,12 @@
                                     $phil = $details['philhealth_deduction'] ?? $details['philhealth'] ?? 0;
                                     $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
                                     $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
-                                    $componentsTotal = $sss + $phil + $pagibig + $other;
+                                    $hmoDeductions = $details['hmo_deductions'] ?? [];
+                                    $hmoTotal = 0;
+                                    if (is_array($hmoDeductions)) {
+                                        $hmoTotal = array_sum(array_column($hmoDeductions, 'amount'));
+                                    }
+                                    $componentsTotal = $sss + $phil + $pagibig + $other + $hmoTotal;
                                 @endphp
                                 <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
                                     <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -329,6 +349,13 @@
                                                 @endif
                                                 @if($pagibig > 0)
                                                     <div class="text-xs text-gray-700">Pag-IBIG: <span class="text-red-600">₱{{ number_format($pagibig, 2) }}</span></div>
+                                                @endif
+                                                @if(is_array($hmoDeductions) && count($hmoDeductions) > 0)
+                                                    @foreach($hmoDeductions as $hmoDeduction)
+                                                        @if(isset($hmoDeduction['amount']) && $hmoDeduction['amount'] > 0)
+                                                            <div class="text-xs text-gray-700">HMO ({{ $hmoDeduction['name'] ?? 'N/A' }}): <span class="text-red-600">₱{{ number_format($hmoDeduction['amount'], 2) }}</span></div>
+                                                        @endif
+                                                    @endforeach
                                                 @endif
                                                 @if($details['late_deduction_amount'] ?? 0 > 0)
                                                     <div class="text-xs text-gray-700">Late: <span class="text-red-600">₱{{ number_format($details['late_deduction_amount'], 2) }}</span></div>
@@ -403,6 +430,7 @@
 @push('modals')
 @include('components.payroll_schedule_modal')
 @include('components.government_contribution_modal')
+@include('components.hmo_deduction_modal')
 @include('components.generate_payroll_modal')
 @include('components.overtime_multiplier_modal') <!-- Include the new modal component -->
 <input type="hidden" id="globalOvertimeMultiplierData" value="{{ $globalOvertimeMultiplier ?? '1.5' }}">

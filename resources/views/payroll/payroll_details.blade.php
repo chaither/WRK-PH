@@ -36,6 +36,28 @@
                 <p class="text-gray-600 font-semibold">Marked as Paid By:</p>
                 <p>{{ $payPeriod->markedPaidBy->name ?? 'N/A' }}</p>
             </div>
+            @php
+                $summaryTotalGrossPay = $payPeriod->payslips->sum('gross_pay');
+                $summaryTotalDeductions = $payPeriod->payslips->sum('deductions');
+                $summaryTotalNetPay = $payPeriod->payslips->sum('net_pay');
+            @endphp
+            <div class="md:col-span-2 mt-4 pt-4 border-t border-gray-300">
+                <h3 class="text-lg font-bold text-gray-800 mb-3">Total Payroll Summary</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 font-medium mb-1">Total Gross Pay</p>
+                        <p class="text-2xl font-bold text-gray-900">₱{{ number_format($summaryTotalGrossPay, 2) }}</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 font-medium mb-1">Total Deductions</p>
+                        <p class="text-2xl font-bold text-red-600">₱{{ number_format($summaryTotalDeductions, 2) }}</p>
+                    </div>
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 font-medium mb-1">Total Net Pay</p>
+                        <p class="text-2xl font-bold text-indigo-700">₱{{ number_format($summaryTotalNetPay, 2) }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Payslips in this Period</h2>
@@ -55,7 +77,17 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
+                        @php
+                            $totalGrossPay = 0;
+                            $totalDeductions = 0;
+                            $totalNetPay = 0;
+                        @endphp
                         @foreach($payPeriod->payslips as $payslip)
+                            @php
+                                $totalGrossPay += $payslip->gross_pay;
+                                $totalDeductions += $payslip->deductions;
+                                $totalNetPay += $payslip->net_pay;
+                            @endphp
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $payslip->user->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">₱{{ number_format($payslip->gross_pay, 2) }}</td>
@@ -69,6 +101,15 @@
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot class="bg-gray-100">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">TOTAL</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">₱{{ number_format($totalGrossPay, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₱{{ number_format($totalDeductions, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-indigo-700">₱{{ number_format($totalNetPay, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap"></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         @endif
