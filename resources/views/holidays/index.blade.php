@@ -4,7 +4,10 @@
 <div class="container mx-auto px-4 py-6">
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Holiday Management</h1>
 
-    <div class="flex justify-end mb-4">
+    <div class="flex justify-between items-center mb-4">
+        <button onclick="openImportPhilippineHolidaysModal()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-150">
+            <i class="fas fa-download mr-2"></i> Import Philippine Holidays
+        </button>
         <button onclick="openAddHolidayModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-150">
             <i class="fas fa-plus mr-2"></i> Add New Holiday
         </button>
@@ -87,4 +90,5 @@
 
 @push('modals')
     @include('components.holiday_modal')
+    @include('components.import_philippine_holidays_modal')
 @endpush

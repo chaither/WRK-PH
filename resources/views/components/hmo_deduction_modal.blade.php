@@ -1,74 +1,74 @@
-<div id="governmentContributionModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-2" x-data="governmentContributionData()" x-init="fetchContributions()">
+<div id="hmoDeductionModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-2" x-data="hmoDeductionData()" x-init="fetchDeductions()">
     <div class="bg-white rounded-xl shadow-2xl p-4 max-w-xl sm:max-w-4xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100">
         <div class="flex justify-between items-center mb-3 border-b pb-2">
-            <h2 class="text-lg font-bold text-gray-800">📊 Manage Government Contributions</h2>
-            <button type="button" @click="closeGovernmentContributionModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100">
+            <h2 class="text-lg font-bold text-gray-800">🏥 Manage HMO Deductions</h2>
+            <button type="button" @click="closeHmoDeductionModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-red-100">
                 <i class="fas fa-times text-base"></i>
             </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Left Column: Current Contributions -->
+            <!-- Left Column: Current Deductions -->
             <div>
-                <h3 class="text-base font-semibold text-gray-700 mb-2">Current Contributions</h3>
+                <h3 class="text-base font-semibold text-gray-700 mb-2">Current HMO Deductions</h3>
                 <div class="max-h-80 overflow-y-auto pr-1">
-                    <template x-if="contributions.length === 0">
-                        <p class="text-gray-600 text-sm">No government contributions configured yet.</p>
+                    <template x-if="deductions.length === 0">
+                        <p class="text-gray-600 text-sm">No HMO deductions configured yet.</p>
                     </template>
-                    <template x-for="contribution in contributions" :key="contribution.id">
+                    <template x-for="deduction in deductions" :key="deduction.id">
                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 ">
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 cursor-pointer" @click="expandedContributionId = (expandedContributionId === contribution.id ? null : contribution.id)">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 cursor-pointer" @click="expandedDeductionId = (expandedDeductionId === deduction.id ? null : deduction.id)">
                                 <div>
-                                    <p class="font-medium text-gray-800 text-sm" x-text="formatContributionType(contribution.type)"></p>
+                                    <p class="font-medium text-gray-800 text-sm" x-text="deduction.name"></p>
                                     <p class="text-xs text-gray-600">
-                                        Employee Share: <span x-text="formatCurrency(contribution.employee_share)"></span>
+                                        Employee Share: <span x-text="formatCurrency(deduction.employee_share)"></span>
                                     </p>
                                 </div>
                                 <div class="flex space-x-2 mt-2 sm:mt-0">
-                                    <button type="button" @click.stop="editContribution(contribution)" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
+                                    <button type="button" @click.stop="editDeduction(deduction)" class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition duration-150" title="Edit">
                                         <i class="fas fa-edit text-sm"></i>
                                     </button>
-                                    <button type="button" @click.stop="deleteContribution(contribution.id)" class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
+                                    <button type="button" @click.stop="deleteDeduction(deduction.id)" class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition duration-150" title="Delete">
                                         <i class="fas fa-trash-alt text-sm"></i>
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Expandable Details Section -->
-                            <div x-show="expandedContributionId === contribution.id" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-700">
+                            <div x-show="expandedDeductionId === deduction.id" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90" class="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-700">
                                 <p class="font-semibold mb-1">Details:</p>
                                 <ul class="list-disc list-inside space-y-1">
-                                    <li>Amount Type: <span x-text="contribution.is_percentage ? 'Percentage Based' : 'Fixed Amount'"></span></li>
-                                    <template x-if="!contribution.is_percentage">
-                                        <li>Applies To: <span x-text="formatTargetType(contribution.target_type)"></span>
-                                            <template x-if="contribution.target_type === 'employees' && contribution.applies_to && contribution.applies_to.length > 0">
+                                    <li>Amount Type: <span x-text="deduction.is_percentage ? 'Percentage Based' : 'Fixed Amount'"></span></li>
+                                    <template x-if="!deduction.is_percentage">
+                                        <li>Applies To: <span x-text="formatTargetType(deduction.target_type)"></span>
+                                            <template x-if="deduction.target_type === 'employees' && deduction.applies_to && deduction.applies_to.length > 0">
                                                 <ul class="list-disc list-inside ml-4">
-                                                    <template x-for="employeeId in contribution.applies_to" :key="`emp-${employeeId}`">
+                                                    <template x-for="employeeId in deduction.applies_to" :key="`emp-${employeeId}`">
                                                         <li x-text="getEmployeeNameById(employeeId)"></li>
                                                     </template>
                                                 </ul>
                                             </template>
-                                            <template x-if="contribution.target_type === 'departments' && contribution.applies_to && contribution.applies_to.length > 0">
+                                            <template x-if="deduction.target_type === 'departments' && deduction.applies_to && deduction.applies_to.length > 0">
                                                 <ul class="list-disc list-inside ml-4">
-                                                    <template x-for="departmentId in contribution.applies_to" :key="`dept-${departmentId}`">
+                                                    <template x-for="departmentId in deduction.applies_to" :key="`dept-${departmentId}`">
                                                         <li x-text="getDepartmentNameById(departmentId)"></li>
                                                     </template>
                                                 </ul>
                                             </template>
                                         </li>
                                     </template>
-                                    <li>Deduction Frequency: <span x-text="contribution.deduction_frequency === 'semi_monthly' ? 'Semi-Monthly Deduction' : 'Full Monthly Deduction (First Half Payroll)'"></span></li>
-                                    <li>Frequency Applies To: <span x-text="formatTargetType(contribution.deduction_frequency_target_type)"></span>
-                                        <template x-if="contribution.deduction_frequency_target_type === 'employees' && contribution.deduction_frequency_applies_to && contribution.deduction_frequency_applies_to.length > 0">
+                                    <li>Deduction Frequency: <span x-text="deduction.deduction_frequency === 'semi_monthly' ? 'Semi-Monthly Deduction' : 'Full Monthly Deduction (First Half Payroll)'"></span></li>
+                                    <li>Frequency Applies To: <span x-text="formatTargetType(deduction.deduction_frequency_target_type)"></span>
+                                        <template x-if="deduction.deduction_frequency_target_type === 'employees' && deduction.deduction_frequency_applies_to && deduction.deduction_frequency_applies_to.length > 0">
                                             <ul class="list-disc list-inside ml-4">
-                                                <template x-for="employeeId in contribution.deduction_frequency_applies_to" :key="`df-emp-${employeeId}`">
+                                                <template x-for="employeeId in deduction.deduction_frequency_applies_to" :key="`df-emp-${employeeId}`">
                                                     <li x-text="getEmployeeNameById(employeeId)"></li>
                                                 </template>
                                             </ul>
                                         </template>
-                                        <template x-if="contribution.deduction_frequency_target_type === 'departments' && contribution.deduction_frequency_applies_to && contribution.deduction_frequency_applies_to.length > 0">
+                                        <template x-if="deduction.deduction_frequency_target_type === 'departments' && deduction.deduction_frequency_applies_to && deduction.deduction_frequency_applies_to.length > 0">
                                             <ul class="list-disc list-inside ml-4">
-                                                <template x-for="departmentId in contribution.deduction_frequency_applies_to" :key="`df-dept-${departmentId}`">
+                                                <template x-for="departmentId in deduction.deduction_frequency_applies_to" :key="`df-dept-${departmentId}`">
                                                     <li x-text="getDepartmentNameById(departmentId)"></li>
                                                 </template>
                                             </ul>
@@ -81,19 +81,15 @@
                 </div>
             </div>
 
-            <!-- Right Column: Add/Edit Contribution Form -->
+            <!-- Right Column: Add/Edit Deduction Form -->
             <div class="border-t md:border-t-0 md:border-l md:pl-4 pt-4 md:pt-0 mt-4 md:mt-0">
-                <h3 class="text-base font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit Contribution' : 'Add New Contribution'"></h3>
-                <form @submit.prevent="isEditMode ? updateContribution() : addContribution()" class="space-y-3">
+                <h3 class="text-base font-semibold text-gray-700 mb-2" x-text="isEditMode ? 'Edit HMO Deduction' : 'Add New HMO Deduction'"></h3>
+                <form @submit.prevent="isEditMode ? updateDeduction() : addDeduction()" class="space-y-3">
                     <div>
-                        <label for="contribution_type" class="block text-xs font-medium text-gray-700 mb-1">Contribution Type</label>
-                        <select id="contribution_type" x-model="form.type" required
+                        <label for="deduction_name" class="block text-xs font-medium text-gray-700 mb-1">HMO Plan Name</label>
+                        <input type="text" id="deduction_name" x-model="form.name" required
+                            placeholder="e.g., Maxicare Premium, Medicare Plus"
                             class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200">
-                            <option value="" disabled>Select Type</option>
-                            <option value="sss">SSS</option>
-                            <option value="philhealth">PhilHealth</option>
-                            <option value="pagibig">Pag-IBIG</option>
-                        </select>
                     </div>
 
                     <div class="mt-2">
@@ -157,7 +153,7 @@
                                                             selectedEmployees.push(employeeId);
                                                         }
                                                         form.applies_to = selectedEmployees;
-                                                        $dispatch('input', form.applies_to); // Notify Alpine of change
+                                                        $dispatch('input', form.applies_to);
                                                     }"
                                                     class="text-gray-900 cursor-default select-none relative py-1.5 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
                                                     :class="{ 'bg-blue-600 text-white': selectedEmployees.includes(employee.id) }"
@@ -236,8 +232,8 @@
                         <label for="employee_share" class="block text-xs font-medium text-gray-700 mb-1" x-text="form.amount_type === 'percentage' ? 'Employee Share (%)' : 'Employee Share (₱)'"></label>
                         <input type="number" min="0" :max="form.amount_type === 'percentage' ? '100' : null" step="0.01" id="employee_share" x-model.number="form.employee_share" required
                             :placeholder="form.amount_type === 'percentage' ? 'e.g., 5.5' : 'e.g., 500.00'"
-                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200" :aria-labelledby="form.amount_type === 'percentage' ? 'employee-share-percentage-label' : 'employee-share-fixed-label'" :aria-describedby="form.amount_type === 'percentage' ? 'employee-share-percentage-error' : null">
-                        <p x-show="form.amount_type === 'percentage' && (form.employee_share < 0 || form.employee_share > 100)" class="text-red-500 text-xs mt-1" id="employee-share-percentage-error">Employee share must be between 0 and 100 for percentage-based contributions.</p>
+                            class="w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-gray-800 text-sm transition-colors duration-200">
+                        <p x-show="form.amount_type === 'percentage' && (form.employee_share < 0 || form.employee_share > 100)" class="text-red-500 text-xs mt-1">Employee share must be between 0 and 100 for percentage-based deductions.</p>
                     </div>
 
                     <div>
@@ -294,7 +290,7 @@
                                                     selectedDfEmployees.push(employeeId);
                                                 }
                                                 form.deduction_frequency_applies_to = selectedDfEmployees;
-                                                $dispatch('input', form.deduction_frequency_applies_to); // Notify Alpine of change
+                                                $dispatch('input', form.deduction_frequency_applies_to);
                                             }"
                                             class="text-gray-900 cursor-default select-none relative py-1.5 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
                                             :class="{ 'bg-blue-600 text-white': selectedDfEmployees.includes(employee.id) }"
@@ -358,7 +354,7 @@
                                                     selectedDfDepartments.push(departmentId);
                                                 }
                                                 form.deduction_frequency_applies_to = selectedDfDepartments;
-                                                $dispatch('input', form.deduction_frequency_applies_to); // Notify Alpine of change
+                                                $dispatch('input', form.deduction_frequency_applies_to);
                                             }"
                                             class="text-gray-900 cursor-default select-none relative py-1.5 pl-3 pr-9 hover:bg-blue-600 hover:text-white"
                                             :class="{ 'bg-blue-600 text-white': selectedDfDepartments.includes(department.id) }"
@@ -396,11 +392,11 @@
                     </template>
 
                     <div class="flex justify-end gap-2 pt-2">
-                        <button type="button" @click="closeGovernmentContributionModal()" class="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
+                        <button type="button" @click="closeHmoDeductionModal()" class="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-100 transition duration-150">
                             Cancel
                         </button>
                         <button type="submit" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
-                            <i class="fas fa-save mr-1"></i> <span x-text="isEditMode ? 'Update Contribution' : 'Save Contribution'"></span>
+                            <i class="fas fa-save mr-1"></i> <span x-text="isEditMode ? 'Update Deduction' : 'Save Deduction'"></span>
                         </button>
                     </div>
                 </form>
@@ -409,13 +405,13 @@
     </div>
 </div>
 <script>
-    function openGovernmentContributionModal() {
-        document.getElementById('governmentContributionModal').classList.remove('hidden');
-        document.getElementById('governmentContributionModal').classList.add('flex');
+    function openHmoDeductionModal() {
+        document.getElementById('hmoDeductionModal').classList.remove('hidden');
+        document.getElementById('hmoDeductionModal').classList.add('flex');
     }
 
-    function closeGovernmentContributionModal() {
-        const modal = document.getElementById('governmentContributionModal');
+    function closeHmoDeductionModal() {
+        const modal = document.getElementById('hmoDeductionModal');
         if (!modal) {
             return;
         }
@@ -428,36 +424,32 @@
     }
 
     document.addEventListener('alpine:init', () => {
-        Alpine.data('governmentContributionData', () => ({
-            contributions: [],
+        Alpine.data('hmoDeductionData', () => ({
+            deductions: [],
             allEmployees: [],
             allDepartments: [],
             form: {
                 id: null,
-                type: '',
-                amount_type: 'percentage', // Default to percentage based
+                name: '',
+                amount_type: 'percentage',
                 employee_share: '',
                 target_type: 'all',
                 applies_to: [],
-                deduction_frequency: 'semi_monthly', // Default deduction frequency
-                deduction_frequency_target_type: 'all', // Default for frequency targeting
+                deduction_frequency: 'semi_monthly',
+                deduction_frequency_target_type: 'all',
                 deduction_frequency_applies_to: [],
             },
             isEditMode: false,
-            expandedContributionId: null, // New state to track expanded item
+            expandedDeductionId: null,
 
-            // Computed property for filtered employees based on deduction frequency
             get filteredEmployees() {
-                // If deduction frequency is selected, filter for semi-monthly employees
                 if (this.form.deduction_frequency === 'semi_monthly' || this.form.deduction_frequency === 'first_half_monthly') {
                     return this.allEmployees.filter(employee => employee.pay_schedule === 'semi-monthly');
                 }
-                return this.allEmployees; // Default to all if no specific frequency is chosen
+                return this.allEmployees;
             },
 
-            // Computed property for filtered departments based on deduction frequency
             get filteredDepartments() {
-                // If deduction frequency is selected, filter for departments with semi-monthly employees
                 if (this.form.deduction_frequency === 'semi_monthly' || this.form.deduction_frequency === 'first_half_monthly') {
                     const semiMonthlyDepartmentIds = new Set(this.allEmployees
                         .filter(employee => employee.pay_schedule === 'semi-monthly')
@@ -466,14 +458,13 @@
                     );
                     return this.allDepartments.filter(department => semiMonthlyDepartmentIds.has(department.id));
                 }
-                return this.allDepartments; // Default to all if no specific frequency is chosen
+                return this.allDepartments;
             },
 
             init() {
                 this.fetchEmployees();
                 this.fetchDepartments();
-                this.fetchContributions();
-                // Watch for changes in amount_type to reset targeting if switched to percentage
+                this.fetchDeductions();
                 this.$watch('form.amount_type', (value) => {
                     if (value === 'percentage') {
                         this.form.target_type = 'all';
@@ -481,20 +472,17 @@
                     }
                 });
 
-                // Watch for changes in deduction_frequency_target_type to reset applies_to
                 this.$watch('form.deduction_frequency_target_type', (value) => {
                     if (value === 'all') {
                         this.form.deduction_frequency_applies_to = [];
                     }
                 });
 
-                // Watch for changes in deduction_frequency to reset its targeting fields
                 this.$watch('form.deduction_frequency', (value) => {
                     this.form.deduction_frequency_applies_to = [];
                     this.form.deduction_frequency_target_type = 'all';
                 });
 
-                // Initialize selectedEmployees and selectedDepartment after fetching data
                 this.$nextTick(() => {
                     this.selectedEmployees = this.form.applies_to;
                     this.selectedDepartment = this.form.applies_to[0] || null;
@@ -506,27 +494,27 @@
             resetForm() {
                 this.form = {
                     id: null,
-                    type: '',
+                    name: '',
                     amount_type: 'percentage',
                     employee_share: '',
                     target_type: 'all',
                     applies_to: [],
-                    deduction_frequency: 'semi_monthly', // Reset deduction frequency
+                    deduction_frequency: 'semi_monthly',
                     deduction_frequency_target_type: 'all',
                     deduction_frequency_applies_to: [],
                 };
                 this.isEditMode = false;
             },
 
-            async fetchContributions() {
+            async fetchDeductions() {
                 try {
-                    const response = await fetch('/government-contributions'); // API endpoint
-                    if (!response.ok) throw new Error('Failed to fetch contributions');
-                    this.contributions = await response.json();
-                    console.log('Fetched contributions:', this.contributions);
+                    const response = await fetch('/hmo-deductions');
+                    if (!response.ok) throw new Error('Failed to fetch HMO deductions');
+                    this.deductions = await response.json();
+                    console.log('Fetched HMO deductions:', this.deductions);
                 } catch (error) {
-                    console.error('Error fetching government contributions:', error);
-                    alert('Error fetching government contributions.');
+                    console.error('Error fetching HMO deductions:', error);
+                    alert('Error fetching HMO deductions.');
                 }
             },
 
@@ -560,10 +548,9 @@
                 }
             },
 
-            async addContribution() {
-                // Validation for employee_share based on amount_type
+            async addDeduction() {
                 if (this.form.amount_type === 'percentage' && (this.form.employee_share < 0 || this.form.employee_share > 100)) {
-                    alert('Employee share must be between 0 and 100 for percentage-based contributions.');
+                    alert('Employee share must be between 0 and 100 for percentage-based deductions.');
                     return;
                 }
                 if (this.form.amount_type === 'fixed' && this.form.target_type === 'employees' && this.form.applies_to.length === 0) {
@@ -575,7 +562,6 @@
                     return;
                 }
 
-                // Validation for deduction_frequency_applies_to
                 if (this.form.deduction_frequency_target_type === 'employees' && this.form.deduction_frequency_applies_to.length === 0) {
                     alert('Please select at least one employee for deduction frequency targeting.');
                     return;
@@ -588,15 +574,14 @@
                 try {
                     const payload = {
                         ...this.form,
-                        is_percentage: this.form.amount_type === 'percentage' ? 1 : 0, // Convert to backend format
-                        // Ensure targeting fields are only sent if amount_type is fixed
+                        is_percentage: this.form.amount_type === 'percentage' ? 1 : 0,
                         target_type: this.form.amount_type === 'fixed' ? this.form.target_type : 'all',
                         applies_to: this.form.amount_type === 'fixed' ? this.form.applies_to : [],
                         deduction_frequency_target_type: this.form.deduction_frequency_target_type === 'all' ? 'all' : this.form.deduction_frequency_target_type,
                         deduction_frequency_applies_to: this.form.deduction_frequency_target_type === 'all' ? [] : this.form.deduction_frequency_applies_to,
                     };
 
-                    const response = await fetch('/government-contributions', {
+                    const response = await fetch('/hmo-deductions', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -604,32 +589,30 @@
                         },
                         body: JSON.stringify(payload),
                     });
-                    if (!response.ok) throw new Error('Failed to add contribution');
-                    Alpine.nextTick(() => this.fetchContributions());
+                    if (!response.ok) throw new Error('Failed to add HMO deduction');
+                    Alpine.nextTick(() => this.fetchDeductions());
                     this.resetForm();
-                    alert('Contribution added successfully!');
+                    alert('HMO deduction added successfully!');
                 } catch (error) {
-                    console.error('Error adding contribution:', error);
-                    alert('Error adding contribution.');
+                    console.error('Error adding HMO deduction:', error);
+                    alert('Error adding HMO deduction.');
                 }
             },
 
-            editContribution(contribution) {
-                this.form.id = contribution.id;
-                this.form.type = contribution.type;
-                // Set amount_type based on is_percentage from backend
-                this.form.amount_type = contribution.is_percentage === 1 ? 'percentage' : 'fixed';
-                this.form.target_type = contribution.target_type || 'all';
-                this.form.applies_to = contribution.applies_to || [];
-                this.form.employee_share = contribution.employee_share;
-                this.form.deduction_frequency = contribution.deduction_frequency || 'semi_monthly'; // Populate deduction frequency
-                this.form.deduction_frequency_target_type = contribution.deduction_frequency_target_type || 'all';
-                this.form.deduction_frequency_applies_to = contribution.deduction_frequency_applies_to || [];
+            editDeduction(deduction) {
+                this.form.id = deduction.id;
+                this.form.name = deduction.name;
+                this.form.amount_type = deduction.is_percentage === 1 ? 'percentage' : 'fixed';
+                this.form.target_type = deduction.target_type || 'all';
+                this.form.applies_to = deduction.applies_to || [];
+                this.form.employee_share = deduction.employee_share;
+                this.form.deduction_frequency = deduction.deduction_frequency || 'semi_monthly';
+                this.form.deduction_frequency_target_type = deduction.deduction_frequency_target_type || 'all';
+                this.form.deduction_frequency_applies_to = deduction.deduction_frequency_applies_to || [];
                 this.isEditMode = true;
-                console.log('Editing contribution. Form data:', this.form);
-                openGovernmentContributionModal();
+                console.log('Editing HMO deduction. Form data:', this.form);
+                openHmoDeductionModal();
 
-                // Update local Alpine.js state for selected employees/departments after form population
                 this.$nextTick(() => {
                     this.selectedEmployees = this.form.applies_to;
                     this.selectedDepartment = this.form.applies_to[0] || null;
@@ -638,10 +621,9 @@
                 });
             },
 
-            async updateContribution() {
-                // Validation for employee_share based on amount_type
+            async updateDeduction() {
                 if (this.form.amount_type === 'percentage' && (this.form.employee_share < 0 || this.form.employee_share > 100)) {
-                    alert('Employee share must be between 0 and 100 for percentage-based contributions.');
+                    alert('Employee share must be between 0 and 100 for percentage-based deductions.');
                     return;
                 }
                 if (this.form.amount_type === 'fixed' && this.form.target_type === 'employees' && this.form.applies_to.length === 0) {
@@ -653,7 +635,6 @@
                     return;
                 }
 
-                // Validation for deduction_frequency_applies_to
                 if (this.form.deduction_frequency_target_type === 'employees' && this.form.deduction_frequency_applies_to.length === 0) {
                     alert('Please select at least one employee for deduction frequency targeting.');
                     return;
@@ -666,15 +647,14 @@
                 try {
                     const payload = {
                         ...this.form,
-                        is_percentage: this.form.amount_type === 'percentage' ? 1 : 0, // Convert to backend format
-                        // Ensure targeting fields are only sent if amount_type is fixed
+                        is_percentage: this.form.amount_type === 'percentage' ? 1 : 0,
                         target_type: this.form.amount_type === 'fixed' ? this.form.target_type : 'all',
                         applies_to: this.form.amount_type === 'fixed' ? this.form.applies_to : [],
                         deduction_frequency_target_type: this.form.deduction_frequency_target_type === 'all' ? 'all' : this.form.deduction_frequency_target_type,
                         deduction_frequency_applies_to: this.form.deduction_frequency_target_type === 'all' ? [] : this.form.deduction_frequency_applies_to,
                     };
 
-                    const response = await fetch(`/government-contributions/${this.form.id}`, {
+                    const response = await fetch(`/hmo-deductions/${this.form.id}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -682,31 +662,31 @@
                         },
                         body: JSON.stringify(payload),
                     });
-                    if (!response.ok) throw new Error('Failed to update contribution');
-                    Alpine.nextTick(() => this.fetchContributions());
+                    if (!response.ok) throw new Error('Failed to update HMO deduction');
+                    Alpine.nextTick(() => this.fetchDeductions());
                     this.resetForm();
-                    alert('Contribution updated successfully!');
+                    alert('HMO deduction updated successfully!');
                 } catch (error) {
-                    console.error('Error updating contribution:', error);
-                    alert('Error updating contribution.');
+                    console.error('Error updating HMO deduction:', error);
+                    alert('Error updating HMO deduction.');
                 }
             },
 
-            async deleteContribution(id) {
-                if (!confirm('Are you sure you want to delete this contribution?')) return;
+            async deleteDeduction(id) {
+                if (!confirm('Are you sure you want to delete this HMO deduction?')) return;
                 try {
-                    const response = await fetch(`/government-contributions/${id}`, {
+                    const response = await fetch(`/hmo-deductions/${id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         },
                     });
-                    if (!response.ok) throw new Error('Failed to delete contribution');
-                    Alpine.nextTick(() => this.fetchContributions());
-                    alert('Contribution deleted successfully!');
+                    if (!response.ok) throw new Error('Failed to delete HMO deduction');
+                    Alpine.nextTick(() => this.fetchDeductions());
+                    alert('HMO deduction deleted successfully!');
                 } catch (error) {
-                    console.error('Error deleting contribution:', error);
-                    alert('Error deleting contribution.');
+                    console.error('Error deleting HMO deduction:', error);
+                    alert('Error deleting HMO deduction.');
                 }
             },
 
@@ -714,10 +694,6 @@
                 if (type === 'employees') return 'Employees';
                 if (type === 'departments') return 'Departments';
                 return 'All';
-            },
-
-            formatContributionType(type) {
-                return type.toUpperCase();
             },
 
             formatCurrency(amount) {
@@ -745,4 +721,3 @@
         }));
     });
 </script>
-

@@ -159,7 +159,12 @@
                                 $pagibig = $details['pagibig_deduction'] ?? $details['pagibig'] ?? 0;
                                 $other = $details['other_deductions'] ?? $details['other_deduction'] ?? 0;
                                 $lateDeductionAmount = $details['late_deduction_amount'] ?? 0;
-                                $componentsTotal = $sss + $phil + $pagibig + $other + $lateDeductionAmount;
+                                $hmoDeductions = $details['hmo_deductions'] ?? [];
+                                $hmoTotal = 0;
+                                if (is_array($hmoDeductions)) {
+                                    $hmoTotal = array_sum(array_column($hmoDeductions, 'amount'));
+                                }
+                                $componentsTotal = $sss + $phil + $pagibig + $other + $lateDeductionAmount + $hmoTotal;
                             @endphp
                             <td>{{ $details['present_days'] ?? 0 }} / {{ $details['expected_working_days_in_period'] ?? 0 }}</td>
                             <td>{{ round($details['regular_work_hours'] ?? 0, 0) }}</td>
@@ -178,6 +183,13 @@
                                     @endif
                                     @if($pagibig > 0)
                                         <div>Pag-IBIG: ₱{{ number_format($pagibig, 2) }}</div>
+                                    @endif
+                                    @if(is_array($hmoDeductions) && count($hmoDeductions) > 0)
+                                        @foreach($hmoDeductions as $hmoDeduction)
+                                            @if(isset($hmoDeduction['amount']) && $hmoDeduction['amount'] > 0)
+                                                <div>HMO ({{ $hmoDeduction['name'] ?? 'N/A' }}): ₱{{ number_format($hmoDeduction['amount'], 2) }}</div>
+                                            @endif
+                                        @endforeach
                                     @endif
                                     @if($lateDeductionAmount > 0)
                                         <div>Late: ₱{{ number_format($lateDeductionAmount, 2) }}</div>

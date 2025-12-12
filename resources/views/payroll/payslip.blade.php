@@ -167,6 +167,20 @@
                         <span>₱{{ number_format($details['pagibig_deduction'], 2) }}</span>
                     </div>
                     @endif
+                    @if(isset($details['hmo_deductions']) && is_array($details['hmo_deductions']) && count($details['hmo_deductions']) > 0)
+                        @foreach($details['hmo_deductions'] as $hmoDeduction)
+                            @if(isset($hmoDeduction['amount']) && $hmoDeduction['amount'] > 0)
+                            <div class="flex justify-between">
+                                <span>HMO ({{ $hmoDeduction['name'] ?? 'N/A' }})
+                                    @if(isset($hmoDeduction['is_percentage']) && $hmoDeduction['is_percentage'])
+                                        ({{ number_format($hmoDeduction['employee_share_rate'], 2) }}%)
+                                    @endif:
+                                </span>
+                                <span>₱{{ number_format($hmoDeduction['amount'], 2) }}</span>
+                            </div>
+                            @endif
+                        @endforeach
+                    @endif
                     <div class="flex justify-between font-semibold border-t pt-2 mt-2">
                         <span>Total Deductions:</span>
                         <span>₱{{ number_format($payslip->deductions, 2) }}</span>

@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\GovernmentContribution;
+use App\Models\HmoDeduction;
 use Illuminate\Validation\Rule;
 
-class GovernmentContributionController extends Controller
+class HmoDeductionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return response()->json(GovernmentContribution::all());
+        return response()->json(HmoDeduction::all());
     }
 
     /**
@@ -22,7 +22,7 @@ class GovernmentContributionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['sss', 'philhealth', 'pagibig'])],
+            'name' => 'required|string|max:255',
             'is_percentage' => 'required|boolean',
             'employee_share' => 'required|numeric|min:0',
             'target_type' => ['required_if:is_percentage,false', Rule::in(['all', 'employees', 'departments'])],
@@ -49,8 +49,8 @@ class GovernmentContributionController extends Controller
             $validated['deduction_frequency_applies_to'] = null;
         }
 
-        $contribution = GovernmentContribution::create($validated);
-        return response()->json($contribution, 201);
+        $deduction = HmoDeduction::create($validated);
+        return response()->json($deduction, 201);
     }
 
     /**
@@ -58,8 +58,8 @@ class GovernmentContributionController extends Controller
      */
     public function show(string $id)
     {
-        $contribution = GovernmentContribution::findOrFail($id);
-        return response()->json($contribution);
+        $deduction = HmoDeduction::findOrFail($id);
+        return response()->json($deduction);
     }
 
     /**
@@ -67,10 +67,10 @@ class GovernmentContributionController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $contribution = GovernmentContribution::findOrFail($id);
+        $deduction = HmoDeduction::findOrFail($id);
 
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['sss', 'philhealth', 'pagibig'])],
+            'name' => 'required|string|max:255',
             'is_percentage' => 'required|boolean',
             'employee_share' => 'required|numeric|min:0',
             'target_type' => ['required_if:is_percentage,false', Rule::in(['all', 'employees', 'departments'])],
@@ -97,8 +97,8 @@ class GovernmentContributionController extends Controller
             $validated['deduction_frequency_applies_to'] = null;
         }
 
-        $contribution->update($validated);
-        return response()->json($contribution);
+        $deduction->update($validated);
+        return response()->json($deduction);
     }
 
     /**
@@ -106,8 +106,8 @@ class GovernmentContributionController extends Controller
      */
     public function destroy(string $id)
     {
-        $contribution = GovernmentContribution::findOrFail($id);
-        $contribution->delete();
+        $deduction = HmoDeduction::findOrFail($id);
+        $deduction->delete();
         return response()->json(null, 204);
     }
 }
