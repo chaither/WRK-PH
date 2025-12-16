@@ -62,15 +62,6 @@
         }
     }
 </style>
-<div class="header-print no-print">
-    <div class="logo">
-        <img src="{{ public_path('limehills.png') }}" alt="Company Logo">
-    </div>
-    <div class="report-info">
-        <h1>Payslip</h1>
-        <p>For Period: {{ $payPeriod->start_date->format('M d, Y') }} - {{ $payPeriod->end_date->format('M d, Y') }}</p>
-    </div>
-</div>
 <div class="bg-white rounded-lg shadow-md p-6">
     <div class="flex justify-between items-center mb-6 no-print">
         <h1 class="text-2xl font-bold">Payslip</h1>
