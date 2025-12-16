@@ -43,18 +43,6 @@
                 </form>
             </div>
 
-            <div class="flex items-center justify-center md:justify-start md:col-span-2">
-                @php $currentUser = auth()->user(); @endphp
-                @if($currentUser && empty($currentUser->face_embedding))
-                    <a href="{{ route('face.register') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded shadow hover:bg-yellow-600">
-                        <i class="fas fa-user-plus mr-2"></i> Register Face (one-time)
-                    </a>
-                    <p class="ml-4 text-sm text-gray-600">You must register your face once before using face verification for clock in/out.</p>
-                @else
-                    <p class="text-sm text-gray-600">Face registered: {{ $currentUser && $currentUser->face_embedding ? 'Yes' : 'No' }}</p>
-                @endif
-            </div>
-
             <div class="text-center">
                 <form id="clockOutForm" action="{{ route('dtr.clock-out') }}" method="POST">
                     @csrf
@@ -76,6 +64,18 @@
                     @endif
                 </form>
             </div>
+        </div>
+
+        <div class="mt-6 text-center">
+            @php $currentUser = auth()->user(); @endphp
+            @if($currentUser && empty($currentUser->face_embedding))
+                <a href="{{ route('face.register') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded shadow hover:bg-yellow-600">
+                    <i class="fas fa-user-plus mr-2"></i> Register Face (one-time)
+                </a>
+                <p class="mt-2 text-sm text-gray-600">You must register your face once before using face verification for clock in/out.</p>
+            @else
+                <p class="text-sm text-gray-600">Face registered: {{ $currentUser && $currentUser->face_embedding ? 'Yes' : 'No' }}</p>
+            @endif
         </div>
     </div>
 
@@ -120,7 +120,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-2 text-center text-gray-500">No records found</td>
+                            <td colspan="9" class="px-4 py-2 text-center text-gray-500">No records found</td>
                         </tr>
                     @endforelse
                 </tbody>
