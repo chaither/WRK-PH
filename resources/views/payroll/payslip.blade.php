@@ -81,9 +81,10 @@
             <h2 class="text-lg font-semibold mb-2">Pay Information</h2>
             @php
                 $details = json_decode($payslip->details, true);
+                $isMonthly = $payPeriod->start_date->day == 1 && $payPeriod->end_date->isSameDay($payPeriod->end_date->copy()->endOfMonth());
             @endphp
             <p><strong>Monthly Effective Salary:</strong> ₱{{ number_format(optional($details)['monthly_salary'], 2) }}</p>
-            <p><strong>Pay Period Type:</strong> {{ ucfirst($employee->pay_period) }}</p>
+            <p><strong>Pay Period Type:</strong> {{ $isMonthly ? 'Monthly' : 'Semi-monthly' }}</p>
             <p><strong>Daily Rate:</strong> ₱{{ number_format(optional($details)['daily_rate'], 2) }}</p>
             <p><strong>Hourly Rate:</strong> ₱{{ number_format(optional($details)['hourly_rate'], 2) }}</p>
         </div>

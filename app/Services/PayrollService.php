@@ -35,6 +35,11 @@ class PayrollService
             ['status' => 'processing', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']
         );
 
+        // Update pay_period_type if provided and different
+        if ($payScheduleFilter && $payPeriod->pay_period_type !== $payScheduleFilter) {
+            $payPeriod->update(['pay_period_type' => $payScheduleFilter]);
+        }
+
         $employeesQuery = User::where('role', 'employee');
         if ($payScheduleFilter) {
             $employeesQuery->where('pay_schedule', $payScheduleFilter);

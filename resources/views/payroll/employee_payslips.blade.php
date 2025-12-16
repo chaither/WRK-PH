@@ -39,7 +39,14 @@
                                     <tr class="payslip-row hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
-                                            <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type ?? 'N/A') }}</div>
+                                            <div class="text-xs text-gray-500">
+                                                @php
+                                                    $start = \Carbon\Carbon::parse($payslip->pay_period_start);
+                                                    $end = \Carbon\Carbon::parse($payslip->pay_period_end);
+                                                    $isMonthly = $start->day == 1 && $end->isSameDay($end->copy()->endOfMonth());
+                                                @endphp
+                                                {{ $isMonthly ? 'Monthly' : 'Semi-monthly' }}
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-700">₱{{ number_format($payslip->net_pay, 2) }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -76,7 +83,14 @@
                             <button @click="open = !open; console.log('Mobile Button clicked, open state:', open)" class="flex justify-between items-center w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 focus:outline-none">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
-                                    <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type ?? 'N/A') }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        @php
+                                            $start = \Carbon\Carbon::parse($payslip->pay_period_start);
+                                            $end = \Carbon\Carbon::parse($payslip->pay_period_end);
+                                            $isMonthly = $start->day == 1 && $end->isSameDay($end->copy()->endOfMonth());
+                                        @endphp
+                                        {{ $isMonthly ? 'Monthly' : 'Semi-monthly' }}
+                                    </div>
                                 </div>
                                 <svg x-show="!open" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
