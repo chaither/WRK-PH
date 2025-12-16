@@ -18,6 +18,10 @@
                     <p class="text-gray-500">Please check back after your next payroll generation.</p>
                 </div>
             @else
+                <!-- Search Input -->
+                <div class="mb-4">
+                    <input type="text" id="payslip-search" placeholder="Search payslips by pay period..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
                 <!-- Desktop View -->
                 <div class="hidden sm:block">
                     <div class="">
@@ -32,7 +36,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-100">
                                 @foreach($payslips as $payslip)
-                                    <tr class="hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
+                                    <tr class="payslip-row hover:bg-indigo-50 transition duration-100 @if ($loop->even) bg-gray-50 @endif">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
                                             <div class="text-xs text-gray-500">{{ ucfirst($payslip->payPeriod->pay_period_type ?? 'N/A') }}</div>
@@ -68,7 +72,7 @@
                 <!-- Mobile View -->
                 <div class="sm:hidden">
                     @foreach($payslips as $payslip)
-                        <div x-data="{ open: false }" class="mb-4 bg-white rounded-lg shadow-md overflow-hidden">
+                        <div x-data="{ open: false }" class="payslip-card mb-4 bg-white rounded-lg shadow-md overflow-hidden">
                             <button @click="open = !open; console.log('Mobile Button clicked, open state:', open)" class="flex justify-between items-center w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 focus:outline-none">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>
@@ -116,4 +120,22 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('payslip-search').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.payslip-row');
+    const cards = document.querySelectorAll('.payslip-card');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+</script>
 @endsection
