@@ -35,6 +35,12 @@
                                 <input type="email" name="email" id="email" autocomplete="email" required
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                             </div>
+                            <div>
+                                <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee ID</label>
+                                <input type="number" name="employee_id" id="employee_id" min="1"
+                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" placeholder="Enter employee number or leave blank">
+                                <p class="text-xs text-gray-500 mt-1">Auto-generated if left blank (sequential numbers starting from 101)</p>
+                            </div>
                             <div id="passwordFields">
                                 <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                                 <div class="relative">
@@ -423,6 +429,7 @@
                 document.getElementById('first_name').value = employee.first_name;
                 document.getElementById('last_name').value = employee.last_name;
                 document.getElementById('email').value = employee.email;
+                document.getElementById('employee_id').value = employee.employee_id || '';
                 document.getElementById('position').value = employee.position;
                 document.getElementById('role').value = employee.role;
                 document.getElementById('department_id').value = employee.department_id; // Populate department_id

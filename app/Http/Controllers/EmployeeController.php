@@ -16,12 +16,16 @@ use App\Models\LeaveRequest; // Add this line
 use App\Models\ChangeRestdayRequest;
 use App\Models\ChangeShiftRequest;
 use App\Models\NoBioRequest;
+use App\Services\ZktecoService;
 
 class EmployeeController extends Controller
 {
-    public function __construct()
+    protected $zktecoService;
+
+    public function __construct(ZktecoService $zktecoService)
     {
         // Removed middleware. Now handled by route groups only.
+        $this->zktecoService = $zktecoService;
     }
 
     public function index(Request $request)
@@ -94,6 +98,7 @@ class EmployeeController extends Controller
             'department_id' => 'nullable|exists:departments,id',
             'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
             'role' => 'required|in:employee,hr,admin', // Add role validation
+            'employee_id' => 'nullable|string|unique:users,employee_id',
         ]);
 
         // Handle password separately: only hash if provided
@@ -145,6 +150,11 @@ class EmployeeController extends Controller
         // Assign the pay_period input to the pay_schedule column
         $validated['pay_schedule'] = $validated['pay_period'];
 
+        // Generate employee_id if not provided
+        if (empty($validated['employee_id'])) {
+            $validated['employee_id'] = $this->generateEmployeeId();
+        }
+
         $user = User::create([
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
@@ -163,7 +173,16 @@ class EmployeeController extends Controller
             'working_days' => $validated['working_days'],
             'rest_days' => $validated['rest_days'],
             'role' => $validated['role'],
+            'employee_id' => $validated['employee_id'],
         ]);
+
+        // Automatically sync to biometric device if online
+        try {
+            $this->zktecoService->syncSingleUser($user);
+        } catch (\Exception $e) {
+            // Don't fail employee creation if biometric sync fails
+            // Error is already logged in ZktecoService
+        }
 
         return redirect()->route('department.index')->with('success', 'Employee created successfully');
     }
@@ -217,6 +236,7 @@ class EmployeeController extends Controller
             'working_days' => 'nullable|array',
             'rest_days' => 'nullable|array', // Add rest_days validation
             'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
+            'employee_id' => 'nullable|string|unique:users,employee_id,' . $employee->id,
         ]);
 
         // Handle password separately: only hash if provided and not empty
@@ -408,7 +428,7 @@ class EmployeeController extends Controller
             ]);
         }
 
-        $employee->update([
+        $updateData = [
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'],
             'email' => $validated['email'],
@@ -424,7 +444,13 @@ class EmployeeController extends Controller
             'working_days' => $validated['working_days'],
             'rest_days' => $validated['rest_days'],
             'shift_id' => $validated['shift_id'],
-        ]);
+        ];
+
+        if (!empty($validated['employee_id'])) {
+            $updateData['employee_id'] = $validated['employee_id'];
+        }
+
+        $employee->update($updateData);
 
         return redirect()->route('employees.index')->with('success', 'Employee updated successfully');
     }
@@ -483,5 +509,23 @@ class EmployeeController extends Controller
         }
 
         return [];
+    }
+
+    private function generateEmployeeId(): string
+    {
+        // Find the highest numeric employee ID
+        $lastEmployee = User::whereNotNull('employee_id')
+            ->whereRaw('employee_id REGEXP "^[0-9]+$"')
+            ->orderByRaw('CAST(employee_id AS UNSIGNED) DESC')
+            ->first();
+
+        $nextNumber = 101; // Start from 101
+
+        if ($lastEmployee && $lastEmployee->employee_id) {
+            $currentMax = intval($lastEmployee->employee_id);
+            $nextNumber = max($currentMax + 1, 101); // Ensure at least 101
+        }
+
+        return (string) $nextNumber;
     }
 }

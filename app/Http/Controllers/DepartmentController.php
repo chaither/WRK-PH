@@ -9,9 +9,17 @@ use App\Models\User;
 use App\Models\Shift; // Add this line
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth; // Add this line
+use App\Services\ZktecoService;
 
 class DepartmentController extends Controller
 {
+    protected $zktecoService;
+
+    public function __construct(ZktecoService $zktecoService)
+    {
+        $this->zktecoService = $zktecoService;
+    }
+
     public function index()
     {
         if (!Auth::user()->isHRManager()) {
@@ -113,7 +121,7 @@ class DepartmentController extends Controller
             'department_id' => 'nullable|exists:departments,id', // Make department_id nullable and validate existence
         ]);
 
-        User::create([
+        $user = User::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'email' => $request->email,
@@ -129,6 +137,14 @@ class DepartmentController extends Controller
             'work_end' => $request->work_end,
             'department_id' => $request->department_id, // Assign to the selected department from the request
         ]);
+
+        // Automatically sync to biometric device if online and employee has employee_id
+        try {
+            $this->zktecoService->syncSingleUser($user);
+        } catch (\Exception $e) {
+            // Don't fail employee creation if biometric sync fails
+            // Error is already logged in ZktecoService
+        }
 
         return redirect()->route('department.index')->with('success', 'Employee created and assigned to department successfully.');
     }

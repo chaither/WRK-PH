@@ -40,6 +40,7 @@ class User extends Authenticatable
         'working_days',
         'pay_schedule',
         'face_embedding',
+        'employee_id',
     ];
 
     /**

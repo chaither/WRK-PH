@@ -19,6 +19,7 @@
             <div>
                 <p class="text-gray-600"><strong>Name:</strong> {{ $employee->name }}</p>
                 <p class="text-gray-600"><strong>Email:</strong> {{ $employee->email }}</p>
+                <p class="text-gray-600"><strong>Employee ID:</strong> {{ $employee->employee_id ?? 'N/A' }}</p>
                 <p class="text-gray-600"><strong>Position:</strong> {{ $employee->position ?? 'N/A' }}</p>
                 <p class="text-gray-600"><strong>Department:</strong> {{ $employee->department->name ?? 'N/A' }}</p>
             </div>

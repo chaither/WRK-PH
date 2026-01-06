@@ -155,18 +155,37 @@
                             </td>
                             @php
                                 $dtrRecord = optional($employee->dtrRecords->first());
+                                // If first (and only) log is in the afternoon, show it in the PM columns and keep AM columns blank
+                                $timeIn = $dtrRecord->time_in ? \Carbon\Carbon::parse($dtrRecord->time_in) : null;
+                                $timeOut = $dtrRecord->time_out ? \Carbon\Carbon::parse($dtrRecord->time_out) : null;
+                                $timeIn2 = $dtrRecord->time_in_2 ? \Carbon\Carbon::parse($dtrRecord->time_in_2) : null;
+                                $timeOut2 = $dtrRecord->time_out_2 ? \Carbon\Carbon::parse($dtrRecord->time_out_2) : null;
+
+                                $afternoonFirst = $timeIn && !$timeIn2 && $timeIn->format('H:i') >= '12:00';
+
+                                $displayTimeIn1 = $afternoonFirst ? '-' : ($timeIn ? TimeHelper::getTimeOfDay($timeIn) . ': ' . $timeIn->format('h:i A') : '-');
+                                $displayTimeOut1 = $afternoonFirst ? '-' : ($timeOut ? TimeHelper::getTimeOfDay($timeOut) . ': ' . $timeOut->format('h:i A') : '-');
+
+                                // If afternoon-first, reuse time_in/time_out into the PM columns
+                                $displayTimeIn2 = $timeIn2
+                                    ? TimeHelper::getTimeOfDay($timeIn2) . ': ' . $timeIn2->format('h:i A')
+                                    : ($afternoonFirst ? TimeHelper::getTimeOfDay($timeIn) . ': ' . $timeIn->format('h:i A') : '-');
+
+                                $displayTimeOut2 = $timeOut2
+                                    ? TimeHelper::getTimeOfDay($timeOut2) . ': ' . $timeOut2->format('h:i A')
+                                    : ($afternoonFirst && $timeOut ? TimeHelper::getTimeOfDay($timeOut) . ': ' . $timeOut->format('h:i A') : '-');
                             @endphp
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_in ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_in)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_in)->format('h:i A') : '-' }}
+                                {{ $displayTimeIn1 }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_out ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_out)->format('h:i A') : '-' }}
+                                {{ $displayTimeOut1 }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_in_2 ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_in_2)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_in_2)->format('h:i A') : '-' }}
+                                {{ $displayTimeIn2 }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
-                                {{ $dtrRecord->time_out_2 ? TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($dtrRecord->time_out_2)) . ': ' . \Carbon\Carbon::parse($dtrRecord->time_out_2)->format('h:i A') : '-' }}
+                                {{ $displayTimeOut2 }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
                                 {{ $dtrRecord->overtime_time_in ? \Carbon\Carbon::parse($dtrRecord->overtime_time_in)->format('h:i A') : '-' }}
