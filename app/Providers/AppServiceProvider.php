@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Automatic biometric sync is handled by AutoSyncBiometric middleware
+        // This middleware syncs attendances automatically on each request (throttled to every 10 seconds)
+        // No manual commands needed - fingerprints are stored automatically!
     }
 }
