@@ -13,7 +13,8 @@ class HolidayController extends Controller
      */
     public function index()
     {
-        $holidays = Holiday::all();
+        // Always show holidays ordered by date so they naturally group by month
+        $holidays = Holiday::orderBy('date', 'asc')->get();
         return view('holidays.index', compact('holidays'));
     }
 
