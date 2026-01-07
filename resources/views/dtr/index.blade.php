@@ -25,10 +25,16 @@
                 <form id="clockInForm" action="{{ route('dtr.clock-in') }}" method="POST">
                     @csrf
                     <input type="hidden" name="face_descriptor" id="clockin_face_descriptor">
+                    @php 
+                        $currentUser = auth()->user(); 
+                        $faceRecognitionDisabled = ($currentUser && $currentUser->role === 'employee' && !$currentUser->face_recognition_enabled);
+                        $alreadyComplete = ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2);
+                        $buttonDisabled = $faceRecognitionDisabled || $alreadyComplete || $onLeave;
+                    @endphp
                     <button id="clockInBtn" type="submit" 
                         class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 w-full 
-                            {{ ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2) || $onLeave ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        {{ ($dtrRecord && $dtrRecord->time_in && $dtrRecord->time_out && $dtrRecord->time_in_2) || $onLeave ? 'disabled' : '' }}>
+                            {{ $buttonDisabled ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        {{ $buttonDisabled ? 'disabled' : '' }}>
                         <i class="fas fa-sign-in-alt mr-2"></i>
                         Clock In
                     </button>
@@ -47,10 +53,17 @@
                 <form id="clockOutForm" action="{{ route('dtr.clock-out') }}" method="POST">
                     @csrf
                     <input type="hidden" name="face_descriptor" id="clockout_face_descriptor">
+                    @php 
+                        $currentUser = auth()->user(); 
+                        $faceRecognitionDisabled = ($currentUser && $currentUser->role === 'employee' && !$currentUser->face_recognition_enabled);
+                        $noClockIn = (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2));
+                        $alreadyComplete = ($dtrRecord && $dtrRecord->time_out && $dtrRecord->time_out_2);
+                        $buttonDisabled = $faceRecognitionDisabled || $noClockIn || $alreadyComplete || $onLeave;
+                    @endphp
                     <button id="clockOutBtn" type="submit" 
                         class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 w-full 
-                            {{ (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2) || ($dtrRecord->time_out && $dtrRecord->time_out_2)) || $onLeave ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        {{ (!$dtrRecord || (!$dtrRecord->time_in && !$dtrRecord->time_in_2) || ($dtrRecord->time_out && $dtrRecord->time_out_2)) || $onLeave ? 'disabled' : '' }}>
+                            {{ $buttonDisabled ? 'opacity-50 cursor-not-allowed' : '' }}"
+                        {{ $buttonDisabled ? 'disabled' : '' }}>
                         <i class="fas fa-sign-out-alt mr-2"></i>
                         Clock Out
                     </button>
@@ -68,13 +81,18 @@
 
         <div class="mt-6 text-center">
             @php $currentUser = auth()->user(); @endphp
-            @if($currentUser && empty($currentUser->face_embedding))
-                <a href="{{ route('face.register') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded shadow hover:bg-yellow-600">
-                    <i class="fas fa-user-plus mr-2"></i> Register Face (one-time)
-                </a>
-                <p class="mt-2 text-sm text-gray-600">You must register your face once before using face verification for clock in/out.</p>
-            @else
-                <p class="text-sm text-gray-600">Face registered: {{ $currentUser && $currentUser->face_embedding ? 'Yes' : 'No' }}</p>
+            @if($currentUser && $currentUser->role === 'employee' && $currentUser->face_embedding && !$currentUser->face_recognition_enabled)
+                {{-- Employee has registered their face, but HR/Admin has not enabled face recognition --}}
+                <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Face Recognition Not Enabled</strong>
+                    <p class="mt-2 text-sm">Your face is registered, but face recognition is not enabled for your account. Please contact HR or Admin to enable this feature.</p>
+                </div>
+            @elseif($currentUser && $currentUser->role === 'employee' && $currentUser->face_embedding && $currentUser->face_recognition_enabled)
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                    Face recognition enabled and registered
+                </p>
             @endif
         </div>
     </div>

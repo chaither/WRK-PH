@@ -40,6 +40,7 @@ class User extends Authenticatable
         'working_days',
         'pay_schedule',
         'face_embedding',
+        'face_recognition_enabled',
         'employee_id',
     ];
 
@@ -78,6 +79,7 @@ class User extends Authenticatable
         'rest_days' => 'array',
         'working_days' => 'array',
         'face_embedding' => 'array',
+        'face_recognition_enabled' => 'boolean',
     ];
 
     /**

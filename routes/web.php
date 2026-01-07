@@ -207,6 +207,12 @@ Route::prefix('dtr')->name('dtr.')->group(function() {
     Route::post('/clock-out', [DTRController::class, 'clockOut'])->name('clock-out');
 });
 
+// Face Recognition Management Routes (HR/Admin only)
+Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->group(function () {
+    Route::get('/dtr/face-recognition/management', [DTRController::class, 'faceRecognitionManagement'])->name('dtr.face-recognition.management');
+    Route::post('/dtr/face-recognition/{employee}/toggle', [DTRController::class, 'toggleFaceRecognition'])->name('dtr.face-recognition.toggle');
+});
+
 // Password Reset Routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
     ->name('password.request');

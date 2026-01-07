@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DTRRecord;
 use App\Models\User;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -29,10 +30,12 @@ class DTRController extends Controller
         }
         
         $user = Auth::user();
-        // If employee hasn't registered face, redirect them to one-time face registration
+        // For employees: force face registration page first, then handle enable/disable
         if ($user->role === 'employee' && empty($user->face_embedding)) {
+            // If employee hasn't registered face, redirect them to one-time face registration
             return redirect()->route('face.register')->with('info', 'Please register your face before accessing Daily Time Record.');
         }
+        // If employee has registered face but face recognition is disabled, we just show a notice in the view
         $today = Carbon::today();
 
         $dtrRecord = DTRRecord::where('user_id', $user->id)
@@ -80,6 +83,11 @@ class DTRController extends Controller
 
         if ($onLeave) {
             return back()->with('error', 'You are on an approved leave today and cannot clock in.');
+        }
+
+        // Check if face recognition is enabled for this employee
+        if ($user->role === 'employee' && !$user->face_recognition_enabled) {
+            return back()->with('error', 'Face recognition is not enabled for your account. Please contact HR or Admin to enable this feature.');
         }
 
         // Require face registration
@@ -208,6 +216,11 @@ class DTRController extends Controller
 
         if ($onLeave) {
             return back()->with('error', 'You are on an approved leave today and cannot clock out.');
+        }
+
+        // Check if face recognition is enabled for this employee
+        if ($user->role === 'employee' && !$user->face_recognition_enabled) {
+            return back()->with('error', 'Face recognition is not enabled for your account. Please contact HR or Admin to enable this feature.');
         }
 
         // Require face registration
@@ -476,5 +489,60 @@ class DTRController extends Controller
                                 ->get();
 
         return view('dtr.employee_dtr_detailed_history', compact('employee', 'dtrRecords', 'startDate', 'endDate', 'isFiltered'));
+    }
+
+    public function faceRecognitionManagement(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $selectedDepartmentId = $request->input('department_id');
+        $search = $request->input('search');
+
+        // Get all departments
+        $departments = Department::orderBy('name')->get();
+
+        // Build employee query
+        $employeesQuery = User::where('role', 'employee')
+            ->with('department')
+            ->when($selectedDepartmentId, function ($query) use ($selectedDepartmentId) {
+                $query->where('department_id', $selectedDepartmentId);
+            })
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', '%' . $search . '%')
+                      ->orWhere('last_name', 'like', '%' . $search . '%')
+                      ->orWhere('employee_id', 'like', '%' . $search . '%');
+                });
+            })
+            ->orderBy('first_name')
+            ->orderBy('last_name');
+
+        $employees = $employeesQuery->get();
+
+        return view('dtr.face_recognition_management', compact('departments', 'employees', 'selectedDepartmentId', 'search'));
+    }
+
+    public function toggleFaceRecognition(Request $request, User $employee)
+    {
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access.'], 403);
+        }
+
+        $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        $employee->face_recognition_enabled = $request->input('enabled');
+        $employee->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Face recognition ' . ($request->input('enabled') ? 'enabled' : 'disabled') . ' successfully.',
+            'enabled' => $employee->face_recognition_enabled
+        ]);
     }
 }

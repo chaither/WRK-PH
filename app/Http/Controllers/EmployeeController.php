@@ -99,6 +99,7 @@ class EmployeeController extends Controller
             'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
             'role' => 'required|in:employee,hr,admin', // Add role validation
             'employee_id' => 'nullable|string|unique:users,employee_id',
+            'face_recognition_enabled' => 'nullable|boolean',
         ]);
 
         // Handle password separately: only hash if provided
@@ -174,6 +175,7 @@ class EmployeeController extends Controller
             'rest_days' => $validated['rest_days'],
             'role' => $validated['role'],
             'employee_id' => $validated['employee_id'],
+            'face_recognition_enabled' => $request->has('face_recognition_enabled') ? (bool)$request->input('face_recognition_enabled') : false,
         ]);
 
         // Automatically sync to biometric device if online
@@ -200,6 +202,7 @@ class EmployeeController extends Controller
         $data['work_end_time'] = $employee->work_end
             ? Carbon::parse($employee->work_end)->format('H:i')
             : null;
+        $data['face_recognition_enabled'] = $employee->face_recognition_enabled ?? false;
 
         return response()->json($data);
     }
@@ -237,6 +240,7 @@ class EmployeeController extends Controller
             'rest_days' => 'nullable|array', // Add rest_days validation
             'shift_id' => 'required|exists:shifts,id', // Add shift_id validation
             'employee_id' => 'nullable|string|unique:users,employee_id,' . $employee->id,
+            'face_recognition_enabled' => 'nullable|boolean',
         ]);
 
         // Handle password separately: only hash if provided and not empty
@@ -444,6 +448,7 @@ class EmployeeController extends Controller
             'working_days' => $validated['working_days'],
             'rest_days' => $validated['rest_days'],
             'shift_id' => $validated['shift_id'],
+            'face_recognition_enabled' => $request->has('face_recognition_enabled') ? (bool)$request->input('face_recognition_enabled') : false,
         ];
 
         if (!empty($validated['employee_id'])) {
