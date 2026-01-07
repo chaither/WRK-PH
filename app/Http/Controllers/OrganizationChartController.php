@@ -6,28 +6,32 @@ use App\Models\OrganizationChartNode;
 use App\Models\Department;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 class OrganizationChartController extends Controller
 {
     public function index()
     {
+        // First, ensure base nodes exist
         try {
             $this->ensureBaseNodes();
+        } catch (\Illuminate\Database\QueryException $e) {
+            // If table doesn't exist, log and show error to user
+            Log::error('Database error ensuring base nodes: ' . $e->getMessage());
+            if (str_contains($e->getMessage(), "doesn't exist") || str_contains($e->getMessage(), 'Base table or view not found')) {
+                return redirect()->back()->with('error', 'Organization chart table not found. Please run migrations: php artisan migrate');
+            }
+            // For other database errors, log and continue
+            Log::warning('Failed to ensure base nodes, but continuing: ' . $e->getMessage());
         } catch (\Exception $e) {
-            // Log the error and continue - don't break the page if base nodes can't be created
-            Log::error('Failed to ensure base nodes: ' . $e->getMessage());
+            // Log the error but continue to try loading existing nodes
+            Log::error('Error ensuring base nodes: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
         }
 
-        try {
-            $nodes = OrganizationChartNode::all();
-            $departments = Department::with('employees')->orderBy('name')->get();
-        } catch (\Exception $e) {
-            // If there's a database error, log it and return empty collections
-            Log::error('Failed to load organization data: ' . $e->getMessage());
-            $nodes = collect([]);
-            $departments = collect([]);
-        }
+        // Load existing nodes - don't catch exceptions here, let Laravel handle them properly
+        $nodes = OrganizationChartNode::all();
+        $departments = Department::with('employees')->orderBy('name')->get();
 
         return view('organization.index', compact('nodes', 'departments'));
     }
@@ -107,55 +111,63 @@ class OrganizationChartController extends Controller
      */
     private function ensureBaseNodes(): void
     {
-        try {
-            // Create CEO if missing
-            $ceo = OrganizationChartNode::whereNull('parent_id')
-                ->where('position', 'CEO')
-                ->first();
+        // Check if table exists first
+        if (!Schema::hasTable('organization_chart_nodes')) {
+            throw new \Exception('organization_chart_nodes table does not exist. Please run migrations.');
+        }
 
-            if (!$ceo) {
+        // Create CEO if missing - check by position first, then by null parent
+        $ceo = OrganizationChartNode::where('position', 'CEO')
+            ->whereNull('parent_id')
+            ->first();
+
+        if (!$ceo) {
+            // Check if there's any node with null parent (could be an existing CEO with different position name)
+            $existingRoot = OrganizationChartNode::whereNull('parent_id')->first();
+            
+            if (!$existingRoot) {
                 $ceo = OrganizationChartNode::create([
                     'name' => 'CEO',
                     'position' => 'CEO',
                     'parent_id' => null,
                 ]);
+                Log::info('Created CEO node in organization chart');
+            } else {
+                // Use existing root node as CEO
+                $ceo = $existingRoot;
+            }
+        }
+
+        // Create or reattach CO-CEO under CEO
+        if ($ceo) {
+            $coCeo = OrganizationChartNode::where('position', 'CO-CEO')->first();
+            if (!$coCeo) {
+                $coCeo = OrganizationChartNode::create([
+                    'name' => 'CO-CEO',
+                    'position' => 'CO-CEO',
+                    'parent_id' => $ceo->id,
+                ]);
+                Log::info('Created CO-CEO node in organization chart');
+            } elseif ($coCeo->parent_id !== $ceo->id) {
+                $coCeo->update(['parent_id' => $ceo->id]);
+                Log::info('Updated CO-CEO parent to CEO');
             }
 
-            // Create or reattach CO-CEO under CEO
-            if ($ceo) {
-                $coCeo = OrganizationChartNode::where('position', 'CO-CEO')->first();
-                if (!$coCeo) {
-                    $coCeo = OrganizationChartNode::create([
-                        'name' => 'CO-CEO',
-                        'position' => 'CO-CEO',
-                        'parent_id' => $ceo->id,
+            // Create or reattach HR Manager under CO-CEO
+            if ($coCeo) {
+                $hrManager = OrganizationChartNode::where('position', 'HR Manager')->first();
+                if (!$hrManager) {
+                    OrganizationChartNode::create([
+                        'name' => 'HR Manager',
+                        'position' => 'HR Manager',
+                        'parent_id' => $coCeo->id,
                     ]);
-                } elseif ($coCeo->parent_id !== $ceo->id) {
-                    $coCeo->update(['parent_id' => $ceo->id]);
-                }
-
-                // Create or reattach HR Manager under CO-CEO
-                if ($coCeo) {
-                    $hrManager = OrganizationChartNode::where('position', 'HR Manager')->first();
-                    if (!$hrManager) {
-                        OrganizationChartNode::create([
-                            'name' => 'HR Manager',
-                            'position' => 'HR Manager',
-                            'parent_id' => $coCeo->id,
-                        ]);
-                    } elseif ($hrManager->parent_id !== $coCeo->id) {
-                        $hrManager->update(['parent_id' => $coCeo->id]);
-                    }
+                    Log::info('Created HR Manager node in organization chart');
+                } elseif ($hrManager->parent_id !== $coCeo->id) {
+                    $hrManager->update(['parent_id' => $coCeo->id]);
+                    Log::info('Updated HR Manager parent to CO-CEO');
                 }
             }
-        } catch (\Illuminate\Database\QueryException $e) {
-            // If there's a database issue (e.g., table doesn't exist, constraint violation), log and rethrow
-            Log::error('Database error in ensureBaseNodes: ' . $e->getMessage());
-            throw $e;
-        } catch (\Exception $e) {
-            // Log any other errors
-            Log::error('Error in ensureBaseNodes: ' . $e->getMessage());
-            throw $e;
         }
     }
 }
