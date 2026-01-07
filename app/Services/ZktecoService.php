@@ -40,10 +40,45 @@ class ZktecoService
     {
         try {
             $this->initializeZkteco();
+            
+            // Quick connectivity check: try to ping the device first (if enabled)
+            // This helps fail fast instead of waiting for full timeout
+            $deviceIp = config('zkteco.device_ip');
+            if (config('zkteco.should_ping', true) && $deviceIp) {
+                // Quick ping check (1 second timeout) before attempting full connection
+                $pingResult = $this->quickPing($deviceIp, 1);
+                if (!$pingResult) {
+                    Log::debug('Device ping failed, skipping connection attempt', ['ip' => $deviceIp]);
+                    return false;
+                }
+            }
+            
             $this->zkteco->connect();
             return true;
         } catch (Exception $e) {
             Log::error('Failed to connect to ZKTeco device: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Quick ping check to see if device is reachable
+     * Returns true if device responds, false otherwise
+     */
+    protected function quickPing($ip, $timeout = 1)
+    {
+        // On Windows, use ping command; on Linux/Unix, use socket check
+        if (PHP_OS_FAMILY === 'Windows') {
+            // Windows ping with 1 second timeout
+            $result = @exec("ping -n 1 -w " . ($timeout * 1000) . " $ip 2>nul", $output, $returnCode);
+            return $returnCode === 0;
+        } else {
+            // Linux/Unix: try to open socket connection quickly
+            $socket = @fsockopen($ip, config('zkteco.device_port', 4370), $errno, $errstr, $timeout);
+            if ($socket) {
+                fclose($socket);
+                return true;
+            }
             return false;
         }
     }
