@@ -135,6 +135,10 @@
                     <i class="fas fa-building text-xl"></i>
                     <span class="ml-3 sidebar-text">Department</span>
                 </a>
+                <a href="{{ route('dtr.face-recognition.management') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dtr.face-recognition.*') ? 'bg-blue-700' : '' }}">
+                    <i class="fas fa-user-shield text-xl"></i>
+                    <span class="ml-3 sidebar-text">Face Recognition</span>
+                </a>
                 @endif
                 
                 @if (Auth::user()->hasRole(['admin', 'hr']))
