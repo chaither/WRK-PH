@@ -129,22 +129,22 @@
     </div>
 </div>
 <!-- Modal for camera preview and capture -->
-<div id="faceModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-4 w-full max-w-lg">
-        <div class="flex justify-between items-center mb-2">
+<div id="faceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-lg p-4 w-full max-w-lg mx-4 my-4 md:my-auto flex flex-col max-h-[95vh]">
+        <div class="flex justify-between items-center mb-2 flex-shrink-0">
             <h3 class="text-lg font-semibold">Face Verification</h3>
-            <button id="modalCloseBtn" class="text-gray-600 hover:text-gray-900">✕</button>
+            <button id="modalCloseBtn" class="text-gray-600 hover:text-gray-900 text-xl leading-none">✕</button>
         </div>
-        <div class="mb-2">
-            <div style="position:relative; width:100%; height:320px;">
-                <video id="modalVideo" width="100%" height="320" autoplay muted playsinline class="bg-gray-100 rounded"></video>
-                <canvas id="modalOverlay" style="position:absolute; left:0; top:0; width:100%; height:320px; pointer-events:none;"></canvas>
+        <div class="mb-3 flex-shrink-0" style="position: relative;">
+            <div class="relative w-full" style="aspect-ratio: 4/3; max-height: 50vh;">
+                <video id="modalVideo" width="100%" height="100%" autoplay muted playsinline class="bg-gray-100 rounded object-cover" style="width: 100%; height: 100%;"></video>
+                <canvas id="modalOverlay" class="absolute inset-0 w-full h-full" style="pointer-events:none;"></canvas>
             </div>
         </div>
-        <div id="modalStatus" class="text-sm text-gray-600 mb-3">Preparing camera...</div>
-        <div class="flex gap-2 justify-end">
-            <button id="modalCaptureBtn" class="bg-indigo-600 text-white px-4 py-2 rounded">Capture & Verify</button>
-            <button id="modalCancelBtn" class="bg-gray-200 px-4 py-2 rounded">Cancel</button>
+        <div id="modalStatus" class="text-sm text-gray-600 mb-3 flex-shrink-0">Preparing camera...</div>
+        <div class="flex flex-col sm:flex-row gap-2 justify-end flex-shrink-0">
+            <button id="modalCancelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded font-medium order-2 sm:order-1">Cancel</button>
+            <button id="modalCaptureBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-medium order-1 sm:order-2">Capture & Verify</button>
         </div>
     </div>
 </div>
@@ -223,9 +223,15 @@ async function startModalCamera() {
         modalStatus.textContent = 'Camera ready. Captures will average 3 samples.';
         if (modalOverlay) {
             modalOverlayCtx = modalOverlay.getContext('2d');
-            // set canvas size based on video
-            modalOverlay.width = modalVideo.videoWidth || modalVideo.clientWidth;
-            modalOverlay.height = modalVideo.videoHeight || modalVideo.clientHeight;
+            // Wait for video to have dimensions, then set canvas size to match video display
+            const updateOverlaySize = () => {
+                const rect = modalVideo.getBoundingClientRect();
+                modalOverlay.width = rect.width;
+                modalOverlay.height = rect.height;
+            };
+            // Update on load and when video dimensions are available
+            modalVideo.addEventListener('loadedmetadata', updateOverlaySize);
+            setTimeout(updateOverlaySize, 100);
         }
     } catch (err) {
         modalStatus.textContent = 'Cannot access camera: ' + err.message;
@@ -275,15 +281,19 @@ modalCaptureBtn.addEventListener('click', async function () {
             // draw overlay + landmark mesh
             if (modalOverlayCtx) {
                 modalOverlayCtx.clearRect(0,0,modalOverlay.width, modalOverlay.height);
+                // Scale coordinates to match displayed video size
+                const videoRect = modalVideo.getBoundingClientRect();
+                const scaleX = videoRect.width / modalVideo.videoWidth;
+                const scaleY = videoRect.height / modalVideo.videoHeight;
                 const box = detection.detection.box;
                 modalOverlayCtx.strokeStyle = '#00b894'; modalOverlayCtx.lineWidth = 2;
-                modalOverlayCtx.strokeRect(box.x, box.y, box.width, box.height);
+                modalOverlayCtx.strokeRect(box.x * scaleX, box.y * scaleY, box.width * scaleX, box.height * scaleY);
                 const ear = (function(){ const l=detection.landmarks.getLeftEye(); const r=detection.landmarks.getRightEye(); const A=(Math.hypot(l[1].x-l[5].x,l[1].y-l[5].y)+Math.hypot(l[2].x-l[4].x,l[2].y-l[4].y)); const B=(Math.hypot(r[1].x-r[5].x,r[1].y-r[5].y)+Math.hypot(r[2].x-r[4].x,r[2].y-r[4].y)); const C=(Math.hypot(l[0].x-l[3].x,l[0].y-l[3].y)+Math.hypot(r[0].x-r[3].x,r[0].y-r[3].y))/2; return (A+B)/(2.0*C); })();
                 modalOverlayCtx.fillStyle = '#fff'; modalOverlayCtx.font = '14px Arial';
-                modalOverlayCtx.fillText(`EAR:${ear.toFixed(2)} TURN:${head.toFixed(2)}`, Math.max(8, box.x), Math.max(18, box.y-6));
+                modalOverlayCtx.fillText(`EAR:${ear.toFixed(2)} TURN:${head.toFixed(2)}`, Math.max(8, box.x * scaleX), Math.max(18, box.y * scaleY - 6));
                 const pts = detection.landmarks.positions;
                 modalOverlayCtx.save(); modalOverlayCtx.strokeStyle='rgba(255,255,255,0.9)'; modalOverlayCtx.lineWidth=1;
-                function poly(idxs, close=false){ modalOverlayCtx.beginPath(); for(let i=0;i<idxs.length;i++){ const p=pts[idxs[i]]; if(i===0) modalOverlayCtx.moveTo(p.x,p.y); else modalOverlayCtx.lineTo(p.x,p.y);} if(close) modalOverlayCtx.closePath(); modalOverlayCtx.stroke(); }
+                function poly(idxs, close=false){ modalOverlayCtx.beginPath(); for(let i=0;i<idxs.length;i++){ const p=pts[idxs[i]]; if(i===0) modalOverlayCtx.moveTo(p.x * scaleX, p.y * scaleY); else modalOverlayCtx.lineTo(p.x * scaleX, p.y * scaleY);} if(close) modalOverlayCtx.closePath(); modalOverlayCtx.stroke(); }
                 poly([...Array(17).keys()]); poly([17,18,19,20,21]); poly([22,23,24,25,26]); poly([27,28,29,30,31,32,33,34,35]); poly([36,37,38,39,40,41], true); poly([42,43,44,45,46,47], true); poly([48,49,50,51,52,53,54,55,56,57,58,59], true); poly([60,61,62,63,64,65,66,67], true);
                 modalOverlayCtx.restore();
                 if (head < -0.12) { modalOverlayCtx.fillStyle = '#ff6b6b'; modalOverlayCtx.fillText('TURN LEFT', 8, modalOverlay.height - 12); }
