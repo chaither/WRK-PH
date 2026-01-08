@@ -13,6 +13,16 @@ class AdminChangeShiftController extends Controller
     {
         try {
             if ($changeShiftRequest) {
+                // Eager load relationships if not already loaded
+                if (!$changeShiftRequest->relationLoaded('user')) {
+                    $changeShiftRequest->load('user');
+                }
+                if (!$changeShiftRequest->relationLoaded('currentShift')) {
+                    $changeShiftRequest->load('currentShift');
+                }
+                if (!$changeShiftRequest->relationLoaded('requestedShift')) {
+                    $changeShiftRequest->load('requestedShift');
+                }
                 $changeShiftRequests = collect([$changeShiftRequest]); // Show only the specific change shift request
             } else {
                 $changeShiftRequests = ChangeShiftRequest::with(['user', 'currentShift', 'requestedShift'])
@@ -20,6 +30,12 @@ class AdminChangeShiftController extends Controller
                                                     ->latest()
                                                     ->get();
             }
+            
+            // Ensure we have a collection (even if empty)
+            if (!($changeShiftRequests instanceof \Illuminate\Support\Collection)) {
+                $changeShiftRequests = collect($changeShiftRequests);
+            }
+            
             return view('admin.attendance.change_shift.index', compact('changeShiftRequests'));
         } catch (\Exception $e) {
             Log::error('Error loading change shift requests: ' . $e->getMessage(), [
