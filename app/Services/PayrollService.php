@@ -30,8 +30,12 @@ class PayrollService
      */
     public function generatePayslipsForPeriod(Carbon $payPeriodStart, Carbon $payPeriodEnd, string $payScheduleFilter = null, ?array $departmentIds = null): void
     {
+        // Ensure dates are in the correct format for database comparison (date only, no time)
+        $startDateFormatted = $payPeriodStart->format('Y-m-d');
+        $endDateFormatted = $payPeriodEnd->format('Y-m-d');
+        
         $payPeriod = PayPeriod::firstOrCreate(
-            ['start_date' => $payPeriodStart, 'end_date' => $payPeriodEnd],
+            ['start_date' => $startDateFormatted, 'end_date' => $endDateFormatted],
             ['status' => 'processing', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']
         );
 

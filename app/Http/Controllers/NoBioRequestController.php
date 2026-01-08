@@ -59,21 +59,15 @@ class NoBioRequestController extends Controller
 
         if ($request->type === 'morning_in') {
             $rules['requested_time_in'] = 'required|date_format:H:i';
-            if ($shiftStartTime) {
-                $rules['requested_time_in'] .= '|after_or_equal:' . $shiftStartTime;
-            }
             $rules['requested_time_out'] = 'nullable';
         } elseif ($request->type === 'morning_out') {
-            $rules['requested_time_out'] = 'required|date_format:H:i|before_or_equal:12:00';
+            $rules['requested_time_out'] = 'required|date_format:H:i';
             $rules['requested_time_in'] = 'nullable';
         } elseif ($request->type === 'afternoon_in') {
-            $rules['requested_time_in'] = 'required|date_format:H:i|after_or_equal:13:00'; // Enforce after 1 PM for afternoon_in
+            $rules['requested_time_in'] = 'required|date_format:H:i'; // Enforce after 1 PM for afternoon_in
             $rules['requested_time_out'] = 'nullable';
         } elseif ($request->type === 'afternoon_out') {
             $rules['requested_time_out'] = 'required|date_format:H:i';
-            if ($shiftEndTime) {
-                $rules['requested_time_out'] .= '|before_or_equal:' . $shiftEndTime;
-            }
             $rules['requested_time_in'] = 'nullable';
         } elseif (in_array($request->type, ['all_morning', 'all_afternoon', 'whole_day'])) {
             // For these types, times are derived from shift, so they are not strictly required from the user
@@ -84,29 +78,46 @@ class NoBioRequestController extends Controller
 
         // New rules for 'all_morning', 'all_afternoon', and 'whole_day'
         if ($request->type === 'all_morning') {
-            $rules['requested_time_in'] = 'required|date_format:H:i';
-            if ($shiftStartTime) {
-                $rules['requested_time_in'] .= '|after_or_equal:' . $shiftStartTime;
-            }
-            $rules['requested_time_out'] = 'required|date_format:H:i|before_or_equal:12:00';
+            $rules['requested_time_in'] = 'nullable|date_format:H:i';
+            $rules['requested_time_out'] = 'nullable|date_format:H:i';
         } elseif ($request->type === 'all_afternoon') {
-            $rules['requested_time_in'] = 'required|date_format:H:i|after_or_equal:13:00';
-            $rules['requested_time_out'] = 'required|date_format:H:i';
-            if ($shiftEndTime) {
-                $rules['requested_time_out'] .= '|before_or_equal:' . $shiftEndTime;
-            }
+            $rules['requested_time_in'] = 'nullable|date_format:H:i';
+            $rules['requested_time_out'] = 'nullable|date_format:H:i';
         } elseif ($request->type === 'whole_day') {
-            $rules['requested_time_in'] = 'required|date_format:H:i';
-            if ($shiftStartTime) {
-                $rules['requested_time_in'] .= '|after_or_equal:' . $shiftStartTime;
-            }
-            $rules['requested_time_out'] = 'required|date_format:H:i';
-            if ($shiftEndTime) {
-                $rules['requested_time_out'] .= '|before_or_equal:' . $shiftEndTime;
-            }
+            $rules['requested_time_in'] = 'nullable|date_format:H:i';
+            $rules['requested_time_out'] = 'nullable|date_format:H:i';
         }
 
-        $request->validate($rules);
+        $validated = $request->validate($rules);
+        
+        // Custom validation for time ranges (after database format validation passes)
+        if ($request->type === 'morning_in' && $shiftStartTime && $request->requested_time_in) {
+            $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
+            if ($requestedTime < $shiftStartTime) {
+                return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to your shift start time (' . $shiftStartTime . ').'])->withInput();
+            }
+        }
+        
+        if ($request->type === 'afternoon_in' && $request->requested_time_in) {
+            $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
+            if ($requestedTime < '13:00') {
+                return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to 1:00 PM (13:00).'])->withInput();
+            }
+        }
+        
+        if ($request->type === 'morning_out' && $request->requested_time_out) {
+            $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
+            if ($requestedTime > '12:00') {
+                return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to 12:00 PM.'])->withInput();
+            }
+        }
+        
+        if ($request->type === 'afternoon_out' && $shiftEndTime && $request->requested_time_out) {
+            $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
+            if ($requestedTime > $shiftEndTime) {
+                return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to your shift end time (' . $shiftEndTime . ').'])->withInput();
+            }
+        }
 
         NoBioRequest::create([
             'user_id' => Auth::id(),

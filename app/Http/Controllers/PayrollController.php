@@ -199,34 +199,44 @@ class PayrollController extends Controller
                 $payScheduleFilter = 'monthly';
             }
 
+            // Ensure dates are in the correct format for database comparison
+            $startDate = Carbon::parse($start)->format('Y-m-d');
+            $endDate = Carbon::parse($end)->format('Y-m-d');
+            
             $payPeriod = PayPeriod::firstOrCreate([
-                'start_date' => $start,
-                'end_date' => $end
+                'start_date' => $startDate,
+                'end_date' => $endDate
             ], ['status' => 'draft', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly', 'generated_by_user_id' => Auth::id()]);
 
             // Do not regenerate if already generated/unpaid or paid, or closed
             if (in_array($payPeriod->status, ['unpaid', 'paid', 'closed']) && !$request->has('force_regenerate')) {
                 if ($payPeriod->status === 'closed') {
-                    return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+                    return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
                 } else {
-                    return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+                    return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
                 }
             }
 
             // If forced regeneration, set status to draft to allow re-generation
             if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid', 'closed'])) {
                 if ($payPeriod->status === 'closed') {
-                    return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+                    return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
                 }
                 $payPeriod->update(['status' => 'draft', 'regenerated_by_user_id' => Auth::id()]);
             }
 
             // Call existing generator, pass departmentId array
-            $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter, $departmentIds);
+            // Use Carbon instances for date calculations
+            $this->payrollService->generatePayslipsForPeriod(
+                Carbon::parse($startDate)->startOfDay(), 
+                Carbon::parse($endDate)->endOfDay(), 
+                $payScheduleFilter, 
+                $departmentIds
+            );
 
             $payPeriod->update(['status' => 'unpaid']); // Update status after generation
 
-            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
+            return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
         } catch (\Exception $e) {
             Log::error('Error generating payroll for range: ' . $e->getMessage(), [
                 'start_date' => $request->input('start_date'),
