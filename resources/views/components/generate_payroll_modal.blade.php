@@ -20,6 +20,7 @@
             <input type="hidden" name="start_date" id="modal_start_date">
             <input type="hidden" name="end_date" id="modal_end_date">
             <input type="hidden" name="force_regenerate" id="modal_force_regenerate" value="false">
+            <input type="hidden" name="ajax" value="1">
 
             <div class="space-y-2">
                 <label for="department_ids" class="block text-sm font-medium text-gray-700">Select Department(s)</label>
@@ -114,12 +115,14 @@
 
         updateSelectedDepartmentsText(); // Initial text update
         
-        // Handle form submission
+        // Handle form submission with AJAX for better timeout handling
         const generatePayrollForm = document.getElementById('generatePayrollForm');
         const loadingOverlay = document.getElementById('generatePayrollLoading');
         
         if (generatePayrollForm) {
             generatePayrollForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Prevent default form submission
+                
                 // Show loading overlay
                 if (loadingOverlay) {
                     loadingOverlay.classList.remove('hidden');
@@ -132,8 +135,108 @@
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Generating...';
                 }
                 
-                // Let the form submit normally - it will redirect
-                // No need to preventDefault() or use AJAX
+                // Get form data
+                const formData = new FormData(generatePayrollForm);
+                formData.append('ajax', '1');
+                
+                // Submit via AJAX
+                fetch(generatePayrollForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Try to parse error response
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Network response was not ok');
+                        }).catch(() => {
+                            throw new Error('Failed to generate payroll. Server returned error status: ' + response.status);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loading overlay
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                    }
+                    
+                    // Close modal
+                    closeGeneratePayrollModal();
+                    
+                    // Show success message
+                    if (data.success) {
+                        // Show success notification
+                        const successDiv = document.createElement('div');
+                        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                        successDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + (data.message || 'Payroll generated successfully!');
+                        document.body.appendChild(successDiv);
+                        
+                        // Remove notification after 5 seconds
+                        setTimeout(() => {
+                            successDiv.remove();
+                        }, 5000);
+                        
+                        // Reload the page after a short delay to show the new payroll data
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url || window.location.href;
+                        }, 1500);
+                    } else {
+                        // Show error message
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + (data.message || 'Failed to generate payroll');
+                        document.body.appendChild(errorDiv);
+                        
+                        setTimeout(() => {
+                            errorDiv.remove();
+                        }, 5000);
+                        
+                        // Re-enable submit button
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fas fa-calculator mr-1"></i> Generate Payroll';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Hide loading overlay
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                    }
+                    
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i> ' + (error.message || 'Error generating payroll. Please try again or check the logs.');
+                    document.body.appendChild(errorDiv);
+                    
+                    setTimeout(() => {
+                        errorDiv.remove();
+                    }, 7000);
+                    
+                    // Re-enable submit button
+                    const submitBtnElement = document.getElementById('generatePayrollSubmitBtn');
+                    if (submitBtnElement) {
+                        submitBtnElement.disabled = false;
+                        const isRegenerate = document.getElementById('modal_force_regenerate').value === 'true';
+                        if (isRegenerate) {
+                            submitBtnElement.innerHTML = '<i class="fas fa-redo mr-1"></i> Regenerate Payroll';
+                            submitBtnElement.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                            submitBtnElement.classList.add('bg-orange-600', 'hover:bg-orange-700');
+                        } else {
+                            submitBtnElement.innerHTML = '<i class="fas fa-calculator mr-1"></i> Generate Payroll';
+                            submitBtnElement.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                            submitBtnElement.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                        }
+                    }
+                });
             });
         }
     });
