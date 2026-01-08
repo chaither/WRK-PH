@@ -132,9 +132,6 @@ class LeaveController extends Controller
         }
     }
 
-        return redirect()->route('employee.leave.index')->with('success', 'Leave request submitted successfully.');
-    }
-
     public function showEmployeeLeaveHistory(Request $request, User $employee)
     {
         // Ensure only admin/hr can view other employee's leave history
