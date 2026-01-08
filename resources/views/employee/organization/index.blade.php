@@ -30,7 +30,7 @@
             <div class="bg-[#f0f1f6] px-4 py-8">
                 <div class="w-full max-w-6xl mx-auto">
                     @if ($ceoNode)
-                        @include('employee.organization.partials.node', ['node' => $ceoNode])
+                        @include('employee.organization.partials.node', ['node' => $ceoNode, 'departments' => $departments])
                     @else
                         <p class="text-center text-gray-500">No organizational chart nodes found.</p>
                     @endif
