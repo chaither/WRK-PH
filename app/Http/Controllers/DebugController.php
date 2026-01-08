@@ -57,10 +57,10 @@ class DebugController extends Controller
             return redirect()->back()->with('error', "Failed to execute '$command': " . $e->getMessage());
         }
     }
-    public function updateBiometricConfig(Request $request)
+    public function updateBiometricConfig(Request $request, \App\Services\ZktecoService $zktecoService)
     {
         $request->validate([
-            'ip' => 'required|ip',
+            'ip' => 'required|string',
             'port' => 'required|integer',
         ]);
 
@@ -70,6 +70,22 @@ class DebugController extends Controller
         \Illuminate\Support\Facades\Cache::put('zkteco_override_ip', $ip); // Store indefinitely
         \Illuminate\Support\Facades\Cache::put('zkteco_override_port', $port); // Store indefinitely
 
-        return redirect()->back()->with('success', "Biometric configuration updated. Using IP: $ip, Port: $port");
+        // Test the connection immediately
+        try {
+            if ($zktecoService->connect()) {
+                $info = $zktecoService->getDeviceInfo();
+                $deviceName = $info['device_name'] ?? 'Unknown Device';
+                $zktecoService->disconnect();
+                
+                $message = "✅ CONFIGURATION UPDATED & CONNECTED!\n";
+                $message .= "Successfully connected to {$deviceName} at {$ip}:{$port}";
+                
+                return redirect()->back()->with('success', $message);
+            } else {
+                return redirect()->back()->with('error', "⚠️ Configuration Updated, BUT Connection FAILED.\nCould not reach {$ip}:{$port}. Please check your VPN/Network.");
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "⚠️ Configuration Updated, BUT Error Occurred: " . $e->getMessage());
+        }
     }
 }
