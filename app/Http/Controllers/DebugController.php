@@ -88,4 +88,29 @@ class DebugController extends Controller
             return redirect()->back()->with('error', "⚠️ Configuration Updated, BUT Error Occurred: " . $e->getMessage());
         }
     }
+
+    public function syncBiometricUsers(\App\Services\ZktecoService $zktecoService)
+    {
+        try {
+            // Ensure we use the cached config if available
+            $ip = \Illuminate\Support\Facades\Cache::get('zkteco_override_ip', config('zkteco.device_ip'));
+            $port = \Illuminate\Support\Facades\Cache::get('zkteco_override_port', config('zkteco.device_port'));
+            
+            if (!$zktecoService->connect()) {
+                return redirect()->back()->with('error', "Cannot connect to device at $ip:$port to perform sync.");
+            }
+
+            $count = $zktecoService->syncUsersToDevice();
+            $zktecoService->disconnect();
+
+            if ($count === false) {
+                return redirect()->back()->with('error', "Sync failed. Check logs for details.");
+            }
+
+            return redirect()->back()->with('success', "✅ SUCCESS! Synced $count employees to biometric device.");
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "Sync Error: " . $e->getMessage());
+        }
+    }
 }

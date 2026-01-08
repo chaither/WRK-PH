@@ -234,4 +234,5 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->pref
     Route::get('/', [App\Http\Controllers\DebugController::class, 'index'])->name('index');
     Route::post('/run', [App\Http\Controllers\DebugController::class, 'runCommand'])->name('run');
     Route::post('/biometric-config', [App\Http\Controllers\DebugController::class, 'updateBiometricConfig'])->name('biometric.update');
+    Route::post('/biometric-config/sync-users', [App\Http\Controllers\DebugController::class, 'syncBiometricUsers'])->name('biometric.sync-users');
 });
