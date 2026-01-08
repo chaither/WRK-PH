@@ -139,39 +139,6 @@ Route::prefix('admin/payroll')->name('admin.payroll.')->middleware(['auth', \App
     Route::get('/history/{payPeriod}/details', [PayrollController::class, 'showPayrollDetails'])->name('history.details');
 });
 
-// Temporary log viewer for debugging (Admin only - Remove in production)
-Route::get('/admin/logs', function() {
-    if (!Auth::check() || !Auth::user()->isHRManager()) {
-        abort(403, 'Unauthorized');
-    }
-    
-    $logFile = storage_path('logs/laravel.log');
-    
-    if (!file_exists($logFile)) {
-        return response()->json([
-            'error' => 'Log file not found at: ' . $logFile
-        ], 404);
-    }
-    
-    // Get last 200 lines (adjust as needed)
-    $lines = file($logFile);
-    $recentLines = array_slice($lines, -200);
-    
-    // Filter for errors related to payroll
-    $errorLines = array_filter($recentLines, function($line) {
-        return stripos($line, 'error') !== false || 
-               stripos($line, 'payroll') !== false || 
-               stripos($line, 'exception') !== false ||
-               stripos($line, 'generateForRange') !== false;
-    });
-    
-    return view('admin.logs', [
-        'allLogs' => $recentLines,
-        'errorLogs' => $errorLines,
-        'logFile' => $logFile
-    ]);
-})->name('admin.logs')->middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class]);
-
 // Leave Management Routes
 Route::get('/leave-management', [LeaveController::class, 'index'])->name('leave.index');
 Route::post('/leave-management/update-balance/{user}', [LeaveController::class, 'updateLeaveBalance'])->name('leave.updateBalance');
