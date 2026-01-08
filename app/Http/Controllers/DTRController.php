@@ -440,9 +440,9 @@ class DTRController extends Controller
 
     public function showDetailedEmployeeDTRHistory(Request $request, User $employee)
     {
-        // Ensure only admin/hr can view other employee's DTR
+        // Ensure only admin/hr or the employee themselves can view the DTR
         $user = Auth::user();
-        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+        if (!$user || (!in_array($user->role, ['admin', 'hr']) && $user->id !== $employee->id)) {
             abort(403, 'Unauthorized access.');
         }
 

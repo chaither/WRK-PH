@@ -134,9 +134,9 @@ class LeaveController extends Controller
 
     public function showEmployeeLeaveHistory(Request $request, User $employee)
     {
-        // Ensure only admin/hr can view other employee's leave history
+        // Ensure only admin/hr or the employee themselves can view leave history
         $user = Auth::user();
-        if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+        if (!$user || (!in_array($user->role, ['admin', 'hr']) && $user->id !== $employee->id)) {
             abort(403, 'Unauthorized access.');
         }
 

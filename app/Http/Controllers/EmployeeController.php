@@ -50,7 +50,7 @@ class EmployeeController extends Controller
 
     public function showProfile(User $employee)
     {
-        if (!Auth::user()->isHRManager() && !Auth::user()->isAdmin()) {
+        if (!Auth::user()->isHRManager() && !Auth::user()->isAdmin() && Auth::id() !== $employee->id) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to view employee profiles.');
         }
 

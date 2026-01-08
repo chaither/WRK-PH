@@ -156,6 +156,10 @@
                     </a>
                 @endif
                 @if (Auth::user()->isEmployee())
+                    <a href="{{ route('employees.profile', Auth::user()->id) }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employees.profile') ? 'bg-blue-700' : '' }}">
+                        <i class="fas fa-user text-xl"></i>
+                        <span class="ml-3 sidebar-text">My Profile</span>
+                    </a>
                     <a href="{{ route('employee.leave.index') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 text-white {{ request()->routeIs('employee.leave.index') ? 'bg-blue-700' : '' }}">
                         <i class="fas fa-briefcase text-xl"></i>
                         <span class="ml-3 sidebar-text">My Leave Requests</span>

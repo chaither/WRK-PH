@@ -73,9 +73,9 @@ class ChangeRestdayController extends Controller
     public function showEmployeeRestdayHistory(Request $request, \App\Models\User $employee)
     {
         try {
-            // Ensure only admin/hr can view other employee's rest day change history
+            // Ensure only admin/hr or the employee themselves can view rest day change history
             $user = Auth::user();
-            if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            if (!$user || (!in_array($user->role, ['admin', 'hr']) && $user->id !== $employee->id)) {
                 abort(403, 'Unauthorized access.');
             }
 

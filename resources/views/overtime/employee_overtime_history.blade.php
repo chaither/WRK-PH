@@ -38,8 +38,13 @@
         @if ($records->isEmpty())
             <p class="text-gray-500">No overtime requests found for this employee within the selected date range.</p>
         @else
+
+    <div class="mb-4">
+        <input type="text" id="overtimeSearch" placeholder="Search by Date (e.g. Jan 01, 2026)" class="px-4 py-2 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 w-full md:w-1/3">
+    </div>
+
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200" id="overtimeTable">
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
@@ -66,3 +71,32 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('overtimeSearch');
+        const table = document.getElementById('overtimeTable');
+        if (!table || !searchInput) return;
+
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+
+            rows.forEach(row => {
+                const dateCell = row.cells[0]; // Date is 1st column
+                if (dateCell) {
+                    const dateText = dateCell.textContent.toLowerCase();
+                    if (dateText.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+</script>
+@endpush
