@@ -233,4 +233,5 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->prefix('debug')->name('debug.')->group(function () {
     Route::get('/', [App\Http\Controllers\DebugController::class, 'index'])->name('index');
     Route::post('/run', [App\Http\Controllers\DebugController::class, 'runCommand'])->name('run');
+    Route::post('/biometric-config', [App\Http\Controllers\DebugController::class, 'updateBiometricConfig'])->name('biometric.update');
 });
