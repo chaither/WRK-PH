@@ -295,6 +295,16 @@ class PayrollController extends Controller
                     'payslips_count' => $payPeriod->payslips()->count()
                 ]);
                 
+                // Handle AJAX requests differently
+                if ($request->ajax() || $request->has('ajax')) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Payroll generated for selected period.',
+                        'redirect_url' => route('payroll.index', $redirectParams),
+                        'payslips_count' => $payPeriod->payslips()->count()
+                    ]);
+                }
+                
                 return redirect()->route('payroll.index', $redirectParams)->with('success', 'Payroll generated for selected period.');
             } catch (\Exception $serviceException) {
                 Log::error('Error in payroll service during generation: ' . $serviceException->getMessage(), [
@@ -309,6 +319,14 @@ class PayrollController extends Controller
                     $payPeriod->update(['status' => 'draft']);
                 }
                 
+                // Handle AJAX requests
+                if ($request->ajax() || $request->has('ajax')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to generate payroll: ' . $serviceException->getMessage()
+                    ], 500);
+                }
+                
                 throw $serviceException; // Re-throw to be caught by outer catch
             }
         } catch (\Exception $e) {
@@ -317,6 +335,15 @@ class PayrollController extends Controller
                 'end_date' => $request->input('end_date'),
                 'trace' => $e->getTraceAsString()
             ]);
+            
+            // Handle AJAX requests
+            if ($request->ajax() || $request->has('ajax')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to generate payroll: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return redirect()->route('payroll.index')->with('error', 'Failed to generate payroll: ' . $e->getMessage());
         }
     }
