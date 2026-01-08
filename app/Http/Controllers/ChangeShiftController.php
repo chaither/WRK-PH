@@ -16,14 +16,8 @@ class ChangeShiftController extends Controller
             $user = Auth::user();
             $currentShift = 'N/A';
             
-            if ($user->shift && $user->shift->start_time && $user->shift->end_time) {
-                try {
-                    $startTime = \Carbon\Carbon::parse($user->shift->start_time)->format('h:i A');
-                    $endTime = \Carbon\Carbon::parse($user->shift->end_time)->format('h:i A');
-                    $currentShift = $user->shift->name . ' (' . $startTime . ' - ' . $endTime . ')';
-                } catch (\Exception $e) {
-                    Log::warning('Invalid shift time format', ['user_id' => $user->id, 'shift_id' => $user->shift_id]);
-                }
+            if ($user->shift) {
+                $currentShift = $user->shift->name;
             }
             
             $shifts = Shift::all();

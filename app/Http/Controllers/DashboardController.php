@@ -411,6 +411,24 @@ class DashboardController extends Controller
             return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
         }
         $notifications = Notification::where('user_id', $user->id)->orderByDesc('created_at')->get();
+
+        // Populate links for the view
+        foreach ($notifications as $notification) {
+            $link = '#';
+            if (in_array($notification->type, ['leave_request_submitted', 'leave_request_approved', 'leave_request_rejected'])) {
+                $link = route('employee.leave.index');
+            } elseif (in_array($notification->type, ['overtime_request_submitted', 'overtime_request_approved', 'overtime_request_rejected'])) {
+                $link = route('attendance.overtime-request.index');
+            } elseif (in_array($notification->type, ['change_shift_request_submitted', 'change_shift_request_approved', 'change_shift_request_rejected'])) {
+                $link = route('attendance.change-shift.index');
+            } elseif (in_array($notification->type, ['change_restday_request_submitted', 'change_restday_request_approved', 'change_restday_request_rejected'])) {
+                $link = route('attendance.change-restday.index');
+            } elseif (in_array($notification->type, ['no_bio_request_submitted', 'no_bio_request_approved', 'no_bio_request_rejected'])) {
+                $link = route('attendance.no-bio-request.index');
+            }
+            $notification->link = $link;
+        }
+
         return view('employee.notifications.history', compact('notifications'));
     }
 }

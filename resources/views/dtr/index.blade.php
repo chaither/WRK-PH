@@ -99,10 +99,16 @@
 
     <!-- Monthly Records Table -->
     <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-xl font-bold mb-4">Monthly Records - {{ now()->format('F Y') }}</h3>
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Monthly Records - {{ now()->format('F Y') }}</h3>
+        </div>
         
+        <div class="mb-4">
+            <input type="text" id="dtrSearch" placeholder="Search by Date (e.g. Jan 01, 2026)" class="px-4 py-2 bg-gray-100 border-transparent focus:border-indigo-500 focus:bg-white focus:ring-0 rounded-md w-full md:w-1/3 transition-colors duration-200">
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="min-w-full table-auto">
+            <table id="dtrTable" class="min-w-full table-auto">
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="px-4 py-2">Date</th>
@@ -371,6 +377,33 @@ document.addEventListener('DOMContentLoaded', function () {
             openModal('clockOutForm', 'clockout_face_descriptor', clockOutBtn);
         });
     }
+});
+
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('dtrSearch');
+    const table = document.getElementById('dtrTable');
+    if (!table || !searchInput) return;
+
+    const tbody = table.querySelector('tbody');
+    const rows = tbody.querySelectorAll('tr');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        rows.forEach(row => {
+            // Get the date cell text (first column usually, index 0)
+            const dateCell = row.cells[0];
+            if (dateCell) {
+                const dateText = dateCell.textContent.toLowerCase();
+                if (dateText.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
 });
 </script>
 @endpush
