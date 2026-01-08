@@ -112,7 +112,9 @@ class PayrollService
             $startDateStr = $payPeriodStart->format('Y-m-d');
             $endDateStr = $payPeriodEnd->format('Y-m-d');
             
-            $holidays = Holiday::whereBetween('date', [$startDateStr, $endDateStr])->get()->keyBy('date');
+            $holidays = Holiday::whereBetween('date', [$startDateStr, $endDateStr])->get()->keyBy(function($holiday) {
+                return $holiday->date->format('Y-m-d');
+            });
             $governmentContributions = GovernmentContribution::all()->groupBy('type');
             $hmoDeductions = HmoDeduction::all();
 
@@ -287,7 +289,7 @@ class PayrollService
             $isHoliday = $holidays->has($currentDate->toDateString());
             // Find DTR for the current day using a more robust comparison
             $dtrForDay = $dtrRecords->first(function ($dtr) use ($currentDate) {
-                return $dtr->date->toDateString() === $currentDate->toDateString();
+                return $dtr->date && $dtr->date->toDateString() === $currentDate->toDateString();
             });
 
             Log::info('Processing date: ' . $currentDate->toDateString() . ', isWorkingDay: ' . ($isWorkingDay ? 'true' : 'false') . ', dtrForDay exists: ' . ($dtrForDay ? 'true' : 'false') . ', time_in: ' . ($dtrForDay && $dtrForDay->time_in ? $dtrForDay->time_in->toDateTimeString() : 'NULL') . ', time_in_2: ' . ($dtrForDay && $dtrForDay->time_in_2 ? $dtrForDay->time_in_2->toDateTimeString() : 'NULL') . ', DTR Record Overtime Hours: ' . ($dtrForDay ? $dtrForDay->overtime_hours : 'NULL'));

@@ -421,11 +421,7 @@ class PayrollController extends Controller
                 if ($request->ajax() || $request->has('ajax')) {
                     $errorMessage = 'Failed to generate payroll.';
                     // Only include detailed error message in development
-                    if (config('app.debug')) {
-                        $errorMessage .= ' ' . $serviceException->getMessage();
-                    } else {
-                        $errorMessage .= ' Please check the logs for details.';
-                    }
+                    $errorMessage .= ' ' . $serviceException->getMessage();
                     
                     return response()->json([
                         'success' => false,
@@ -468,11 +464,7 @@ class PayrollController extends Controller
             if ($request->ajax() || $request->has('ajax')) {
                 $errorMessage = 'Failed to generate payroll.';
                 // Only include detailed error message in development
-                if (config('app.debug')) {
-                    $errorMessage .= ' ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
-                } else {
-                    $errorMessage .= ' Please check the logs for details.';
-                }
+                $errorMessage .= ' ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
                 
                 return response()->json([
                     'success' => false,
