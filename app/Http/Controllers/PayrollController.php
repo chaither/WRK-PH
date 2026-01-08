@@ -189,6 +189,12 @@ class PayrollController extends Controller
     public function generateForRange(Request $request)
     {
         if (!Auth::user()->isHRManager()) {
+            if ($request->ajax() || $request->has('ajax')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to process payroll.'
+                ], 403);
+            }
             return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
         }
 
@@ -229,17 +235,57 @@ class PayrollController extends Controller
 
             // Do not regenerate if already generated/unpaid or paid, or closed
             if (in_array($payPeriod->status, ['unpaid', 'paid', 'closed']) && !$request->has('force_regenerate')) {
+                $redirectParams = [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ];
+                if (!empty($departmentIds) && is_array($departmentIds)) {
+                    $redirectParams['department_ids'] = $departmentIds;
+                }
+                
                 if ($payPeriod->status === 'closed') {
-                    return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+                    $message = 'Payroll for the selected period is closed and cannot be regenerated.';
+                    if ($request->ajax() || $request->has('ajax')) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $message,
+                            'redirect_url' => route('payroll.index', $redirectParams)
+                        ], 400);
+                    }
+                    return redirect()->route('payroll.index', $redirectParams)->with('error', $message);
                 } else {
-                    return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+                    $message = 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.';
+                    if ($request->ajax() || $request->has('ajax')) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $message,
+                            'redirect_url' => route('payroll.index', $redirectParams)
+                        ], 400);
+                    }
+                    return redirect()->route('payroll.index', $redirectParams)->with('info', $message);
                 }
             }
 
             // If forced regeneration, set status to draft to allow re-generation
             if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid', 'closed'])) {
+                $redirectParams = [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ];
+                if (!empty($departmentIds) && is_array($departmentIds)) {
+                    $redirectParams['department_ids'] = $departmentIds;
+                }
+                
                 if ($payPeriod->status === 'closed') {
-                    return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+                    $message = 'Payroll for the selected period is closed and cannot be regenerated.';
+                    if ($request->ajax() || $request->has('ajax')) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $message,
+                            'redirect_url' => route('payroll.index', $redirectParams)
+                        ], 400);
+                    }
+                    return redirect()->route('payroll.index', $redirectParams)->with('error', $message);
                 }
                 $payPeriod->update(['status' => 'draft', 'regenerated_by_user_id' => Auth::id()]);
             }
@@ -329,6 +375,16 @@ class PayrollController extends Controller
                 
                 throw $serviceException; // Re-throw to be caught by outer catch
             }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors for AJAX requests
+            if ($request->ajax() || $request->has('ajax')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . implode(', ', $e->errors()['start_date'] ?? []) . ' ' . implode(', ', $e->errors()['end_date'] ?? []),
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error generating payroll for range: ' . $e->getMessage(), [
                 'start_date' => $request->input('start_date'),
