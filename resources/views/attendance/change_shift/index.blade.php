@@ -22,7 +22,7 @@
                 <select name="requested_shift" id="requested_shift" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     <option value="">Select a shift</option>
                     @foreach($shifts as $shift)
-                        <option value="{{ $shift->id }}">{{ $shift->name }} ({{ \Carbon\Carbon::parse($shift->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('h:i A') }})</option>
+                        <option value="{{ $shift->id }}">{{ $shift->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -55,8 +55,8 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach ($changeShiftRequests as $request)
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->currentShift->name }} ({{ \Carbon\Carbon::parse($request->currentShift->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($request->currentShift->end_time)->format('h:i A') }})</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->requestedShift->name }} ({{ \Carbon\Carbon::parse($request->requestedShift->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($request->requestedShift->end_time)->format('h:i A') }})</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->currentShift->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->requestedShift->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($request->status) }}</td>
                         </tr>
