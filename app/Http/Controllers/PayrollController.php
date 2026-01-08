@@ -80,10 +80,25 @@ class PayrollController extends Controller
         $currentPeriod = PayPeriod::where('start_date', $start)->where('end_date', $end)->first();
 
         if ($currentPeriod) {
-            Log::info('Current PayPeriod status before view: ' . $currentPeriod->status); // Add this line for debugging
-            $payslipQuery = Payslip::with(['user', 'payPeriod'])
+            Log::info('Current PayPeriod status before view: ' . $currentPeriod->status, [
+                'department_ids' => $departmentIds,
+                'start_date' => $start,
+                'end_date' => $end
+            ]);
+            
+            $payslipQuery = Payslip::with(['user', 'user.department', 'payPeriod'])
                 ->where('pay_period_id', $currentPeriod->id);
+            
+            // Filter by department_ids if provided
+            if ($departmentIds !== null && is_array($departmentIds) && !empty($departmentIds)) {
+                $payslipQuery->whereHas('user', function($query) use ($departmentIds) {
+                    $query->whereIn('department_id', $departmentIds);
+                });
+                Log::info('Filtering payslips by departments', ['department_ids' => $departmentIds]);
+            }
+            
             $payrolls = $payslipQuery->get();
+            Log::info('Payrolls loaded', ['count' => $payrolls->count(), 'department_ids' => $departmentIds]);
             
         } else {
             // If no currentPeriod is found, there are no existing payroll records for this range.
@@ -245,7 +260,25 @@ class PayrollController extends Controller
                 // Update status after successful generation
                 $payPeriod->update(['status' => 'unpaid']);
 
-                return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
+                // Ensure department_ids are passed correctly as array for filtering
+                $redirectParams = [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ];
+                
+                // Add department_ids only if they were provided and not empty
+                if (!empty($departmentIds) && is_array($departmentIds)) {
+                    $redirectParams['department_ids'] = $departmentIds;
+                }
+                
+                Log::info('Payroll generated successfully, redirecting', [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'department_ids' => $departmentIds,
+                    'payslips_count' => $payPeriod->payslips()->count()
+                ]);
+                
+                return redirect()->route('payroll.index', $redirectParams)->with('success', 'Payroll generated for selected period.');
             } catch (\Exception $serviceException) {
                 Log::error('Error in payroll service during generation: ' . $serviceException->getMessage(), [
                     'start_date' => $startDate,
