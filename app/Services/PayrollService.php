@@ -113,7 +113,7 @@ class PayrollService
             $endDateStr = $payPeriodEnd->format('Y-m-d');
             
             $holidays = Holiday::whereBetween('date', [$startDateStr, $endDateStr])->get()->keyBy(function($holiday) {
-                return $holiday->date->format('Y-m-d');
+                return $holiday->date ? $holiday->date->format('Y-m-d') : '';
             });
             $governmentContributions = GovernmentContribution::all()->groupBy('type');
             $hmoDeductions = HmoDeduction::all();
