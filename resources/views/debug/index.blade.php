@@ -96,6 +96,20 @@
                 </button>
             </div>
         </form>
+
+        <hr class="my-6 border-blue-200">
+
+        <h3 class="text-lg font-semibold mb-2 text-blue-800">Actions</h3>
+        <p class="text-sm text-gray-600 mb-4">
+             If the device is connected but users are not recognized, use this to push all employee data to the device.
+        </p>
+
+        <form action="{{ route('debug.biometric.sync-users') }}" method="POST" onsubmit="return confirm('This will overwrite users on the biometric device. Continue?');">
+            @csrf
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 inline-flex items-center">
+                <i class="fas fa-users-cog mr-2"></i> Sync All Employees to Device
+            </button>
+        </form>
     </div>
 
 
