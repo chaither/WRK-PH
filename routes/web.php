@@ -228,3 +228,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', [ChangePasswordController::class, 'showChangePasswordForm'])->name('password.change');
     Route::post('/change-password', [ChangePasswordController::class, 'changePassword'])->name('password.change.submit');
 });
+
+// Debug / Admin Utility Routes
+Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->prefix('debug')->name('debug.')->group(function () {
+    Route::get('/', [App\Http\Controllers\DebugController::class, 'index'])->name('index');
+    Route::post('/run', [App\Http\Controllers\DebugController::class, 'runCommand'])->name('run');
+});
