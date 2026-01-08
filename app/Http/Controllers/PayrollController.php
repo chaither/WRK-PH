@@ -247,9 +247,18 @@ class PayrollController extends Controller
             // Refresh payPeriod to ensure we have the latest data
             $payPeriod->refresh();
             
+            // Set execution time limit for long-running process
+            set_time_limit(300); // 5 minutes
+                
             // Call existing generator, pass departmentId array
             // Use Carbon instances for date calculations
             try {
+                Log::info('Starting payroll generation in controller', [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'pay_period_id' => $payPeriod->id
+                ]);
+                
                 $this->payrollService->generatePayslipsForPeriod(
                     Carbon::parse($startDate)->startOfDay(), 
                     Carbon::parse($endDate)->endOfDay(), 
@@ -257,8 +266,16 @@ class PayrollController extends Controller
                     $departmentIds
                 );
 
+                // Refresh pay period to get latest data
+                $payPeriod->refresh();
+                
                 // Update status after successful generation
                 $payPeriod->update(['status' => 'unpaid']);
+                
+                Log::info('Payroll generation completed in controller', [
+                    'pay_period_id' => $payPeriod->id,
+                    'payslips_count' => $payPeriod->payslips()->count()
+                ]);
 
                 // Ensure department_ids are passed correctly as array for filtering
                 $redirectParams = [

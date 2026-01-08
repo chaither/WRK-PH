@@ -42,6 +42,9 @@ class PayrollService
             'department_ids' => $departmentIds
         ]);
 
+        // Set execution time limit for long-running process
+        set_time_limit(300); // 5 minutes
+        
         // Use database transaction for atomicity
         DB::beginTransaction();
         try {
@@ -53,6 +56,16 @@ class PayrollService
             // Update pay_period_type if provided and different
             if ($payScheduleFilter && $payPeriod->pay_period_type !== $payScheduleFilter) {
                 $payPeriod->update(['pay_period_type' => $payScheduleFilter]);
+            }
+
+            // Delete existing payslips for this period to prevent duplicates
+            $existingPayslipsCount = Payslip::where('pay_period_id', $payPeriod->id)->count();
+            if ($existingPayslipsCount > 0) {
+                Log::info('Deleting existing payslips before regeneration', [
+                    'pay_period_id' => $payPeriod->id,
+                    'count' => $existingPayslipsCount
+                ]);
+                Payslip::where('pay_period_id', $payPeriod->id)->delete();
             }
 
             $employeesQuery = User::where('role', 'employee');
@@ -75,6 +88,7 @@ class PayrollService
                     'pay_schedule_filter' => $payScheduleFilter,
                     'department_ids' => $departmentIds
                 ]);
+                $payPeriod->update(['status' => 'draft']);
                 DB::commit();
                 return;
             }
@@ -88,8 +102,15 @@ class PayrollService
             $hmoDeductions = HmoDeduction::all();
 
             $processedCount = 0;
-            foreach ($employees as $employee) {
+            $errorCount = 0;
+            
+            foreach ($employees as $index => $employee) {
                 try {
+                    Log::info('Processing employee ' . ($index + 1) . ' of ' . $employees->count(), [
+                        'employee_id' => $employee->id,
+                        'employee_name' => $employee->name
+                    ]);
+                    
                     $payPeriodDates = $this->getPayPeriodDates($employee->pay_schedule, $payPeriodStart, $payPeriodEnd, $payScheduleFilter);
 
                     if (empty($payPeriodDates)) {
@@ -105,8 +126,10 @@ class PayrollService
                     }
                     $processedCount++;
                 } catch (\Exception $e) {
+                    $errorCount++;
                     Log::error('Error generating payslip for employee', [
                         'employee_id' => $employee->id,
+                        'employee_name' => $employee->name ?? 'Unknown',
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
                     ]);
@@ -114,15 +137,42 @@ class PayrollService
                 }
             }
 
-            DB::commit();
-            
-            Log::info('Payroll generation completed', [
-                'pay_period_id' => $payPeriod->id,
-                'employees_processed' => $processedCount,
-                'total_employees' => $employees->count()
-            ]);
+            // Only commit if at least some employees were processed successfully
+            if ($processedCount > 0 || $errorCount === 0) {
+                DB::commit();
+                
+                Log::info('Payroll generation completed', [
+                    'pay_period_id' => $payPeriod->id,
+                    'employees_processed' => $processedCount,
+                    'employees_with_errors' => $errorCount,
+                    'total_employees' => $employees->count()
+                ]);
+            } else {
+                DB::rollBack();
+                Log::error('Payroll generation failed - no employees processed successfully', [
+                    'pay_period_id' => $payPeriod->id,
+                    'error_count' => $errorCount,
+                    'total_employees' => $employees->count()
+                ]);
+                throw new \Exception('Failed to generate payroll for any employees. Check logs for details.');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            // Update pay period status to draft on error
+            try {
+                $payPeriod = PayPeriod::where('start_date', $startDateFormatted)
+                    ->where('end_date', $endDateFormatted)
+                    ->first();
+                if ($payPeriod) {
+                    $payPeriod->update(['status' => 'draft']);
+                }
+            } catch (\Exception $statusUpdateError) {
+                Log::error('Failed to update pay period status on error', [
+                    'error' => $statusUpdateError->getMessage()
+                ]);
+            }
+            
             Log::error('Error in payroll generation: ' . $e->getMessage(), [
                 'start_date' => $startDateFormatted,
                 'end_date' => $endDateFormatted,
