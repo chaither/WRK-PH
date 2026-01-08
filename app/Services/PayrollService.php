@@ -43,7 +43,18 @@ class PayrollService
         ]);
 
         // Set execution time limit for long-running process
-        set_time_limit(300); // 5 minutes
+        try {
+            set_time_limit(300); // 5 minutes
+        } catch (\Exception $e) {
+            Log::warning('Could not set time limit: ' . $e->getMessage());
+        }
+        
+        // Increase memory limit if possible
+        try {
+            ini_set('memory_limit', '512M');
+        } catch (\Exception $e) {
+            Log::warning('Could not set memory limit: ' . $e->getMessage());
+        }
         
         // Use database transaction for atomicity
         DB::beginTransaction();
@@ -52,6 +63,10 @@ class PayrollService
                 ['start_date' => $startDateFormatted, 'end_date' => $endDateFormatted],
                 ['status' => 'processing', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']
             );
+            
+            if (!$payPeriod || !$payPeriod->id) {
+                throw new \Exception('Failed to create or retrieve pay period');
+            }
 
             // Update pay_period_type if provided and different
             if ($payScheduleFilter && $payPeriod->pay_period_type !== $payScheduleFilter) {

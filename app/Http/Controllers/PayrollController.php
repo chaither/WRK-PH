@@ -188,14 +188,38 @@ class PayrollController extends Controller
     // Generate for arbitrary date range submitted from the UI
     public function generateForRange(Request $request)
     {
-        if (!Auth::user()->isHRManager()) {
+        try {
+            // Check authentication first
+            if (!Auth::check()) {
+                if ($request->ajax() || $request->has('ajax')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not authenticated. Please login.'
+                    ], 401);
+                }
+                return redirect()->route('login')->with('error', 'Please login to continue.');
+            }
+
+            if (!Auth::user() || !Auth::user()->isHRManager()) {
+                if ($request->ajax() || $request->has('ajax')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not authorized to process payroll.'
+                    ], 403);
+                }
+                return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
+            }
+        } catch (\Exception $authException) {
+            Log::error('Auth error in generateForRange: ' . $authException->getMessage(), [
+                'trace' => $authException->getTraceAsString()
+            ]);
             if ($request->ajax() || $request->has('ajax')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You are not authorized to process payroll.'
-                ], 403);
+                    'message' => 'Authentication error: ' . $authException->getMessage()
+                ], 500);
             }
-            return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
+            return redirect()->route('login')->with('error', 'Authentication error. Please login again.');
         }
 
         try {
@@ -334,53 +358,99 @@ class PayrollController extends Controller
                     $redirectParams['department_ids'] = $departmentIds;
                 }
                 
+                // Get payslips count safely
+                $payslipsCount = 0;
+                try {
+                    $payslipsCount = $payPeriod->payslips()->count();
+                } catch (\Exception $countException) {
+                    Log::warning('Error getting payslips count: ' . $countException->getMessage());
+                }
+                
                 Log::info('Payroll generated successfully, redirecting', [
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                     'department_ids' => $departmentIds,
-                    'payslips_count' => $payPeriod->payslips()->count()
+                    'payslips_count' => $payslipsCount
                 ]);
                 
                 // Handle AJAX requests differently
                 if ($request->ajax() || $request->has('ajax')) {
+                    try {
+                        $redirectUrl = route('payroll.index', $redirectParams);
+                    } catch (\Exception $routeException) {
+                        Log::error('Error generating route: ' . $routeException->getMessage());
+                        // Fallback to manual URL construction
+                        $redirectUrl = url('/payroll?' . http_build_query($redirectParams));
+                    }
+                    
                     return response()->json([
                         'success' => true,
                         'message' => 'Payroll generated for selected period.',
-                        'redirect_url' => route('payroll.index', $redirectParams),
-                        'payslips_count' => $payPeriod->payslips()->count()
+                        'redirect_url' => $redirectUrl,
+                        'payslips_count' => $payslipsCount
                     ]);
                 }
                 
-                return redirect()->route('payroll.index', $redirectParams)->with('success', 'Payroll generated for selected period.');
+                try {
+                    return redirect()->route('payroll.index', $redirectParams)->with('success', 'Payroll generated for selected period.');
+                } catch (\Exception $redirectException) {
+                    Log::error('Error in redirect: ' . $redirectException->getMessage());
+                    // Fallback redirect
+                    return redirect(url('/payroll?' . http_build_query($redirectParams)))->with('success', 'Payroll generated for selected period.');
+                }
             } catch (\Exception $serviceException) {
                 Log::error('Error in payroll service during generation: ' . $serviceException->getMessage(), [
                     'start_date' => $startDate,
                     'end_date' => $endDate,
-                    'pay_period_id' => $payPeriod->id,
+                    'pay_period_id' => isset($payPeriod) ? $payPeriod->id : null,
+                    'file' => $serviceException->getFile(),
+                    'line' => $serviceException->getLine(),
                     'trace' => $serviceException->getTraceAsString()
                 ]);
                 
                 // Rollback pay period status if generation failed
-                if ($payPeriod->status === 'processing') {
-                    $payPeriod->update(['status' => 'draft']);
+                try {
+                    if (isset($payPeriod) && $payPeriod->status === 'processing') {
+                        $payPeriod->update(['status' => 'draft']);
+                    }
+                } catch (\Exception $updateException) {
+                    Log::error('Error updating pay period status on failure: ' . $updateException->getMessage());
                 }
                 
                 // Handle AJAX requests
                 if ($request->ajax() || $request->has('ajax')) {
+                    $errorMessage = 'Failed to generate payroll.';
+                    // Only include detailed error message in development
+                    if (config('app.debug')) {
+                        $errorMessage .= ' ' . $serviceException->getMessage();
+                    } else {
+                        $errorMessage .= ' Please check the logs for details.';
+                    }
+                    
                     return response()->json([
                         'success' => false,
-                        'message' => 'Failed to generate payroll: ' . $serviceException->getMessage()
+                        'message' => $errorMessage,
+                        'error_type' => get_class($serviceException)
                     ], 500);
                 }
                 
                 throw $serviceException; // Re-throw to be caught by outer catch
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Validation error in generateForRange', [
+                'errors' => $e->errors(),
+                'input' => $request->all()
+            ]);
+            
             // Handle validation errors for AJAX requests
             if ($request->ajax() || $request->has('ajax')) {
+                $errorMessages = [];
+                foreach ($e->errors() as $field => $messages) {
+                    $errorMessages = array_merge($errorMessages, $messages);
+                }
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed: ' . implode(', ', $e->errors()['start_date'] ?? []) . ' ' . implode(', ', $e->errors()['end_date'] ?? []),
+                    'message' => 'Validation failed: ' . implode(', ', $errorMessages),
                     'errors' => $e->errors()
                 ], 422);
             }
@@ -389,18 +459,39 @@ class PayrollController extends Controller
             Log::error('Error generating payroll for range: ' . $e->getMessage(), [
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
             
             // Handle AJAX requests
             if ($request->ajax() || $request->has('ajax')) {
+                $errorMessage = 'Failed to generate payroll.';
+                // Only include detailed error message in development
+                if (config('app.debug')) {
+                    $errorMessage .= ' ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
+                } else {
+                    $errorMessage .= ' Please check the logs for details.';
+                }
+                
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to generate payroll: ' . $e->getMessage()
+                    'message' => $errorMessage,
+                    'error_type' => get_class($e)
                 ], 500);
             }
             
-            return redirect()->route('payroll.index')->with('error', 'Failed to generate payroll: ' . $e->getMessage());
+            $redirectMessage = 'Failed to generate payroll.';
+            if (config('app.debug')) {
+                $redirectMessage .= ' ' . $e->getMessage();
+            }
+            
+            try {
+                return redirect()->route('payroll.index')->with('error', $redirectMessage);
+            } catch (\Exception $redirectException) {
+                Log::error('Error in error redirect: ' . $redirectException->getMessage());
+                return redirect(url('/payroll'))->with('error', $redirectMessage);
+            }
         }
     }
 
