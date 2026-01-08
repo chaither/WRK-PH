@@ -31,10 +31,11 @@ class EmployeeOrganizationChartController extends Controller
         }
 
         // Load nodes; if this fails it will surface a clear error in logs
-        $nodes = OrganizationChartNode::all();
+        $nodes = OrganizationChartNode::with('children')->get();
+        $departments = \App\Models\Department::with('employees')->orderBy('name')->get();
         $ceoNode = $nodes->whereNull('parent_id')->first();
 
-        return view('employee.organization.index', compact('ceoNode'));
+        return view('employee.organization.index', compact('ceoNode', 'departments'));
     }
 
     /**
