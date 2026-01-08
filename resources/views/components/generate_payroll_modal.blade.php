@@ -1,5 +1,12 @@
 <div id="generatePayrollModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4 transition-opacity duration-300">
-    <div id="generatePayrollModalContent" class="bg-white bg-opacity-50 rounded-xl shadow-2xl p-6 max-w-md w-full opacity-0 scale-95 transform transition-all duration-300 ease-out">
+    <div id="generatePayrollModalContent" class="bg-white bg-opacity-50 rounded-xl shadow-2xl p-6 max-w-md w-full opacity-0 scale-95 transform transition-all duration-300 ease-out relative">
+        {{-- Loading overlay --}}
+        <div id="generatePayrollLoading" class="hidden absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 rounded-xl">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                <p class="text-gray-700 font-medium">Generating payroll, please wait...</p>
+            </div>
+        </div>
         <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-3">
             <h2 class="text-xl font-bold text-gray-800 flex items-center">
                 <i class="fas fa-calculator mr-2 text-indigo-600"></i> Generate Payroll
@@ -106,6 +113,29 @@
         });
 
         updateSelectedDepartmentsText(); // Initial text update
+        
+        // Handle form submission
+        const generatePayrollForm = document.getElementById('generatePayrollForm');
+        const loadingOverlay = document.getElementById('generatePayrollLoading');
+        
+        if (generatePayrollForm) {
+            generatePayrollForm.addEventListener('submit', function(e) {
+                // Show loading overlay
+                if (loadingOverlay) {
+                    loadingOverlay.classList.remove('hidden');
+                }
+                
+                // Disable submit button to prevent double submission
+                const submitBtn = document.getElementById('generatePayrollSubmitBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Generating...';
+                }
+                
+                // Let the form submit normally - it will redirect
+                // No need to preventDefault() or use AJAX
+            });
+        }
     });
 
     function openGeneratePayrollModal(startDate, endDate, isRegenerate = false) {
