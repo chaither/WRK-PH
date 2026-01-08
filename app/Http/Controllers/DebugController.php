@@ -57,4 +57,19 @@ class DebugController extends Controller
             return redirect()->back()->with('error', "Failed to execute '$command': " . $e->getMessage());
         }
     }
+    public function updateBiometricConfig(Request $request)
+    {
+        $request->validate([
+            'ip' => 'required|ip',
+            'port' => 'required|integer',
+        ]);
+
+        $ip = $request->input('ip');
+        $port = $request->input('port');
+
+        \Illuminate\Support\Facades\Cache::put('zkteco_override_ip', $ip); // Store indefinitely
+        \Illuminate\Support\Facades\Cache::put('zkteco_override_port', $port); // Store indefinitely
+
+        return redirect()->back()->with('success', "Biometric configuration updated. Using IP: $ip, Port: $port");
+    }
 }

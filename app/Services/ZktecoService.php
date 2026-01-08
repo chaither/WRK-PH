@@ -22,9 +22,14 @@ class ZktecoService
     {
         if (!$this->zkteco) {
             try {
+                // Check for dynamic overrides from Cache (set via Debug Controller)
+                // This allows connecting to the device via a VPN/Tunnel IP without changing env
+                $deviceIp = \Illuminate\Support\Facades\Cache::get('zkteco_override_ip', config('zkteco.device_ip'));
+                $devicePort = \Illuminate\Support\Facades\Cache::get('zkteco_override_port', config('zkteco.device_port'));
+
                 $this->zkteco = new ZKTeco(
-                    ip: config('zkteco.device_ip'),
-                    port: config('zkteco.device_port'),
+                    ip: $deviceIp,
+                    port: $devicePort,
                     shouldPing: config('zkteco.should_ping'),
                     timeout: config('zkteco.timeout'),
                     password: config('zkteco.device_password')
@@ -43,7 +48,7 @@ class ZktecoService
             
             // Quick connectivity check: try to ping the device first (if enabled)
             // This helps fail fast instead of waiting for full timeout
-            $deviceIp = config('zkteco.device_ip');
+            $deviceIp = \Illuminate\Support\Facades\Cache::get('zkteco_override_ip', config('zkteco.device_ip'));
             if (config('zkteco.should_ping', true) && $deviceIp) {
                 // Quick ping check (1 second timeout) before attempting full connection
                 $pingResult = $this->quickPing($deviceIp, 1);
