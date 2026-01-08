@@ -780,22 +780,40 @@ class ZktecoService
     }
 
     /**
-     * Decide whether the first log for the day should be placed in the afternoon slot
-     * (time_in_2) instead of morning slot (time_in).
+     * Decide whether the punch should be placed in the afternoon slot (time_in_2/time_out_2)
+     * instead of morning slot (time_in/time_out).
      */
     protected function shouldUseAfternoonSlot($user, Carbon $timestamp, $dtrRecord): bool
     {
-        // Only consider this when there are no previous slots filled
-        $hasAnyTimes = $dtrRecord->time_in || $dtrRecord->time_out || $dtrRecord->time_in_2 || $dtrRecord->time_out_2;
-        if ($hasAnyTimes) {
-            return false;
-        }
-
+        // 1. Check if user is on Day Shift pattern. If not (e.g. Night Shift), allow standard flow.
         if (!$this->isDayShift($user)) {
             return false;
         }
 
         $midday = Carbon::createFromTime(12, 0, 0, $timestamp->timezone);
-        return $timestamp->greaterThanOrEqualTo($midday);
+
+        // 2. If time is before 12:00 PM, it's definitely Morning Shift.
+        if ($timestamp->lessThan($midday)) {
+            return false;
+        }
+
+        // 3. Time is >= 12:00 PM.
+        
+        // If Morning In is definitively empty (and it's afternoon), 
+        // treat this as Afternoon In (Start of PM shift, absent AM).
+        if (!$dtrRecord->time_in) {
+            return true;
+        }
+        
+        // If Morning In is filled, but Morning Out is empty.
+        // We assume this punch is to close the Morning Shift (Late Lunch or Early Out).
+        // By returning false, we allow the main logic to fill time_out.
+        if (!$dtrRecord->time_out) {
+            return false;
+        }
+
+        // If Morning Shift is fully recorded (In and Out both present),
+        // Then this punch must belong to Afternoon Shift.
+        return true;
     }
 }
