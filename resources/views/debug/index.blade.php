@@ -67,52 +67,6 @@
         </div>
     </div>
 
-    <div class="bg-blue-50 rounded-lg shadow-md p-6 mb-6 border border-blue-200">
-        <h2 class="text-xl font-semibold mb-4 text-blue-800">Biometric Connection Settings (Live Cloud Config)</h2>
-        <p class="text-sm text-gray-600 mb-4">
-            Override the connection settings for the ZKTeco device. This allows the cloud server to connect to a specific IP (e.g., VPN IP, Tunneled IP) without modifying the server environment files.
-        </p>
-
-        <form action="{{ route('debug.biometric.update') }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 align-items-end">
-            @csrf
-            
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="ip">Device IP Address</label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                    id="ip" type="text" name="ip" 
-                    value="{{ \Illuminate\Support\Facades\Cache::get('zkteco_override_ip', config('zkteco.device_ip')) }}" required>
-            </div>
-
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="port">Device Port (Default: 4370)</label>
-                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                    id="port" type="number" name="port" 
-                    value="{{ \Illuminate\Support\Facades\Cache::get('zkteco_override_port', config('zkteco.device_port')) }}" required>
-            </div>
-
-            <div class="flex items-end">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150">
-                    Update & Test Connection
-                </button>
-            </div>
-        </form>
-
-        <hr class="my-6 border-blue-200">
-
-        <h3 class="text-lg font-semibold mb-2 text-blue-800">Actions</h3>
-        <p class="text-sm text-gray-600 mb-4">
-             If the device is connected but users are not recognized, use this to push all employee data to the device.
-        </p>
-
-        <form action="{{ route('debug.biometric.sync-users') }}" method="POST" onsubmit="return confirm('This will overwrite users on the biometric device. Continue?');">
-            @csrf
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-150 inline-flex items-center">
-                <i class="fas fa-users-cog mr-2"></i> Sync All Employees to Device
-            </button>
-        </form>
-    </div>
-
-
     <div class="bg-red-50 rounded-lg shadow-md p-6 border border-red-200">
         <h2 class="text-xl font-bold mb-4 text-red-700"><i class="fas fa-exclamation-triangle mr-2"></i> Danger Zone</h2>
         
