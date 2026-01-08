@@ -398,7 +398,7 @@ class PayrollController extends Controller
                     // Fallback redirect
                     return redirect(url('/payroll?' . http_build_query($redirectParams)))->with('success', 'Payroll generated for selected period.');
                 }
-            } catch (\Exception $serviceException) {
+            } catch (\Throwable $serviceException) {
                 Log::error('Error in payroll service during generation: ' . $serviceException->getMessage(), [
                     'start_date' => $startDate,
                     'end_date' => $endDate,
@@ -413,14 +413,14 @@ class PayrollController extends Controller
                     if (isset($payPeriod) && $payPeriod->status === 'processing') {
                         $payPeriod->update(['status' => 'draft']);
                     }
-                } catch (\Exception $updateException) {
+                } catch (\Throwable $updateException) {
                     Log::error('Error updating pay period status on failure: ' . $updateException->getMessage());
                 }
                 
                 // Handle AJAX requests
                 if ($request->ajax() || $request->has('ajax')) {
                     $errorMessage = 'Failed to generate payroll.';
-                    // Only include detailed error message in development
+                    // Include detailed error message
                     $errorMessage .= ' ' . $serviceException->getMessage();
                     
                     return response()->json([
@@ -451,7 +451,7 @@ class PayrollController extends Controller
                 ], 422);
             }
             return redirect()->back()->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error generating payroll for range: ' . $e->getMessage(), [
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
@@ -463,7 +463,7 @@ class PayrollController extends Controller
             // Handle AJAX requests
             if ($request->ajax() || $request->has('ajax')) {
                 $errorMessage = 'Failed to generate payroll.';
-                // Only include detailed error message in development
+                // Return actual error message for debugging
                 $errorMessage .= ' ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
                 
                 return response()->json([
