@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\NoBioRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class NoBioRequestController extends Controller
@@ -13,7 +14,12 @@ class NoBioRequestController extends Controller
     public function index()
     {
         try {
-            $noBioRequests = Auth::user()->noBioRequests()->latest()->get();
+            $user = Auth::user();
+            if (!$user) {
+                return redirect()->route('login')->with('error', 'Please login to continue.');
+            }
+            
+            $noBioRequests = $user->noBioRequests()->latest()->get();
             return view('attendance.no_bio_request.index', compact('noBioRequests'));
         } catch (\Exception $e) {
             Log::error('Error loading no bio requests: ' . $e->getMessage(), [
@@ -29,7 +35,14 @@ class NoBioRequestController extends Controller
         try {
             // Load the user's shift to get their standard end time
             $user = Auth::user();
-            $user->load('shift');
+            if (!$user) {
+                return redirect()->route('login')->with('error', 'Please login to continue.');
+            }
+            
+            if (!$user->relationLoaded('shift')) {
+                $user->load('shift');
+            }
+            
             $shiftEndTime = null;
             $shiftStartTime = null;
             
@@ -49,115 +62,163 @@ class NoBioRequestController extends Controller
                 }
             }
 
-        $rules = [
-            'date' => 'required|date',
-            'type' => 'required|in:morning_in,morning_out,afternoon_in,afternoon_out,all_morning,all_afternoon,whole_day',
-            'reason' => 'required|string|max:500',
-            'requested_time_in' => 'nullable|date_format:H:i',
-            'requested_time_out' => 'nullable|date_format:H:i',
-        ];
+            $rules = [
+                'date' => 'required|date',
+                'type' => 'required|in:morning_in,morning_out,afternoon_in,afternoon_out,all_morning,all_afternoon,whole_day',
+                'reason' => 'required|string|max:500',
+                'requested_time_in' => 'nullable|date_format:H:i',
+                'requested_time_out' => 'nullable|date_format:H:i',
+            ];
 
-        if ($request->type === 'morning_in') {
-            $rules['requested_time_in'] = 'required|date_format:H:i';
-            $rules['requested_time_out'] = 'nullable';
-        } elseif ($request->type === 'morning_out') {
-            $rules['requested_time_out'] = 'required|date_format:H:i';
-            $rules['requested_time_in'] = 'nullable';
-        } elseif ($request->type === 'afternoon_in') {
-            $rules['requested_time_in'] = 'required|date_format:H:i'; // Enforce after 1 PM for afternoon_in
-            $rules['requested_time_out'] = 'nullable';
-        } elseif ($request->type === 'afternoon_out') {
-            $rules['requested_time_out'] = 'required|date_format:H:i';
-            $rules['requested_time_in'] = 'nullable';
-        } elseif (in_array($request->type, ['all_morning', 'all_afternoon', 'whole_day'])) {
-            // For these types, times are derived from shift, so they are not strictly required from the user
-            // but should be allowed if provided (hence nullable above, no specific required rule here)
-            $rules['requested_time_in'] = 'nullable|date_format:H:i';
-            $rules['requested_time_out'] = 'nullable|date_format:H:i';
-        }
-
-        // New rules for 'all_morning', 'all_afternoon', and 'whole_day'
-        if ($request->type === 'all_morning') {
-            $rules['requested_time_in'] = 'nullable|date_format:H:i';
-            $rules['requested_time_out'] = 'nullable|date_format:H:i';
-        } elseif ($request->type === 'all_afternoon') {
-            $rules['requested_time_in'] = 'nullable|date_format:H:i';
-            $rules['requested_time_out'] = 'nullable|date_format:H:i';
-        } elseif ($request->type === 'whole_day') {
-            $rules['requested_time_in'] = 'nullable|date_format:H:i';
-            $rules['requested_time_out'] = 'nullable|date_format:H:i';
-        }
-
-        $validated = $request->validate($rules);
-        
-        // Custom validation for time ranges (after database format validation passes)
-        if ($request->type === 'morning_in' && $shiftStartTime && $request->requested_time_in) {
-            $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
-            if ($requestedTime < $shiftStartTime) {
-                return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to your shift start time (' . $shiftStartTime . ').'])->withInput();
+            if ($request->type === 'morning_in') {
+                $rules['requested_time_in'] = 'required|date_format:H:i';
+                $rules['requested_time_out'] = 'nullable';
+            } elseif ($request->type === 'morning_out') {
+                $rules['requested_time_out'] = 'required|date_format:H:i';
+                $rules['requested_time_in'] = 'nullable';
+            } elseif ($request->type === 'afternoon_in') {
+                $rules['requested_time_in'] = 'required|date_format:H:i';
+                $rules['requested_time_out'] = 'nullable';
+            } elseif ($request->type === 'afternoon_out') {
+                $rules['requested_time_out'] = 'required|date_format:H:i';
+                $rules['requested_time_in'] = 'nullable';
+            } elseif (in_array($request->type, ['all_morning', 'all_afternoon', 'whole_day'])) {
+                // For these types, times are derived from shift, so they are not strictly required from the user
+                $rules['requested_time_in'] = 'nullable|date_format:H:i';
+                $rules['requested_time_out'] = 'nullable|date_format:H:i';
             }
-        }
-        
-        if ($request->type === 'afternoon_in' && $request->requested_time_in) {
-            $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
-            if ($requestedTime < '13:00') {
-                return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to 1:00 PM (13:00).'])->withInput();
-            }
-        }
-        
-        if ($request->type === 'morning_out' && $request->requested_time_out) {
-            $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
-            if ($requestedTime > '12:00') {
-                return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to 12:00 PM.'])->withInput();
-            }
-        }
-        
-        if ($request->type === 'afternoon_out' && $shiftEndTime && $request->requested_time_out) {
-            $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
-            if ($requestedTime > $shiftEndTime) {
-                return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to your shift end time (' . $shiftEndTime . ').'])->withInput();
-            }
-        }
 
-        NoBioRequest::create([
-            'user_id' => Auth::id(),
-            'date' => $request->date,
-            'type' => $request->type,
-            'reason' => $request->reason,
-            'requested_time_in' => $request->requested_time_in,
-            'requested_time_out' => $request->requested_time_out,
-            'status' => 'pending',
-        ]);
-
-            // Create notification for admin/HR about new no bio request
-            $adminUsers = \App\Models\User::whereIn('role', ['admin', 'hr'])->get();
-            $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: $user->name ?? 'Employee';
+            // Validate request data
+            Log::info('Validating no bio request', [
+                'user_id' => Auth::id(),
+                'type' => $request->type,
+                'has_time_in' => !empty($request->requested_time_in),
+                'has_time_out' => !empty($request->requested_time_out)
+            ]);
             
-            foreach ($adminUsers as $admin) {
+            $validated = $request->validate($rules);
+            
+            // Custom validation for time ranges (after database format validation passes)
+            if ($request->type === 'morning_in' && $shiftStartTime && $request->requested_time_in) {
                 try {
-                    \App\Models\Notification::create([
-                        'user_id' => $admin->id,
-                        'message' => "{$userName} submitted a no bio request for " . \Carbon\Carbon::parse($request->date)->format('M d, Y') . ". Type: " . str_replace('_', ' ', $request->type) . ".",
-                        'type' => 'no_bio_request_submitted',
-                    ]);
+                    $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
+                    if ($requestedTime < $shiftStartTime) {
+                        return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to your shift start time (' . $shiftStartTime . ').'])->withInput();
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Failed to create notification', [
-                        'admin_id' => $admin->id,
-                        'error' => $e->getMessage()
-                    ]);
+                    Log::warning('Error parsing requested_time_in for morning_in', ['time' => $request->requested_time_in]);
+                }
+            }
+            
+            if ($request->type === 'afternoon_in' && $request->requested_time_in) {
+                try {
+                    $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
+                    if ($requestedTime < '13:00') {
+                        return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to 1:00 PM (13:00).'])->withInput();
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error parsing requested_time_in for afternoon_in', ['time' => $request->requested_time_in]);
+                }
+            }
+            
+            if ($request->type === 'morning_out' && $request->requested_time_out) {
+                try {
+                    $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
+                    if ($requestedTime > '12:00') {
+                        return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to 12:00 PM.'])->withInput();
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error parsing requested_time_out for morning_out', ['time' => $request->requested_time_out]);
+                }
+            }
+            
+            if ($request->type === 'afternoon_out' && $shiftEndTime && $request->requested_time_out) {
+                try {
+                    $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
+                    if ($requestedTime > $shiftEndTime) {
+                        return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to your shift end time (' . $shiftEndTime . ').'])->withInput();
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error parsing requested_time_out for afternoon_out', ['time' => $request->requested_time_out]);
                 }
             }
 
-            return redirect()->back()->with('success', 'No Bio Request submitted successfully!');
+            // Use database transaction to ensure data integrity
+            DB::beginTransaction();
+            try {
+                // Format date to ensure consistency
+                $dateFormatted = Carbon::parse($request->date)->format('Y-m-d');
+                
+                Log::info('Creating no bio request', [
+                    'user_id' => Auth::id(),
+                    'date' => $dateFormatted,
+                    'type' => $request->type
+                ]);
+
+                $noBioRequest = NoBioRequest::create([
+                    'user_id' => Auth::id(),
+                    'date' => $dateFormatted,
+                    'type' => $request->type,
+                    'reason' => $request->reason ?? '',
+                    'requested_time_in' => $request->requested_time_in,
+                    'requested_time_out' => $request->requested_time_out,
+                    'status' => 'pending',
+                ]);
+
+                if (!$noBioRequest || !$noBioRequest->id) {
+                    throw new \Exception('Failed to create no bio request - no ID returned');
+                }
+
+                Log::info('No bio request created successfully', ['id' => $noBioRequest->id]);
+
+                // Create notification for admin/HR about new no bio request
+                $adminUsers = \App\Models\User::whereIn('role', ['admin', 'hr'])->get();
+                $userName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: $user->name ?? 'Employee';
+                
+                $notificationCount = 0;
+                foreach ($adminUsers as $admin) {
+                    try {
+                        \App\Models\Notification::create([
+                            'user_id' => $admin->id,
+                            'message' => "{$userName} submitted a no bio request for " . Carbon::parse($dateFormatted)->format('M d, Y') . ". Type: " . str_replace('_', ' ', $request->type) . ".",
+                            'type' => 'no_bio_request_submitted',
+                        ]);
+                        $notificationCount++;
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to create notification for admin', [
+                            'admin_id' => $admin->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail the whole request if notification fails
+                    }
+                }
+
+                DB::commit();
+                
+                Log::info('No bio request submitted successfully', [
+                    'no_bio_request_id' => $noBioRequest->id,
+                    'notifications_created' => $notificationCount
+                ]);
+
+                return redirect()->back()->with('success', 'No Bio Request submitted successfully!');
+            } catch (\Exception $dbException) {
+                DB::rollBack();
+                Log::error('Database error creating no bio request: ' . $dbException->getMessage(), [
+                    'user_id' => Auth::id(),
+                    'request_data' => $request->except(['_token']),
+                    'trace' => $dbException->getTraceAsString()
+                ]);
+                throw $dbException; // Re-throw to be caught by outer catch block
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error storing no bio request: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
-                'request_data' => $request->all(),
+                'request_data' => $request->except(['_token', 'password']),
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to submit no bio request: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Failed to submit no bio request. Please check your input and try again.')->withInput();
         }
     }
 

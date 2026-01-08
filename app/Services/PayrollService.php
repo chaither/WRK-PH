@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\GovernmentContribution;
 use App\Models\HmoDeduction;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PayrollService
 {
@@ -34,35 +35,100 @@ class PayrollService
         $startDateFormatted = $payPeriodStart->format('Y-m-d');
         $endDateFormatted = $payPeriodEnd->format('Y-m-d');
         
-        $payPeriod = PayPeriod::firstOrCreate(
-            ['start_date' => $startDateFormatted, 'end_date' => $endDateFormatted],
-            ['status' => 'processing', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']
-        );
+        Log::info('Starting payroll generation', [
+            'start_date' => $startDateFormatted,
+            'end_date' => $endDateFormatted,
+            'pay_schedule_filter' => $payScheduleFilter,
+            'department_ids' => $departmentIds
+        ]);
 
-        // Update pay_period_type if provided and different
-        if ($payScheduleFilter && $payPeriod->pay_period_type !== $payScheduleFilter) {
-            $payPeriod->update(['pay_period_type' => $payScheduleFilter]);
-        }
+        // Use database transaction for atomicity
+        DB::beginTransaction();
+        try {
+            $payPeriod = PayPeriod::firstOrCreate(
+                ['start_date' => $startDateFormatted, 'end_date' => $endDateFormatted],
+                ['status' => 'processing', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly']
+            );
 
-        $employeesQuery = User::where('role', 'employee');
-        if ($payScheduleFilter) {
-            $employeesQuery->where('pay_schedule', $payScheduleFilter);
-        }
-        if ($departmentIds !== null) {
-            $employeesQuery->whereIn('department_id', $departmentIds);
-        }
-
-        $employees = $employeesQuery->get();
-        $holidays = Holiday::whereBetween('date', [$payPeriodStart, $payPeriodEnd])->get()->keyBy('date');
-        $governmentContributions = GovernmentContribution::all()->groupBy('type');
-        $hmoDeductions = HmoDeduction::all();
-
-        foreach ($employees as $employee) {
-            $payPeriodDates = $this->getPayPeriodDates($employee->pay_schedule, $payPeriodStart, $payPeriodEnd, $payScheduleFilter);
-
-            foreach ($payPeriodDates as $period) {
-                $this->generateEmployeePayslip($employee, $payPeriod, $period['start'], $period['end'], $holidays, $governmentContributions, $hmoDeductions);
+            // Update pay_period_type if provided and different
+            if ($payScheduleFilter && $payPeriod->pay_period_type !== $payScheduleFilter) {
+                $payPeriod->update(['pay_period_type' => $payScheduleFilter]);
             }
+
+            $employeesQuery = User::where('role', 'employee');
+            if ($payScheduleFilter) {
+                $employeesQuery->where('pay_schedule', $payScheduleFilter);
+            }
+            if ($departmentIds !== null && !empty($departmentIds)) {
+                $employeesQuery->whereIn('department_id', $departmentIds);
+            }
+
+            $employees = $employeesQuery->get();
+            
+            Log::info('Found employees for payroll generation', [
+                'count' => $employees->count(),
+                'pay_period_id' => $payPeriod->id
+            ]);
+
+            if ($employees->isEmpty()) {
+                Log::warning('No employees found for payroll generation', [
+                    'pay_schedule_filter' => $payScheduleFilter,
+                    'department_ids' => $departmentIds
+                ]);
+                DB::commit();
+                return;
+            }
+
+            // Format dates for database comparison (use date-only format)
+            $startDateStr = $payPeriodStart->format('Y-m-d');
+            $endDateStr = $payPeriodEnd->format('Y-m-d');
+            
+            $holidays = Holiday::whereBetween('date', [$startDateStr, $endDateStr])->get()->keyBy('date');
+            $governmentContributions = GovernmentContribution::all()->groupBy('type');
+            $hmoDeductions = HmoDeduction::all();
+
+            $processedCount = 0;
+            foreach ($employees as $employee) {
+                try {
+                    $payPeriodDates = $this->getPayPeriodDates($employee->pay_schedule, $payPeriodStart, $payPeriodEnd, $payScheduleFilter);
+
+                    if (empty($payPeriodDates)) {
+                        Log::warning('No pay period dates for employee', [
+                            'employee_id' => $employee->id,
+                            'pay_schedule' => $employee->pay_schedule
+                        ]);
+                        continue;
+                    }
+
+                    foreach ($payPeriodDates as $period) {
+                        $this->generateEmployeePayslip($employee, $payPeriod, $period['start'], $period['end'], $holidays, $governmentContributions, $hmoDeductions);
+                    }
+                    $processedCount++;
+                } catch (\Exception $e) {
+                    Log::error('Error generating payslip for employee', [
+                        'employee_id' => $employee->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Continue processing other employees
+                }
+            }
+
+            DB::commit();
+            
+            Log::info('Payroll generation completed', [
+                'pay_period_id' => $payPeriod->id,
+                'employees_processed' => $processedCount,
+                'total_employees' => $employees->count()
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error in payroll generation: ' . $e->getMessage(), [
+                'start_date' => $startDateFormatted,
+                'end_date' => $endDateFormatted,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
     }
 
@@ -136,8 +202,13 @@ class PayrollService
 
         $workingDays = $this->normalizeDaysArray($employee->working_days, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
         $restDays = $this->normalizeDaysArray($employee->rest_days);
+        
+        // Format dates for database comparison (use date-only format)
+        $startDateStr = $payPeriodStart->format('Y-m-d');
+        $endDateStr = $payPeriodEnd->format('Y-m-d');
+        
         $dtrRecords = $employee->dtrRecords()
-            ->whereBetween('date', [$payPeriodStart, $payPeriodEnd])
+            ->whereBetween('date', [$startDateStr, $endDateStr])
             ->get();
         $presentDays = 0;
         $totalActualWorkHours = 0;

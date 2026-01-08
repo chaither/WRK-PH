@@ -151,7 +151,11 @@ class PayrollController extends Controller
                 $payScheduleFilter = 'monthly';
             }
             
-            $this->payrollService->generatePayslipsForPeriod($payPeriod->start_date, $payPeriod->end_date, $payScheduleFilter);
+            // Convert date objects to Carbon instances with proper formatting
+            $startDateCarbon = Carbon::parse($payPeriod->start_date)->startOfDay();
+            $endDateCarbon = Carbon::parse($payPeriod->end_date)->endOfDay();
+            
+            $this->payrollService->generatePayslipsForPeriod($startDateCarbon, $endDateCarbon, $payScheduleFilter);
 
             // Mark period as completed after creating payslips
             $payPeriod->update(['status' => 'unpaid']); // Or 'processing' if there's another step
@@ -225,18 +229,38 @@ class PayrollController extends Controller
                 $payPeriod->update(['status' => 'draft', 'regenerated_by_user_id' => Auth::id()]);
             }
 
+            // Refresh payPeriod to ensure we have the latest data
+            $payPeriod->refresh();
+            
             // Call existing generator, pass departmentId array
             // Use Carbon instances for date calculations
-            $this->payrollService->generatePayslipsForPeriod(
-                Carbon::parse($startDate)->startOfDay(), 
-                Carbon::parse($endDate)->endOfDay(), 
-                $payScheduleFilter, 
-                $departmentIds
-            );
+            try {
+                $this->payrollService->generatePayslipsForPeriod(
+                    Carbon::parse($startDate)->startOfDay(), 
+                    Carbon::parse($endDate)->endOfDay(), 
+                    $payScheduleFilter, 
+                    $departmentIds
+                );
 
-            $payPeriod->update(['status' => 'unpaid']); // Update status after generation
+                // Update status after successful generation
+                $payPeriod->update(['status' => 'unpaid']);
 
-            return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
+                return redirect()->route('payroll.index', ['start_date' => $startDate, 'end_date' => $endDate, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
+            } catch (\Exception $serviceException) {
+                Log::error('Error in payroll service during generation: ' . $serviceException->getMessage(), [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'pay_period_id' => $payPeriod->id,
+                    'trace' => $serviceException->getTraceAsString()
+                ]);
+                
+                // Rollback pay period status if generation failed
+                if ($payPeriod->status === 'processing') {
+                    $payPeriod->update(['status' => 'draft']);
+                }
+                
+                throw $serviceException; // Re-throw to be caught by outer catch
+            }
         } catch (\Exception $e) {
             Log::error('Error generating payroll for range: ' . $e->getMessage(), [
                 'start_date' => $request->input('start_date'),
