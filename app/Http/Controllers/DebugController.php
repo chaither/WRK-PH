@@ -38,7 +38,16 @@ class DebugController extends Controller
 
         try {
             // Capture output
-            Artisan::call($command);
+            // Add --force flag for production environment
+            if (in_array($command, ['migrate', 'migrate:fresh --seed'])) {
+                if ($command === 'migrate:fresh --seed') {
+                     Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+                } else {
+                     Artisan::call($command, ['--force' => true]);
+                }
+            } else {
+                Artisan::call($command);
+            }
             $output = Artisan::output();
             
             Log::info("Debug command executed: $command", ['user_id' => auth()->id()]);
