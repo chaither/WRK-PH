@@ -100,14 +100,35 @@ class DebugController extends Controller
                 return redirect()->back()->with('error', "Cannot connect to device at $ip:$port to perform sync.");
             }
 
-            $count = $zktecoService->syncUsersToDevice();
+            $result = $zktecoService->syncUsersToDevice();
             $zktecoService->disconnect();
 
-            if ($count === false) {
-                return redirect()->back()->with('error', "Sync failed. Check logs for details.");
+            if (isset($result['success']) && !$result['success']) {
+                return redirect()->back()->with('error', "Sync failed: " . ($result['message'] ?? 'Unknown error'));
             }
 
-            return redirect()->back()->with('success', "✅ SUCCESS! Synced $count employees to biometric device.");
+            if (is_array($result)) {
+                $synced = $result['synced'];
+                $failed = $result['failed'];
+                $total = $result['total_found'];
+                
+                $message = "✅ SYNC COMPLETED!\n";
+                $message .= "Found: $total users\n";
+                $message .= "Synced: $synced users\n";
+                $message .= "Failed: $failed users";
+                
+                if ($failed > 0) {
+                     return redirect()->back()->with('success', $message)->with('error', "Some users failed to sync. Check logs.");
+                }
+                
+                return redirect()->back()->with('success', $message);
+            }
+
+            // Fallback for old return type (int)
+            if ($result === false) {
+                 return redirect()->back()->with('error', "Sync failed. Check logs for details.");
+            }
+            return redirect()->back()->with('success', "✅ SUCCESS! Synced $result employees to biometric device.");
 
         } catch (\Exception $e) {
             return redirect()->back()->with('error', "Sync Error: " . $e->getMessage());

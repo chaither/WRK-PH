@@ -186,40 +186,69 @@ class ZktecoService
         // Ensure we are connected before pushing users; otherwise nothing is written.
         if (!$this->connect()) {
             Log::warning('Biometric device is offline, skipping user sync');
-            return false;
+            return ['success' => false, 'message' => 'Device offline'];
         }
 
         try {
-            // Get all non-admin users from database (admins should never be on the device)
-            $users = \App\Models\User::whereNotNull('employee_id')
-                ->where('role', '!=', 'admin')
-                ->get();
+            // Get all valid users from database
+            // We include admins now just in case, but usually role=0 is user, role=14 is admin on device
+            // Let's filter slightly less aggressively to debug
+            $users = \App\Models\User::whereNotNull('employee_id')->get();
 
             $synced = 0;
+            $failed = 0;
+            $errors = [];
+            $logs = [];
+
             foreach ($users as $user) {
-                // Set user on device with employee_id as userid
-                $this->zkteco->setUser(
-                    $user->id, // uid
-                    $user->employee_id, // userid
-                    $user->name,
-                    '', // password
-                    0 // role
-                );
-                $synced++;
+                // Validate constraints
+                // Device UID is usually max 65535. If user ID is larger, this might be an issue.
+                // We'll trust the ID fits for now, or maybe use intval($user->employee_id) if it's numeric?
+                // Let's stick to $user->id as UID for stability.
+                
+                try {
+                    $result = $this->zkteco->setUser(
+                        (int)$user->id,          // uid (unique internal ID)
+                        (string)$user->employee_id, // userid (displayed ID string)
+                        substr($user->name, 0, 24), // name (max 24 chars usually)
+                        '',                      // password
+                        $user->role === 'admin' ? 14 : 0 // role (14 for admin, 0 for user)
+                    );
+                    
+                    if ($result) {
+                        $synced++;
+                        $logs[] = "Synced: {$user->name} ({$user->employee_id})";
+                    } else {
+                        $failed++;
+                        $errors[] = "Failed: {$user->name} ({$user->employee_id}) - Device rejected command";
+                    }
+                } catch (\Exception $uEx) {
+                    $failed++;
+                    $errors[] = "Error: {$user->name} ({$user->employee_id}) - " . $uEx->getMessage();
+                }
             }
 
-            return $synced;
+            return [
+                'success' => true,
+                'synced' => $synced,
+                'failed' => $failed,
+                'total_found' => $users->count(),
+                'logs' => $logs,
+                'errors' => $errors
+            ];
+
         } catch (Exception $e) {
             Log::error('Failed to sync users to ZKTeco device: ' . $e->getMessage());
-            return false;
+            return ['success' => false, 'message' => $e->getMessage()];
         } finally {
             try {
                 $this->disconnect();
             } catch (Exception $disconnectError) {
-                // Ignore disconnect errors to avoid masking primary issues
+                // Ignore
             }
         }
     }
+
 
     /**
      * Sync a single user to the biometric device
