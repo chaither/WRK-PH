@@ -92,9 +92,9 @@ class ChangeShiftController extends Controller
     public function showEmployeeShiftHistory(Request $request, \App\Models\User $employee)
     {
         try {
-            // Ensure only admin/hr can view other employee's shift change history
+            // Ensure only admin/hr or the employee themselves can view shift change history
             $user = Auth::user();
-            if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            if (!$user || (!in_array($user->role, ['admin', 'hr']) && $user->id !== $employee->id)) {
                 abort(403, 'Unauthorized access.');
             }
 

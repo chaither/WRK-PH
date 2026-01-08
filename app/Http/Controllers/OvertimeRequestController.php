@@ -97,8 +97,9 @@ class OvertimeRequestController extends Controller
     {
         try {
             // Ensure only admin/hr can view other employee's overtime history
+            // Ensure only admin/hr or the employee themselves can view overtime history
             $user = Auth::user();
-            if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            if (!$user || (!in_array($user->role, ['admin', 'hr']) && $user->id !== $employee->id)) {
                 abort(403, 'Unauthorized access.');
             }
 

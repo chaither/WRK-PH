@@ -16,7 +16,7 @@
                     <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">HRIS DASHBOARD</h1>
                 </div>
                 <div class="bg-gray-100 rounded-full p-1 flex self-start lg:self-auto">
-                    <span class="px-4 py-2 text-sm font-semibold text-gray-500 rounded-full">Graph</span>
+                    <a href="{{ route('employee.dashboard') }}" class="px-4 py-2 text-sm font-semibold text-gray-500 rounded-full hover:bg-gray-200 transition">Graph</a>
                     <span class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-full shadow">Org</span>
                 </div>
             </div>

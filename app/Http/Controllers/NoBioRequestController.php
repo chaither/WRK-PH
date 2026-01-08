@@ -225,9 +225,9 @@ class NoBioRequestController extends Controller
     public function showEmployeeNoBioHistory(Request $request, \App\Models\User $employee)
     {
         try {
-            // Ensure only admin/hr can view other employee's no-bio history
+            // Ensure only admin/hr or the employee themselves can view no-bio history
             $user = Auth::user();
-            if (!$user || !in_array($user->role, ['admin', 'hr'])) {
+            if (!$user || (!in_array($user->role, ['admin', 'hr']) && $user->id !== $employee->id)) {
                 abort(403, 'Unauthorized access.');
             }
 
