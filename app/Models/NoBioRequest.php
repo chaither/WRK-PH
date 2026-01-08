@@ -10,7 +10,7 @@ class NoBioRequest extends Model
     protected $fillable = ['user_id', 'date', 'type', 'reason', 'status', 'requested_time_in', 'requested_time_out'];
 
     protected $casts = [
-        'date' => 'datetime',
+        'date' => 'date',
     ];
 
     public function user(): BelongsTo
