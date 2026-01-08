@@ -139,23 +139,31 @@ class PayrollController extends Controller
             return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
         }
 
-        // Call the PayrollService to generate payslips
-        // Determine pay schedule filter based on the pay period duration
-        $payScheduleFilter = null;
-        if ($payPeriod->start_date->day === 1 && $payPeriod->end_date->day === 15) {
-            $payScheduleFilter = 'semi-monthly';
-        } elseif ($payPeriod->start_date->day === 16 && $payPeriod->end_date->isSameDay($payPeriod->end_date->endOfMonth())) {
-            $payScheduleFilter = 'semi-monthly';
-        } elseif ($payPeriod->start_date->isSameDay($payPeriod->start_date->copy()->startOfMonth()) && $payPeriod->end_date->isSameDay($payPeriod->end_date->copy()->endOfMonth())) {
-            $payScheduleFilter = 'monthly';
+        try {
+            // Call the PayrollService to generate payslips
+            // Determine pay schedule filter based on the pay period duration
+            $payScheduleFilter = null;
+            if ($payPeriod->start_date->day === 1 && $payPeriod->end_date->day === 15) {
+                $payScheduleFilter = 'semi-monthly';
+            } elseif ($payPeriod->start_date->day === 16 && $payPeriod->end_date->isSameDay($payPeriod->end_date->endOfMonth())) {
+                $payScheduleFilter = 'semi-monthly';
+            } elseif ($payPeriod->start_date->isSameDay($payPeriod->start_date->copy()->startOfMonth()) && $payPeriod->end_date->isSameDay($payPeriod->end_date->copy()->endOfMonth())) {
+                $payScheduleFilter = 'monthly';
+            }
+            
+            $this->payrollService->generatePayslipsForPeriod($payPeriod->start_date, $payPeriod->end_date, $payScheduleFilter);
+
+            // Mark period as completed after creating payslips
+            $payPeriod->update(['status' => 'unpaid']); // Or 'processing' if there's another step
+
+            return redirect()->route('payroll.index')->with('success', 'Payslips generated successfully');
+        } catch (\Exception $e) {
+            Log::error('Error generating payslips: ' . $e->getMessage(), [
+                'pay_period_id' => $payPeriod->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('payroll.index')->with('error', 'Failed to generate payslips: ' . $e->getMessage());
         }
-        
-        $this->payrollService->generatePayslipsForPeriod($payPeriod->start_date, $payPeriod->end_date, $payScheduleFilter);
-
-        // Mark period as completed after creating payslips
-        $payPeriod->update(['status' => 'unpaid']); // Or 'processing' if there's another step
-
-        return redirect()->route('payroll.index')->with('success', 'Payslips generated successfully');
     }
 
     // Generate for arbitrary date range submitted from the UI
@@ -165,59 +173,68 @@ class PayrollController extends Controller
             return redirect()->route('dashboard')->with('error', 'You are not authorized to process payroll.');
         }
 
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'department_ids' => 'nullable|array', // Add department_ids validation
-        ]);
+        try {
+            $request->validate([
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'department_ids' => 'nullable|array', // Add department_ids validation
+            ]);
 
-        $start = $request->input('start_date');
-        $end = $request->input('end_date');
-        $departmentIds = $request->input('department_ids', []); // Get array of department IDs
-        
-        // Handle "All Departments" case: if no specific departments are selected,
-        // or if an empty string/null is passed, treat as all departments.
-        if (empty($departmentIds) || (count($departmentIds) === 1 && $departmentIds[0] === "")) {
-            $departmentIds = null; // Represents all departments
-        }
-
-        $payScheduleFilter = null;
-        if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
-            $payScheduleFilter = 'semi-monthly';
-        } elseif (Carbon::parse($start)->day === 16 && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
-            $payScheduleFilter = 'semi-monthly';
-        } elseif (Carbon::parse($start)->isSameDay(Carbon::parse($start)->startOfMonth()) && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
-            $payScheduleFilter = 'monthly';
-        }
-
-        $payPeriod = PayPeriod::firstOrCreate([
-            'start_date' => $start,
-            'end_date' => $end
-        ], ['status' => 'draft', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly', 'generated_by_user_id' => Auth::id()]);
-
-        // Do not regenerate if already generated/unpaid or paid, or closed
-        if (in_array($payPeriod->status, ['unpaid', 'paid', 'closed']) && !$request->has('force_regenerate')) {
-            if ($payPeriod->status === 'closed') {
-                return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
-            } else {
-                return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+            $start = $request->input('start_date');
+            $end = $request->input('end_date');
+            $departmentIds = $request->input('department_ids', []); // Get array of department IDs
+            
+            // Handle "All Departments" case: if no specific departments are selected,
+            // or if an empty string/null is passed, treat as all departments.
+            if (empty($departmentIds) || (count($departmentIds) === 1 && $departmentIds[0] === "")) {
+                $departmentIds = null; // Represents all departments
             }
-        }
 
-        // If forced regeneration, set status to draft to allow re-generation
-        if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid', 'closed'])) {
-            if ($payPeriod->status === 'closed') {
-                return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+            $payScheduleFilter = null;
+            if (Carbon::parse($start)->day === 1 && Carbon::parse($end)->day === 15) {
+                $payScheduleFilter = 'semi-monthly';
+            } elseif (Carbon::parse($start)->day === 16 && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+                $payScheduleFilter = 'semi-monthly';
+            } elseif (Carbon::parse($start)->isSameDay(Carbon::parse($start)->startOfMonth()) && Carbon::parse($end)->isSameDay(Carbon::parse($end)->endOfMonth())) {
+                $payScheduleFilter = 'monthly';
             }
-            $payPeriod->update(['status' => 'draft', 'regenerated_by_user_id' => Auth::id()]);
+
+            $payPeriod = PayPeriod::firstOrCreate([
+                'start_date' => $start,
+                'end_date' => $end
+            ], ['status' => 'draft', 'pay_period_type' => $payScheduleFilter ?? 'semi-monthly', 'generated_by_user_id' => Auth::id()]);
+
+            // Do not regenerate if already generated/unpaid or paid, or closed
+            if (in_array($payPeriod->status, ['unpaid', 'paid', 'closed']) && !$request->has('force_regenerate')) {
+                if ($payPeriod->status === 'closed') {
+                    return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+                } else {
+                    return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('info', 'Payroll for the selected period has already been generated. Click \'Regenerate Payroll\' again to force regeneration.');
+                }
+            }
+
+            // If forced regeneration, set status to draft to allow re-generation
+            if ($request->has('force_regenerate') && in_array($payPeriod->status, ['unpaid', 'paid', 'closed'])) {
+                if ($payPeriod->status === 'closed') {
+                    return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('error', 'Payroll for the selected period is closed and cannot be regenerated.');
+                }
+                $payPeriod->update(['status' => 'draft', 'regenerated_by_user_id' => Auth::id()]);
+            }
+
+            // Call existing generator, pass departmentId array
+            $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter, $departmentIds);
+
+            $payPeriod->update(['status' => 'unpaid']); // Update status after generation
+
+            return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
+        } catch (\Exception $e) {
+            Log::error('Error generating payroll for range: ' . $e->getMessage(), [
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('payroll.index')->with('error', 'Failed to generate payroll: ' . $e->getMessage());
         }
-
-        // Call existing generator, pass departmentId array
-        $this->payrollService->generatePayslipsForPeriod(Carbon::parse($start), Carbon::parse($end), $payScheduleFilter, $departmentIds);
-
-        $payPeriod->update(['status' => 'unpaid']); // Update status after generation
-
-        return redirect()->route('payroll.index', ['start_date' => $start, 'end_date' => $end, 'department_ids' => $departmentIds])->with('success', 'Payroll generated for selected period.');
     }
 
     // Mark pay period as completed (done payment)
@@ -234,7 +251,7 @@ class PayrollController extends Controller
     public function closePayPeriod(PayPeriod $payPeriod)
     {
         if ($payPeriod->status !== 'closed') {
-            $payPeriod->update(['status' => 'closed', 'closed_by_user_id' => Auth::id()]);
+            $payPeriod->update(['status' => 'closed']);
         }
 
         return redirect()->route('payroll.index', ['start_date' => $payPeriod->start_date, 'end_date' => $payPeriod->end_date])->with('success', 'Pay period marked as closed and final.');
@@ -382,19 +399,27 @@ class PayrollController extends Controller
             return redirect()->route('dashboard')->with('error', 'You are not authorized to view payroll history.');
         }
 
-        $type = $request->query('type', 'all'); // Default to 'all'
+        try {
+            $type = $request->query('type', 'all'); // Default to 'all'
 
-        $payPeriodsQuery = PayPeriod::with('generatedBy', 'regeneratedBy', 'markedPaidBy');
+            $payPeriodsQuery = PayPeriod::with(['generatedBy', 'regeneratedBy', 'markedPaidBy', 'payslips']);
 
-        if ($type === 'semiMonthly') {
-            $payPeriodsQuery->where('pay_period_type', 'semi-monthly');
-        } elseif ($type === 'monthly') {
-            $payPeriodsQuery->where('pay_period_type', 'monthly');
+            if ($type === 'semiMonthly') {
+                $payPeriodsQuery->where('pay_period_type', 'semi-monthly');
+            } elseif ($type === 'monthly') {
+                $payPeriodsQuery->where('pay_period_type', 'monthly');
+            }
+
+            $payPeriods = $payPeriodsQuery->orderByDesc('end_date')->get();
+
+            return view('payroll.history.index', compact('payPeriods'));
+        } catch (\Exception $e) {
+            Log::error('Error loading payroll history: ' . $e->getMessage(), [
+                'type' => $request->query('type'),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('payroll.index')->with('error', 'Failed to load payroll history: ' . $e->getMessage());
         }
-
-        $payPeriods = $payPeriodsQuery->orderByDesc('end_date')->get();
-
-        return view('payroll.history.index', compact('payPeriods'));
     }
 
     public function showPayrollDetails(PayPeriod $payPeriod)

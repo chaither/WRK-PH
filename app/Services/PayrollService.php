@@ -156,8 +156,8 @@ class PayrollService
                 if ($dtrForDay && ($dtrForDay->time_in || $dtrForDay->time_in_2)) {
                     $presentDays++;
                     // totalActualWorkHours now explicitly includes regular and approved overtime
-                    $totalActualWorkHours += $dtrForDay->work_hours;
-                    $totalApprovedOvertimeHours += $dtrForDay->overtime_hours; // Accumulate approved overtime hours
+                    $totalActualWorkHours += ($dtrForDay->total_work_hours ?? ($dtrForDay->regular_work_hours ?? 0) + ($dtrForDay->overtime_hours ?? 0));
+                    $totalApprovedOvertimeHours += ($dtrForDay->overtime_hours ?? 0); // Accumulate approved overtime hours
 
                     // Calculate expected regular work hours for the day based on user's shift
                     $expectedRegularHours = 0;
@@ -176,7 +176,7 @@ class PayrollService
                     $totalRegularWorkHours += $dailyRegularWorkHours;
                     $totalLateMinutes += $dtrForDay->late_minutes; // Accumulate late minutes
 
-                    Log::info('PayrollService: Accumulating Overtime - Date: ' . $currentDate->toDateString() . ', DTR Work Hours: ' . $dtrForDay->work_hours . ', DTR Overtime Hours: ' . $dtrForDay->overtime_hours . ', Daily Regular Work Hours: ' . $dailyRegularWorkHours . ', Total Approved Overtime Hours: ' . $totalApprovedOvertimeHours . ', Total Regular Work Hours: ' . $totalRegularWorkHours . ', Total Actual Work Hours (including OT): ' . $totalActualWorkHours);
+                    Log::info('PayrollService: Accumulating Overtime - Date: ' . $currentDate->toDateString() . ', DTR Total Work Hours: ' . ($dtrForDay->total_work_hours ?? 0) . ', DTR Overtime Hours: ' . ($dtrForDay->overtime_hours ?? 0) . ', Daily Regular Work Hours: ' . $dailyRegularWorkHours . ', Total Approved Overtime Hours: ' . $totalApprovedOvertimeHours . ', Total Regular Work Hours: ' . $totalRegularWorkHours . ', Total Actual Work Hours (including OT): ' . $totalActualWorkHours);
 
                     if ($isHoliday) {
                         $holiday = $holidays->get($currentDate->toDateString());
