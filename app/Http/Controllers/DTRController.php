@@ -545,4 +545,61 @@ class DTRController extends Controller
             'enabled' => $employee->face_recognition_enabled
         ]);
     }
+    public function batchStore(Request $request)
+    {
+        // No auth middleware check here if using API token or simple trust for now as requested
+        // In prod, use Sanctum token.
+        
+        $logs = $request->input('logs', []);
+        $count = 0;
+
+        foreach ($logs as $log) {
+            $user = User::where('employee_id', $log['employee_id'])->first();
+            if (!$user) continue;
+
+            $timestamp = Carbon::parse($log['timestamp']);
+            $date = $timestamp->toDateString();
+            
+            $record = DTRRecord::firstOrCreate(
+                ['user_id' => $user->id, 'date' => $date],
+                ['status' => 'present'] // Default status
+            );
+
+            // Logic to map Punch to DTR Column
+            // Simple logic: AM = time_in/out, PM = time_in_2/out_2
+            // Or use state: 0/4=In, 1/5=Out
+            
+            $isAm = $timestamp->hour < 12;
+            $state = $log['status']; // 0=In, 1=Out, etc.
+            
+            if ($state == 0 || $state == 4) { // Check In
+                if ($isAm) {
+                     if (!$record->time_in) $record->time_in = $timestamp;
+                } else {
+                     if (!$record->time_in_2) $record->time_in_2 = $timestamp;
+                }
+            } elseif ($state == 1 || $state == 5) { // Check Out
+                if ($isAm) {
+                     if (!$record->time_out) $record->time_out = $timestamp;
+                } else {
+                     if (!$record->time_out_2) $record->time_out_2 = $timestamp;
+                }
+            } else {
+                // Fallback auto-detection if state is unknown or generic
+                if ($isAm) {
+                    if (!$record->time_in) $record->time_in = $timestamp;
+                    else $record->time_out = $timestamp;
+                } else {
+                    if (!$record->time_in_2) $record->time_in_2 = $timestamp;
+                    else $record->time_out_2 = $timestamp;
+                }
+            }
+            
+            $record->save();
+            $record->recalculateAllHours(); // Ensure hours are calculated
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'processed' => $count], 200);
+    }
 }

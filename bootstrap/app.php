@@ -12,11 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Exclude API routes from CSRF verification (for biometric-app sync)
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+        
         // Automatically sync biometric attendances on each request (throttled)
         // This ensures fingerprints are stored immediately without manual commands
-        $middleware->web(append: [
-            \App\Http\Middleware\AutoSyncBiometric::class,
-        ]);
+        // Middleware removed as logic moved to biometric-app
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

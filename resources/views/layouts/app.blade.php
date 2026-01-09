@@ -42,7 +42,7 @@
 <body class="bg-gray-100">
     <div class="flex">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-[#0B1432] text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
+        <div id="sidebar" class="bg-sidebar-dark text-white w-64 space-y-6 py-7 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50">
             <div class="flex items-center space-x-2 px-4 mb-8">
                 <button id="sidebarToggle" class="text-white focus:outline-none">
                     <i class="fas fa-bars text-xl align-middle"></i>
@@ -186,7 +186,7 @@
         <!-- Content -->
         <div id="content" class="flex-1 transition-all duration-300 ease-in-out h-screen overflow-y-auto md:ml-64">
             <!-- Top Nav -->
-            <nav class="bg-[#0B1432] text-white p-4">
+            <nav class="bg-sidebar-dark text-white p-4">
                 <div class="flex items-center px-4">
                     <!-- Top hamburger (overrides to front overlay) -->
                     <button id="mobileSidebarToggle" class="text-white mr-4 md:hidden focus:outline-none">

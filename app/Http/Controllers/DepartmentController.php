@@ -9,17 +9,8 @@ use App\Models\User;
 use App\Models\Shift; // Add this line
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth; // Add this line
-use App\Services\ZktecoService;
-
 class DepartmentController extends Controller
 {
-    protected $zktecoService;
-
-    public function __construct(ZktecoService $zktecoService)
-    {
-        $this->zktecoService = $zktecoService;
-    }
-
     public function index()
     {
         if (!Auth::user()->isHRManager()) {
@@ -40,9 +31,11 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
-        if (!Auth::user()->isHRManager()) {
+        // Skip auth check for API requests (from biometric-app)
+        if (!$request->wantsJson() && (!Auth::check() || !Auth::user()->isHRManager())) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to create departments.');
         }
+        
         $request->validate([
             'name' => 'required|unique:departments|max:255',
         ]);
@@ -51,8 +44,8 @@ class DepartmentController extends Controller
             'name' => $request->name,
         ]);
 
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'message' => 'Department created successfully.', 'department' => $department]);
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Department created successfully.', 'department' => $department], 201);
         }
 
         return redirect()->route('department.index')->with('success', 'Department created successfully.');
@@ -138,13 +131,8 @@ class DepartmentController extends Controller
             'department_id' => $request->department_id, // Assign to the selected department from the request
         ]);
 
-        // Automatically sync to biometric device if online and employee has employee_id
-        try {
-            $this->zktecoService->syncSingleUser($user);
-        } catch (\Exception $e) {
-            // Don't fail employee creation if biometric sync fails
-            // Error is already logged in ZktecoService
-        }
+        // Automatically sync to biometric device removed from here (HRIS).
+        // Biometric-app handles the sync.
 
         return redirect()->route('department.index')->with('success', 'Employee created and assigned to department successfully.');
     }

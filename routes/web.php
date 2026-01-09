@@ -98,6 +98,11 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
     Route::get('/api/payroll-history', [App\Http\Controllers\PayrollHistoryController::class, 'getPayrollHistory']);
 });
 
+// API Routes for biometric-app sync (no auth required for inter-service communication)
+Route::post('/api/departments', [DepartmentController::class, 'store']);
+Route::post('/api/employees', [EmployeeController::class, 'store']);
+Route::post('/api/attendance/batch', [DTRController::class, 'batchStore']);
+
 // Department Employee Routes
 Route::get('/departments/{department}/employees', [DepartmentController::class, 'showEmployees'])->name('departments.show_employees');
 Route::post('department/{department}/employees', [DepartmentController::class, 'addEmployee'])->name('department.employees.store');

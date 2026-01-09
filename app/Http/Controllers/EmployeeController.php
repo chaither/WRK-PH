@@ -16,18 +16,8 @@ use App\Models\LeaveRequest; // Add this line
 use App\Models\ChangeRestdayRequest;
 use App\Models\ChangeShiftRequest;
 use App\Models\NoBioRequest;
-use App\Services\ZktecoService;
-
 class EmployeeController extends Controller
 {
-    protected $zktecoService;
-
-    public function __construct(ZktecoService $zktecoService)
-    {
-        // Removed middleware. Now handled by route groups only.
-        $this->zktecoService = $zktecoService;
-    }
-
     public function index(Request $request)
     {
         if (!Auth::user()->isHRManager()) {
@@ -66,7 +56,8 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
-        if (!Auth::user()->isHRManager()) {
+        // Skip auth check for API requests (from biometric-app)
+        if (!$request->wantsJson() && (!Auth::check() || !Auth::user()->isHRManager())) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to create employees.');
         }
         // Removed redundant role check, now handled by route middleware.
@@ -178,12 +169,17 @@ class EmployeeController extends Controller
             'face_recognition_enabled' => $request->has('face_recognition_enabled') ? (bool)$request->input('face_recognition_enabled') : false,
         ]);
 
-        // Automatically sync to biometric device if online
-        try {
-            $this->zktecoService->syncSingleUser($user);
-        } catch (\Exception $e) {
-            // Don't fail employee creation if biometric sync fails
-            // Error is already logged in ZktecoService
+        // Automatically sync to biometric device removed from here (HRIS).
+        // Biometric-app handles the sync.
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Employee created successfully',
+                'employee' => $user,
+                'id' => $user->id,
+                'employee_id' => $user->employee_id
+            ], 201);
         }
 
         return redirect()->route('department.index')->with('success', 'Employee created successfully');
