@@ -16,6 +16,6 @@ return [
     ],
 
     'hris' => [
-        'url' => env('HRIS_URL', 'http://localhost:8000'),
+        'url' => env('HRIS_URL', 'https://hris-main-y0anvt.laravel.cloud'),
     ],
 ];
