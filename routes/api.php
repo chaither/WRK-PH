@@ -27,6 +27,17 @@ Route::get('/test-employee-sync/{id}', function($id) {
 
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\SyncDataController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EmployeeController;
 
 Route::get('/sync/updates', [SyncDataController::class, 'getUpdates']);
 Route::post('/attendance/batch', [AttendanceController::class, 'storeBatch']);
+
+// Sync Routes (Incoming from Biometric App)
+// Note: api.php prefix is /api
+Route::post('/departments', [DepartmentController::class, 'store']);
+Route::put('/departments/{department}', [DepartmentController::class, 'update']);
+Route::delete('/departments/{department}', [DepartmentController::class, 'destroy']);
+Route::post('/employees', [EmployeeController::class, 'store']);
+Route::put('/employees/{employee}', [EmployeeController::class, 'update']);
+Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy']);

@@ -99,12 +99,7 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
 });
 
 // API Routes for biometric-app sync (no auth required for inter-service communication)
-Route::post('/api/departments', [DepartmentController::class, 'store']);
-Route::put('/api/departments/{department}', [DepartmentController::class, 'update']);
-Route::delete('/api/departments/{department}', [DepartmentController::class, 'destroy']);
-Route::post('/api/employees', [EmployeeController::class, 'store']);
-Route::put('/api/employees/{employee}', [EmployeeController::class, 'update']);
-Route::delete('/api/employees/{employee}', [EmployeeController::class, 'destroy']);
+// API Routes for biometric-app sync REMOVED (Moved to routes/api.php)
 
 
 // Department Employee Routes
