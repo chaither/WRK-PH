@@ -24,3 +24,6 @@ Route::get('/test-employee-sync/{id}', function($id) {
         ], 500);
     }
 });
+
+use App\Http\Controllers\Api\AttendanceController;
+Route::post('/attendance/batch', [AttendanceController::class, 'storeBatch']);
