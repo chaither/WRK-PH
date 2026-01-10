@@ -72,19 +72,33 @@
     </div>
 
     <!-- Delete Department Modal -->
-    <div id="deleteDepartmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Department</h3>
-            <p class="mb-4">Are you sure you want to delete department "<span x-text="departmentName" class="font-semibold"></span>"?</p>
-            <div class="flex justify-end">
-                <button @click="open = false" type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+    <!-- Delete Department Modal -->
+    <div id="deleteDepartmentModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 transform transition-all duration-300 scale-100 flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                <h3 class="text-xl font-bold text-gray-800">Delete Department</h3>
+                <button onclick="closeDeleteDepartmentModal()" class="text-gray-400 hover:text-gray-600 transition duration-150 p-1 rounded-full hover:bg-gray-100">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-gray-600 text-base">Are you sure you want to delete the department <span id="deleteDepartmentName" class="font-bold text-gray-900"></span>?</p>
+                <p class="text-sm text-red-500 mt-3 flex items-center bg-red-50 p-3 rounded-lg border border-red-100">
+                    <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i> 
+                    Warning: This action cannot be undone.
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                 <button onclick="closeDeleteDepartmentModal()" type="button" class="px-5 py-2.5 text-sm border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-gray-200">
                     Cancel
                 </button>
-                <form :action="`/department/${departmentId}`" method="POST" class="inline-block">
+                <form id="deleteDepartmentForm" action="" method="POST" class="inline-block">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                        Delete
+                    <button type="submit" class="px-5 py-2.5 text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition duration-150 shadow-md hover:shadow-lg focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Delete
                     </button>
                 </form>
             </div>
@@ -181,6 +195,25 @@
         };
 
         refreshDepartmentIndices();
+
+        // Delete Modal Functions
+        window.openDeleteDepartmentModal = function(id, name) {
+            const modal = document.getElementById('deleteDepartmentModal');
+            const nameSpan = document.getElementById('deleteDepartmentName');
+            const form = document.getElementById('deleteDepartmentForm');
+
+            nameSpan.textContent = name;
+            form.action = `/department/${id}`; 
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeDeleteDepartmentModal = function() {
+            const modal = document.getElementById('deleteDepartmentModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
     });
 </script>
 @endpush

@@ -1,38 +1,21 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
-    | Third Party Services
+    | Biometric App Service Configuration
     |--------------------------------------------------------------------------
     |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | This configuration is used by the HRIS system to communicate with
+    | the Biometric App for syncing departments and employees.
     |
     */
 
-    'postmark' => [
-        'token' => env('POSTMARK_TOKEN'),
+    'biometric_app' => [
+        'url' => env('BIOMETRIC_APP_URL', 'http://localhost:8081'),
     ],
 
-    'resend' => [
-        'key' => env('RESEND_KEY'),
+    'hris' => [
+        'url' => env('HRIS_URL', 'http://localhost:8000'),
     ],
-
-    'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
-        'secret' => env('AWS_SECRET_ACCESS_KEY'),
-        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-    ],
-
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
-    ],
-
 ];

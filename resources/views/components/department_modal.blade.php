@@ -70,12 +70,26 @@
                     method: methodToUse, // Use the method from the hidden field
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
                     },
                     body: formData
                 });
 
                 if (!response.ok) {
+                    if (response.status === 422) {
+                        const errorData = await response.json();
+                        let errorMessage = 'Validation Error:\n';
+                        if (errorData.errors) {
+                            for (const [key, messages] of Object.entries(errorData.errors)) {
+                                errorMessage += `${messages.join('\n')}\n`;
+                            }
+                        } else {
+                            errorMessage += errorData.message || 'Unknown validation error.';
+                        }
+                        alert(errorMessage);
+                        return; // Stop further execution
+                    }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
@@ -101,7 +115,10 @@
                 }
             } catch (error) {
                 console.error('Error submitting department form:', error);
-                alert('An error occurred while saving the department.');
+                // If we already alerted the validation error, don't alert again
+                if (!error.message.includes('HTTP error! status: 422')) {
+                     alert('An error occurred while saving the department.\n' + error.message);
+                }
             }
         });
 

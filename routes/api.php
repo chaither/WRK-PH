@@ -1,23 +1,29 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\ZktecoController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-// ZKTeco Biometric API Routes
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/biometric/device-info', [ZktecoController::class, 'deviceInfo']);
-    Route::get('/biometric/users', [ZktecoController::class, 'getUsers']);
-    Route::get('/biometric/attendances', [ZktecoController::class, 'getAttendances']);
-    Route::delete('/biometric/attendances', [ZktecoController::class, 'clearAttendances']);
-    Route::post('/biometric/users', [ZktecoController::class, 'setUser']);
-    Route::delete('/biometric/users', [ZktecoController::class, 'deleteUser']);
-    Route::get('/biometric/time', [ZktecoController::class, 'getTime']);
-    Route::post('/biometric/time', [ZktecoController::class, 'setTime']);
-    Route::post('/biometric/sync-users', [ZktecoController::class, 'syncUsers']);
-    Route::post('/biometric/sync-attendances', [ZktecoController::class, 'syncAttendances']);
+Route::get('/test-employee-sync/{id}', function($id) {
+    $user = \App\Models\User::find($id);
+    
+    if (!$user) {
+        return response()->json(['error' => 'User not found']);
+    }
+    
+    $syncService = new \App\Services\BiometricSyncService();
+    
+    try {
+        $syncService->syncEmployee($user);
+        return response()->json([
+            'success' => true,
+            'message' => "Manually synced employee {$user->id} to biometric app",
+            'user' => $user
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage()
+        ], 500);
+    }
 });
+
+use App\Http\Controllers\Api\AttendanceController;
+Route::post('/attendance/batch', [AttendanceController::class, 'storeBatch']);
