@@ -122,25 +122,28 @@ class DTRRecord extends Model
     {
         $totalWorkSeconds = 0;
 
-        // First segment: time_in to time_out (morning)
-        if ($this->time_in && $this->time_out && $this->time_in instanceof \Carbon\Carbon && $this->time_out instanceof \Carbon\Carbon) {
+        // Optimized logic: 
+        // 1. Check for standard 4-tap split (AM pairs and PM pairs)
+        if ($this->time_in && $this->time_out) {
             $totalWorkSeconds += $this->time_out->diffInSeconds($this->time_in, true);
         }
 
-        // Second segment: time_in_2 to time_out_2 (afternoon)
-        if ($this->time_in_2 && $this->time_out_2 && $this->time_in_2 instanceof \Carbon\Carbon && $this->time_out_2 instanceof \Carbon\Carbon) {
+        if ($this->time_in_2 && $this->time_out_2) {
             $totalWorkSeconds += $this->time_out_2->diffInSeconds($this->time_in_2, true);
         }
 
-        // Round total seconds to the nearest minute, then convert to total seconds (i.e., remove seconds if < 30, round up if >= 30)
-        // Given the requirement to discard seconds (floor), we will just floor the total seconds to the nearest minute's worth of seconds
-        $totalWorkSeconds = floor($totalWorkSeconds / 60) * 60; // Floor to nearest minute, then convert back to seconds
+        // 2. Handle 2-tap "Bridge" (User clocked in AM, but only clocked out in PM)
+        // If Morning Out is missing but Afternoon In/Out exists, calculate the gap.
+        if ($this->time_in && !$this->time_out && $this->time_in_2) {
+            $totalWorkSeconds += $this->time_in_2->diffInSeconds($this->time_in, true);
+        } elseif ($this->time_in && !$this->time_out && $this->time_out_2) {
+            $totalWorkSeconds += $this->time_out_2->diffInSeconds($this->time_in, true);
+        }
 
-        Log::info('DTRRecord ID: ' . $this->id . ' - time_in: ' . ($this->time_in ? $this->time_in->toDateTimeString() : 'NULL'));
-        Log::info('DTRRecord ID: ' . $this->id . ' - time_out: ' . ($this->time_out ? $this->time_out->toDateTimeString() : 'NULL'));
-        Log::info('DTRRecord ID: ' . $this->id . ' - time_in_2: ' . ($this->time_in_2 ? $this->time_in_2->toDateTimeString() : 'NULL'));
-        Log::info('DTRRecord ID: ' . $this->id . ' - time_out_2: ' . ($this->time_out_2 ? $this->time_out_2->toDateTimeString() : 'NULL'));
-        Log::info('DTRRecord ID: ' . $this->id . ' - Calculated totalWorkSeconds (floored to minute): ' . $totalWorkSeconds);
+        // Floor to nearest minute to avoid "00:00:59" appearing as one hour
+        $totalWorkSeconds = floor($totalWorkSeconds / 60) * 60;
+
+        Log::info("DTR Calculation [ID:{$this->id}]: Total Seconds: {$totalWorkSeconds}");
 
         return max(0, $totalWorkSeconds);
     }
