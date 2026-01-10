@@ -26,4 +26,7 @@ Route::get('/test-employee-sync/{id}', function($id) {
 });
 
 use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\SyncDataController;
+
+Route::get('/sync/updates', [SyncDataController::class, 'getUpdates']);
 Route::post('/attendance/batch', [AttendanceController::class, 'storeBatch']);
