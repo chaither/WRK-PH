@@ -174,7 +174,8 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
-        if (!Auth::user()->isHRManager()) {
+        // Skip auth check for API requests (from biometric-app)
+        if (!$request->wantsJson() && (!Auth::check() || !Auth::user()->isHRManager())) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to update departments.');
         }
         $request->validate([
@@ -183,7 +184,7 @@ class DepartmentController extends Controller
 
         $department->update(['name' => $request->name]);
 
-        if ($request->ajax()) {
+        if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Department updated successfully.',
@@ -194,12 +195,20 @@ class DepartmentController extends Controller
         return redirect()->route('department.index')->with('success', 'Department updated successfully.');
     }
 
-    public function destroy(Department $department)
+    public function destroy(Department $department, Request $request)
     {
-        if (!Auth::user()->isHRManager()) {
+        // Skip auth check for API requests (from biometric-app)
+        if (!$request->wantsJson() && (!Auth::check() || !Auth::user()->isHRManager())) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to delete departments.');
         }
         $department->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Department deleted successfully.',
+            ]);
+        }
 
         return redirect()->route('department.index')->with('success', 'Department deleted successfully.');
     }

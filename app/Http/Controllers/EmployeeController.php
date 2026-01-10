@@ -205,7 +205,8 @@ class EmployeeController extends Controller
 
     public function update(Request $request, User $employee)
     {
-        if (!Auth::user()->isHRManager()) {
+        // Skip auth check for API requests (from biometric-app)
+        if (!$request->wantsJson() && (!Auth::check() || !Auth::user()->isHRManager())) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to update employee information.');
         }
         // Removed redundant role check, now handled by route middleware.
@@ -453,15 +454,32 @@ class EmployeeController extends Controller
 
         $employee->update($updateData);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Employee updated successfully',
+                'employee' => $employee
+            ]);
+        }
+
         return redirect()->route('employees.index')->with('success', 'Employee updated successfully');
     }
 
-    public function destroy(User $employee)
+    public function destroy(User $employee, Request $request)
     {
-        if (!Auth::user()->isHRManager()) {
+        // Skip auth check for API requests (from biometric-app)
+        if (!$request->wantsJson() && (!Auth::check() || !Auth::user()->isHRManager())) {
             return redirect()->route('dashboard')->with('error', 'You are not authorized to delete employees.');
         }
         $employee->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Employee account permanently deleted.'
+            ]);
+        }
+
         return redirect()->route('employees.index')->with('success', 'Employee account permanently deleted.');
     }
 
