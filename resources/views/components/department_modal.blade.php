@@ -67,7 +67,7 @@
 
             try {
                 const response = await fetch(url, {
-                    method: methodToUse, // Use the method from the hidden field
+                    method: 'POST', // Always use POST for FormData to allow Laravel to interpret _method field correctly
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
