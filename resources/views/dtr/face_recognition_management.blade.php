@@ -3,24 +3,24 @@
 @section('title', 'Face Recognition Management')
 
 @section('content')
-<div class="container mx-auto px-6 py-6">
+<div class="mx-6 py-6">
     <header class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-user-shield mr-3 text-indigo-600"></i> Face Recognition Management
         </h1>
-        <p class="text-gray-600 mt-2">Enable or disable face recognition access for employees to use clock in/out features.</p>
+        <p class="text-slate-400 mt-2">Enable or disable face recognition access for employees to use clock in/out features.</p>
     </header>
 
-    <div class="bg-white rounded-lg shadow-xl p-6">
+    <div class="bg-white rounded-3xl shadow-xl p-6">
         {{-- Filters --}}
         <form action="{{ route('dtr.face-recognition.management') }}" method="GET" class="mb-6 border-b pb-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="department_id" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <select name="department_id" id="department_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">All Departments</option>
+                    <select name="department_id" id="department_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900 bg-white">
+                        <option value="" class="text-gray-900">All Departments</option>
                         @foreach($departments as $department)
-                            <option value="{{ $department->id }}" {{ $selectedDepartmentId == $department->id ? 'selected' : '' }}>
+                            <option value="{{ $department->id }}" {{ $selectedDepartmentId == $department->id ? 'selected' : '' }} class="text-gray-900">
                                 {{ $department->name }}
                             </option>
                         @endforeach
@@ -30,7 +30,7 @@
                     <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search Employee</label>
                     <input type="text" name="search" id="search" placeholder="Search by name or ID..." 
                            value="{{ $search ?? '' }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-gray-900 bg-white placeholder-gray-500">
                 </div>
                 <div class="flex items-end gap-2">
                     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 shadow-sm">
@@ -58,7 +58,7 @@
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200 text-gray-900">
                     @forelse($employees as $employee)
                         <tr class="hover:bg-gray-50 transition duration-100"
                             data-employee-row
@@ -123,15 +123,15 @@
         {{-- Summary Statistics --}}
         @if($employees->count() > 0)
             <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
-                <div class="bg-green-50 p-4 rounded-lg">
+                <div class="bg-green-50 p-4 rounded-3xl">
                     <div class="text-sm font-medium text-green-800">Enabled</div>
                     <div class="text-2xl font-bold text-green-900" id="enabled-count">{{ $employees->where('face_recognition_enabled', true)->count() }}</div>
                 </div>
-                <div class="bg-red-50 p-4 rounded-lg">
+                <div class="bg-red-50 p-4 rounded-3xl">
                     <div class="text-sm font-medium text-red-800">Disabled</div>
                     <div class="text-2xl font-bold text-red-900" id="disabled-count">{{ $employees->where('face_recognition_enabled', false)->count() }}</div>
                 </div>
-                <div class="bg-blue-50 p-4 rounded-lg">
+                <div class="bg-blue-50 p-4 rounded-3xl">
                     <div class="text-sm font-medium text-blue-800">Total Employees</div>
                     <div class="text-2xl font-bold text-blue-900">{{ $employees->count() }}</div>
                 </div>

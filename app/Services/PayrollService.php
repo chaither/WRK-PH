@@ -303,13 +303,26 @@ class PayrollService
 
                     // Calculate expected regular work hours for the day based on user's shift
                     $expectedRegularHours = 0;
-                    if ($employee->work_start && $employee->work_end) {
+                    if ($employee->shift) {
+                        $start = Carbon::parse($employee->shift->start_time);
+                        $end = Carbon::parse($employee->shift->end_time);
+                        
+                        // Calculate total hours in the shift
+                        $shiftDurationHours = $start->diffInHours($end);
+                        
+                        // Subtract lunch break duration if configured and unpaid
+                        $lunchBreakHours = 0;
+                        if ($employee->shift->lunch_break_duration && !$employee->shift->is_lunch_paid) {
+                            $lunchBreakHours = $employee->shift->lunch_break_duration / 60; // Convert minutes to hours
+                        }
+                        
+                        $expectedRegularHours = max(0, $shiftDurationHours - $lunchBreakHours);
+                    } elseif ($employee->work_start && $employee->work_end) {
+                        // Fallback to old work_start/work_end if no shift assigned
                         $start = Carbon::parse($employee->work_start);
                         $end = Carbon::parse($employee->work_end);
-                        
-                        // Calculate total hours in the shift, then subtract 1 hour for lunch break
                         $shiftDurationHours = $start->diffInHours($end);
-                        $expectedRegularHours = max(0, $shiftDurationHours); // Assuming a 1-hour unpaid lunch break
+                        $expectedRegularHours = max(0, $shiftDurationHours - 1); // Default 1-hour lunch for legacy
                     }
 
                     // Use the regular_work_hours directly from the DTR record

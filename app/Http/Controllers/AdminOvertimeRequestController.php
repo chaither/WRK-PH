@@ -33,23 +33,17 @@ class AdminOvertimeRequestController extends Controller
             ['user_id' => $overtimeRequest->user_id, 'date' => $overtimeRequest->date]
         );
 
-        $start = Carbon::parse($overtimeRequest->start_time);
-        $end = Carbon::parse($overtimeRequest->end_time);
-        $overtimeHours = $end->diffInMinutes($start, true) / 60; // Added true for absolute difference
-        
-        // Set overtime time in and time out
+        // Set approved overtime window
         $dtrRecord->overtime_time_in = $overtimeRequest->start_time;
         $dtrRecord->overtime_time_out = $overtimeRequest->end_time;
 
-        // Log the calculated overtime hours for debugging
-        Log::info('AdminOvertimeRequestController: Calculated Overtime Hours for request ' . $id . ': ' . $overtimeHours);
-
-        $dtrRecord->overtime_hours += $overtimeHours;
-        Log::info('AdminOvertimeRequestController: DTRRecord overtime_hours before recalculateAllHours: ' . $dtrRecord->overtime_hours);
-        $dtrRecord->recalculateAllHours(); // Recalculate to ensure all related fields are updated
-        Log::info('AdminOvertimeRequestController: DTRRecord overtime_hours after recalculateAllHours and before save: ' . $dtrRecord->overtime_hours);
+        // Save the record. This triggers the 'saving' event in DTRRecord model,
+        // which calls 'recalculateAllHours()'.
+        // recalculateAllHours() will now use the newly set overtime_time_in/out
+        // to strictly calculate the valid overtime hours based on actual time logs.
         $dtrRecord->save();
-        Log::info('AdminOvertimeRequestController: DTRRecord overtime_hours after save: ' . $dtrRecord->overtime_hours);
+        
+        Log::info('AdminOvertimeRequestController: Approved OT for User ' . $overtimeRequest->user_id . '. DTR recalculated. Overtime Hours: ' . $dtrRecord->overtime_hours);
 
         // Create notification for employee
         Notification::create([

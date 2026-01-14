@@ -3,27 +3,27 @@
 @section('title', 'Leave Request Review')
 
 @section('content')
-<div class="container mx-auto px-6 py-6"> {{-- Consistent compact padding --}}
+<div class="mx-6 py-6"> {{-- Consistent compact padding --}}
     <header class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-clipboard-list mr-3 text-indigo-600"></i> Leave Request Review
         </h1>
     </header>
 
     {{-- Session Messages --}}
     @if (session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-3xl relative mb-6" role="alert">
             <span class="block sm:inline">{{ session('success') }}</span>
         </div>
     @endif
     @if (session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-3xl relative mb-6" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
 
     {{-- Leave Requests Table --}}
-    <div class="bg-white rounded-lg shadow-xl overflow-x-auto border border-gray-200">
+    <div class="bg-white rounded-3xl shadow-xl overflow-x-auto border border-gray-200">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>

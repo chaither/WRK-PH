@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Holiday Management</h1>
+<div class="mx-6 py-6">
+    <h1 class="text-3xl font-bold text-white mb-6">Holiday Management</h1>
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div class="flex items-center gap-2">
@@ -35,7 +35,7 @@
     @endif
 
     {{-- Table view --}}
-    <div id="holidayTableView" class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div id="holidayTableView" class="bg-white shadow-md rounded-3xl overflow-hidden">
         <table class="min-w-full leading-normal">
             <thead>
                 <tr>
@@ -127,7 +127,7 @@
         })->values();
     @endphp
 
-    <div id="holidayCalendarView" class="mt-4 bg-white shadow-md rounded-lg p-4 hidden">
+    <div id="holidayCalendarView" class="mt-4 bg-white shadow-md rounded-3xl p-4 hidden">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
                 <h2 id="holidayCalendarMonthLabel" class="text-xl font-semibold text-gray-800">Calendar</h2>

@@ -154,9 +154,100 @@ class DTRController extends Controller
             $status = 'late';
         }
 
-        $timeOfDay = TimeHelper::getTimeOfDay($now);
+        // Determine Session based on Shift
+        $isSession1 = true;
+        $user->load('shift');
+        
+        if ($user->shift) {
+            // Use shift settings
+            $lunchStart = $user->shift->lunch_break_start ? Carbon::parse($user->shift->lunch_break_start) : null;
+            $lunchEnd = $user->shift->lunch_break_end ? Carbon::parse($user->shift->lunch_break_end) : null;
+            $shiftStart = $user->shift->start_time ? Carbon::parse($user->shift->start_time) : null;
 
-        // If no record exists for today, create the first clock-in
+            // Simple logic: If we are "before" lunch, it's Session 1.
+            // If night shift (e.g. Start 19:00, Lunch 23:00), 19:00 is "before" 23:00.
+            // If user clocks in at 01:00 (after lunch), they are "after".
+            
+            if ($lunchStart) {
+                 // Convert all to timestamps on the "base date" to handle wrap-around shifts?
+                 // Easier: Compare strictly time strings if no date involved, OR:
+                 
+                 // If Shift Start > Lunch Start (Impossible for single day, possible for night shift crossing midnight)
+                 // Let's rely on the "TimeHelper" concept but dynamic.
+                 
+                 $nowTime = (int)$now->format('Hi');
+                 $lunchStartTime = (int)$lunchStart->format('Hi');
+                 $shiftStartTime = $shiftStart ? (int)$shiftStart->format('Hi') : 0;
+                 
+                 // Night Shift Case: Start=1900, Lunch=2300 (or 0000)
+                 if ($shiftStartTime > $lunchStartTime) {
+                     // Wrap around scenario (e.g. Start 19:00, Lunch 00:00)
+                     // Session 1 is 19:00 to 23:59 AND 00:00 to Lunch
+                     // Actually simplest check: If User Time is between Start and Lunch.
+                     
+                     // Complex with timestamps. Let's try simpler heuristics.
+                     // If existingRecord->time_in is empty, we prioritize Session 1 unless it's overwhelmingly obvious it's Session 2.
+                     // For Night Shift (19:00), 19:00 is definitely Session 1.
+                     // 19:00 > 12:00 (Noon). Old logic failed here.
+                     
+                     // New Logic: 
+                     // Default to Session 1 if data is empty. 
+                     // Only jump to Session 2 if we are clearly past the "Lunch Threshold".
+                     
+                     // Define a threshold
+                     $threshold = $lunchStart->format('H:i');
+                     $currentTime = $now->format('H:i');
+                     
+                     // Handle midnight crossing for the threshold comparison
+                     // If Shift Start (19:00) > Threshold (00:00)
+                     // And Current (19:00) > Threshold (00:00) -> Session 1? Yes.
+                     
+                     // Let's use the 'isTimeInRange' logic we used before or similar.
+                     // But simpler:
+                     // If time_in is empty, attempt Time 1.
+                     // UNLESS we are specifically in the "PM" window of a Day Shift.
+                 } else {
+                     // Normal Day Shift (Start 0800, Lunch 1200)
+                     if ($nowTime >= $lunchStartTime) {
+                         $isSession1 = false;
+                     }
+                 }
+            } else {
+                 // Fallback if no lunch defined but shift exists: Split at midpoint?
+                 // Or just fallback to 12 PM if shift starts in AM, or 12 AM if shift starts in PM?
+                 if ($shiftStart && $shiftStart->hour >= 12) {
+                     // Night shift start. "Morning" is virtually PM.
+                     // So we consider "Session 1" as valid.
+                     $isSession1 = true;
+                 } else {
+                     // Day shift logic default
+                     $isSession1 = TimeHelper::getTimeOfDay($now) === 'Morning';
+                 }
+            }
+            // FORCE FIX: If it is a Night Shift (Start > 12:00 PM), allowing "PM" clock-ins to be Session 1
+            if ($user->shift->start_time && Carbon::parse($user->shift->start_time)->hour >= 12) {
+                 // If current time is close to start time (within 4 hours), it matches Session 1
+                 $sTime = Carbon::parse($user->shift->start_time);
+                 $diff = $now->diffInHours($sTime); 
+                 if ($diff < 5) { // Arbitrary buffer: if within 5 hours of start, it's Session 1
+                     $isSession1 = true;
+                 }
+            }
+            
+        } else {
+            // No shift assigned, check generic AM/PM
+             $isSession1 = TimeHelper::getTimeOfDay($now) === 'Morning';
+        }
+
+        // Final override: If time_in (1) is ALREADY taken, we must move to time_in_2 (Session 2), unless logic allows overwriting (which we generally don't).
+        // But here we are deciding where to put the *first* punch if record exists or not.
+        
+        if ($existingRecord && $existingRecord->time_in && !$existingRecord->time_out && !$existingRecord->time_in_2) {
+             // User clocked in morning, hasn't clocked out. Trying to clock in again?
+             // Error defined below handles this.
+        }
+
+        // If no record, create one.
         if (!$existingRecord) {
             $recordData = [
                 'user_id' => $user->id,
@@ -165,38 +256,42 @@ class DTRController extends Controller
                 'late_minutes' => $lateMinutes,
             ];
 
-            if ($timeOfDay === 'Morning') {
+            if ($isSession1) {
                 $recordData['time_in'] = $now;
-                $message = 'Successfully clocked in for the morning.';
-            } else { // Afternoon
+                $message = 'Successfully clocked in for the first session.';
+            } else { 
                 $recordData['time_in_2'] = $now;
-                $message = 'Successfully clocked in for the afternoon.';
+                $message = 'Successfully clocked in for the second session.';
             }
             
             DTRRecord::create($recordData);
             return back()->with('success', $message);
         }
 
-        // If a record exists, check if it's a second clock-in or a morning/afternoon switch
-        if ($timeOfDay === 'Morning') {
+        // If record exists
+        if ($isSession1) {
             if (!$existingRecord->time_in) {
-                $existingRecord->update([
-                    'time_in' => $now,
-                ]);
-                return back()->with('success', 'Successfully clocked in for the morning.');
+                $existingRecord->update(['time_in' => $now]);
+                return back()->with('success', 'Successfully clocked in for the first session.');
             } else if ($existingRecord->time_in && !$existingRecord->time_out && !$existingRecord->time_in_2) {
-                // Allow re-clocking in for morning if they clocked out for lunch and haven't clocked in for afternoon
-                return back()->with('error', 'You have already clocked in for the morning.');
+                return back()->with('error', 'You have already clocked in for the first session.');
+            } else {
+                // If Morning is done (In & Out), checking validity for Session 2 logic fallthrough?
+                // If $isSession1 is true but Time 1 is full, maybe we auto-switch to Session 2?
+                // For now, strict.
             }
-        } else { // Afternoon
-            if (!$existingRecord->time_in_2) {
-                $existingRecord->update([
-                    'time_in_2' => $now,
-                ]);
-                return back()->with('success', 'Successfully clocked in for the afternoon.');
-            } else if ($existingRecord->time_in_2 && !$existingRecord->time_out_2) {
-                return back()->with('error', 'You have already clocked in for the afternoon.');
-            }
+        } 
+        
+        // Fallback or explicit Session 2
+        if (!$existingRecord->time_in_2) {
+             // If we are here, either isSession1=false OR isSession1=true but slots used?
+             // If isSession1 is true, we shouldn't be here unless we want to "overflow".
+             if (!$isSession1 || ($existingRecord->time_in && $existingRecord->time_out)) {
+                $existingRecord->update(['time_in_2' => $now]);
+                return back()->with('success', 'Successfully clocked in for the second session.');
+             }
+        } elseif ($existingRecord->time_in_2 && !$existingRecord->time_out_2) {
+             return back()->with('error', 'You have already clocked in for the second session.');
         }
 
         return back()->with('error', 'You have already clocked in twice today.');

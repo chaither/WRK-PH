@@ -11,17 +11,17 @@
             {{-- @csrf --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="modal_start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" name="start_date" id="modal_start_date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" value="{{ $startDate ? $startDate->format('Y-m-d') : '' }}">
+                    <label for="modal_start_date" class="block text-sm font-bold text-gray-900">Start Date</label>
+                    <input type="date" name="start_date" id="modal_start_date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-gray-900" value="{{ $startDate ? $startDate->format('Y-m-d') : '' }}">
                 </div>
                 <div>
-                    <label for="modal_end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" name="end_date" id="modal_end_date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" value="{{ $endDate ? $endDate->format('Y-m-d') : '' }}">
+                    <label for="modal_end_date" class="block text-sm font-bold text-gray-900">End Date</label>
+                    <input type="date" name="end_date" id="modal_end_date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-gray-900" value="{{ $endDate ? $endDate->format('Y-m-d') : '' }}">
                 </div>
             </div>
             <div>
-                <label for="modal_specific_date" class="block text-sm font-medium text-gray-700">Specific Date</label>
-                <input type="date" name="specific_date" id="modal_specific_date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" value="{{ request('specific_date') }}">
+                <label for="modal_specific_date" class="block text-sm font-bold text-gray-900">Specific Date</label>
+                <input type="date" name="specific_date" id="modal_specific_date" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-gray-900" value="{{ request('specific_date') }}">
             </div>
 
             <div class="flex justify-end space-x-2">

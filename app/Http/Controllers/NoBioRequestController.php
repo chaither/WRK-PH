@@ -98,48 +98,62 @@ class NoBioRequestController extends Controller
             
             $validated = $request->validate($rules);
             
-            // Custom validation for time ranges (after database format validation passes)
-            if ($request->type === 'morning_in' && $shiftStartTime && $request->requested_time_in) {
-                try {
-                    $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
-                    if ($requestedTime < $shiftStartTime) {
-                        return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to your shift start time (' . $shiftStartTime . ').'])->withInput();
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Error parsing requested_time_in for morning_in', ['time' => $request->requested_time_in]);
-                }
+            // 1. Get shift times with robust defaults
+            $shiftStart = $user->shift ? Carbon::parse($user->shift->start_time)->format('H:i') : '08:00';
+            $shiftEnd = $user->shift ? Carbon::parse($user->shift->end_time)->format('H:i') : '17:00';
+            
+            // Smart defaults for lunch: If not set, place it in the middle of the shift
+            if ($user->shift && $user->shift->lunch_break_start) {
+                $lunchStart = Carbon::parse($user->shift->lunch_break_start)->format('H:i');
+            } else {
+                // Approximate midpoint for fallback
+                $lunchStart = Carbon::parse($shiftStart)->addHours(4)->format('H:i');
             }
             
-            if ($request->type === 'afternoon_in' && $request->requested_time_in) {
-                try {
-                    $requestedTime = Carbon::parse($request->requested_time_in)->format('H:i');
-                    if ($requestedTime < '13:00') {
-                        return redirect()->back()->withErrors(['requested_time_in' => 'The requested time in must be after or equal to 1:00 PM (13:00).'])->withInput();
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Error parsing requested_time_in for afternoon_in', ['time' => $request->requested_time_in]);
-                }
+            if ($user->shift && $user->shift->lunch_break_end) {
+                $lunchEnd = Carbon::parse($user->shift->lunch_break_end)->format('H:i');
+            } else {
+                 $lunchEnd = Carbon::parse($lunchStart)->addHour()->format('H:i');
             }
-            
-            if ($request->type === 'morning_out' && $request->requested_time_out) {
-                try {
-                    $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
-                    if ($requestedTime > '12:00') {
-                        return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to 12:00 PM.'])->withInput();
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Error parsing requested_time_out for morning_out', ['time' => $request->requested_time_out]);
+
+            // Helper to check if a time is within a range (handles night shift wrap-around)
+            $isTimeInRange = function ($time, $start, $end) {
+                if (!$time || !$start || !$end) return true;
+                if ($start <= $end) {
+                    return $time >= $start && $time <= $end;
                 }
+                // Wrap-around case (e.g., 22:00 to 02:00)
+                return $time >= $start || $time <= $end;
+            };
+
+            // 2. Perform Validation
+            // A: Strict Global Check (Must be within Shift Start -> Shift End)
+            $requestedTimeCheck = null;
+            if (in_array($request->type, ['morning_in', 'morning_out'])) {
+                 $requestedTimeCheck = $request->type === 'morning_in' ? $request->requested_time_in : $request->requested_time_out;
+            } elseif (in_array($request->type, ['afternoon_in', 'afternoon_out'])) {
+                 $requestedTimeCheck = $request->type === 'afternoon_in' ? $request->requested_time_in : $request->requested_time_out;
             }
-            
-            if ($request->type === 'afternoon_out' && $shiftEndTime && $request->requested_time_out) {
-                try {
-                    $requestedTime = Carbon::parse($request->requested_time_out)->format('H:i');
-                    if ($requestedTime > $shiftEndTime) {
-                        return redirect()->back()->withErrors(['requested_time_out' => 'The requested time out must be before or equal to your shift end time (' . $shiftEndTime . ').'])->withInput();
+
+            if ($requestedTimeCheck) {
+                // Check against the WHOLE shift first (Safety Net)
+                if (!$isTimeInRange($requestedTimeCheck, $shiftStart, $shiftEnd)) {
+                    $fieldName = str_replace('request_', 'requested_', $request->type); // rough map, or just logic
+                    $fName = $request->type === 'morning_in' || $request->type === 'afternoon_in' ? 'requested_time_in' : 'requested_time_out'; 
+                    return redirect()->back()->withErrors([$fName => "Requested time ({$requestedTimeCheck}) is outside your assigned shift hours ({$shiftStart} to {$shiftEnd})."])->withInput();
+                }
+
+                // B: Session Specific Check
+                if (in_array($request->type, ['morning_in', 'morning_out'])) {
+                    if (!$isTimeInRange($requestedTimeCheck, $shiftStart, $lunchStart)) {
+                         $fName = $request->type === 'morning_in' ? 'requested_time_in' : 'requested_time_out';
+                         return redirect()->back()->withErrors([$fName => "Requested time must be within your First Session ({$shiftStart} to {$lunchStart})."])->withInput();
                     }
-                } catch (\Exception $e) {
-                    Log::warning('Error parsing requested_time_out for afternoon_out', ['time' => $request->requested_time_out]);
+                } elseif (in_array($request->type, ['afternoon_in', 'afternoon_out'])) {
+                    if (!$isTimeInRange($requestedTimeCheck, $lunchEnd, $shiftEnd)) {
+                         $fName = $request->type === 'afternoon_in' ? 'requested_time_in' : 'requested_time_out';
+                         return redirect()->back()->withErrors([$fName => "Requested time must be within your Second Session ({$lunchEnd} to {$shiftEnd})."])->withInput();
+                    }
                 }
             }
 

@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-semibold text-gray-800 mb-4">Review Change Shift Requests</h1>
+<div class="mx-6 py-6">
+    <h1 class="text-2xl font-semibold text-white mb-4">Review Change Shift Requests</h1>
 
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <div class="bg-white shadow-md rounded-lg p-6">
+    <div class="bg-white shadow-md rounded-3xl p-6">
         @if ($changeShiftRequests->isEmpty())
             <p class="text-gray-600">No pending change shift requests.</p>
         @else
@@ -27,10 +27,10 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Shift</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Shift</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200 text-gray-900">
                     @foreach ($changeShiftRequests as $request)
                         @php
                             $employeeName = $request->user->name ?? 'N/A';
@@ -53,7 +53,7 @@
                             <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">{{ $currentShiftName }}</td>
                             <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">{{ $requestedShiftName }}</td>
                             <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">{{ $reason }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium hidden sm:table-cell">
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium hidden sm:table-cell">
                                 <form action="{{ route('admin.attendance.change-shift.approve', $request->id) }}" method="POST" class="inline-block">
                                     @csrf
                                     <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Approve</button>
@@ -65,7 +65,7 @@
                             </td>
                         </tr>
                         <tr x-show="open" x-transition:enter="transition-all ease-in-out duration-300" x-transition:enter-start="opacity-0 max-h-0" x-transition:enter-end="opacity-100 max-h-xl" x-transition:leave="transition-all ease-in-out duration-300" x-transition:leave-start="opacity-100 max-h-xl" x-transition:leave-end="opacity-0 max-h-0" class="sm:hidden">
-                            <td colspan="5" class="px-6 py-4">
+                            <td colspan="5" class="px-6 py-4 text-gray-900">
                                 <div class="space-y-2">
                                     <p><span class="font-medium">Current Shift:</span> {{ $currentShiftName }}</p>
                                     <p><span class="font-medium">Requested Shift:</span> {{ $requestedShiftName }}</p>

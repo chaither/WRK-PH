@@ -44,31 +44,68 @@ class AdminNoBioRequestController extends Controller
             $noBioRequest->load('user.shift');
             $userShift = $noBioRequest->user->shift;
 
-            // Define default lunch break times. These could be configured per shift in the future.
-            $defaultMorningOutTime = '12:00'; // Example lunch start
-            $defaultAfternoonInTime = '13:00'; // Example lunch end
+            // Define lunch break times based on shift if available
+            $morningOutTime = ($userShift && $userShift->lunch_break_start) ? Carbon::parse($userShift->lunch_break_start)->format('H:i') : '12:00';
+            $afternoonInTime = ($userShift && $userShift->lunch_break_end) ? Carbon::parse($userShift->lunch_break_end)->format('H:i') : '13:00';
 
             $requestDate = Carbon::parse($noBioRequest->date);
+            
+            // Helper to set time with Night Shift adjustment
+            // If it's a Night Shift (Start > End), and the time we are setting is < Start, 
+            // it means it's the Next Day (e.g. End time 04:00 vs Start 19:00).
+            $setTime = function($baseDate, $timeStr, $shiftStartStr = null, $shiftEndStr = null) {
+                if (!$timeStr) return null;
+                
+                $dt = $baseDate->copy()->setTimeFromTimeString($timeStr);
+                
+                // Check Night Shift Condition
+                if ($shiftStartStr && $shiftEndStr) {
+                    $sStart = Carbon::parse($shiftStartStr);
+                    $sEnd = Carbon::parse($shiftEndStr);
+                    
+                    if ($sEnd->lessThan($sStart)) { // Is Night Shift
+                         $t = Carbon::parse($timeStr);
+                         // If time is less than Start (e.g. 01:00 < 19:00), it's next day
+                         // We use a loose comparison, assuming times 00:00 to ShiftEnd belong to next day
+                         if ($t->lessThan($sStart)) {
+                             $dt->addDay();
+                         }
+                    }
+                }
+                return $dt;
+            };
+            
+            $sStartStr = ($userShift && $userShift->start_time) ? $userShift->start_time : null;
+            $sEndStr = ($userShift && $userShift->end_time) ? $userShift->end_time : null;
 
             if ($noBioRequest->type === 'morning_in' && $noBioRequest->requested_time_in) {
-                $dtrRecord->time_in = $requestDate->copy()->setTimeFromTimeString($noBioRequest->requested_time_in);
+                $dtrRecord->time_in = $setTime($requestDate, $noBioRequest->requested_time_in, $sStartStr, $sEndStr);
             } elseif ($noBioRequest->type === 'morning_out' && $noBioRequest->requested_time_out) {
-                $dtrRecord->time_out = $requestDate->copy()->setTimeFromTimeString($noBioRequest->requested_time_out);
+                $dtrRecord->time_out = $setTime($requestDate, $noBioRequest->requested_time_out, $sStartStr, $sEndStr);
             } elseif ($noBioRequest->type === 'afternoon_in' && $noBioRequest->requested_time_in) {
-                $dtrRecord->time_in_2 = $requestDate->copy()->setTimeFromTimeString($noBioRequest->requested_time_in);
+                $dtrRecord->time_in_2 = $setTime($requestDate, $noBioRequest->requested_time_in, $sStartStr, $sEndStr);
             } elseif ($noBioRequest->type === 'afternoon_out' && $noBioRequest->requested_time_out) {
-                $dtrRecord->time_out_2 = $requestDate->copy()->setTimeFromTimeString($noBioRequest->requested_time_out);
-            } elseif ($noBioRequest->type === 'all_morning' && $userShift && $userShift->start_time) {
-                $dtrRecord->time_in = $requestDate->copy()->setTimeFromTimeString($userShift->start_time);
-                $dtrRecord->time_out = $requestDate->copy()->setTimeFromTimeString($defaultMorningOutTime);
-            } elseif ($noBioRequest->type === 'all_afternoon' && $userShift && $userShift->end_time) {
-                $dtrRecord->time_in_2 = $requestDate->copy()->setTimeFromTimeString($defaultAfternoonInTime);
-                $dtrRecord->time_out_2 = $requestDate->copy()->setTimeFromTimeString($userShift->end_time);
-            } elseif ($noBioRequest->type === 'whole_day' && $userShift && $userShift->start_time && $userShift->end_time) {
-                $dtrRecord->time_in = $requestDate->copy()->setTimeFromTimeString($userShift->start_time);
-                $dtrRecord->time_out = $requestDate->copy()->setTimeFromTimeString($defaultMorningOutTime);
-                $dtrRecord->time_in_2 = $requestDate->copy()->setTimeFromTimeString($defaultAfternoonInTime);
-                $dtrRecord->time_out_2 = $requestDate->copy()->setTimeFromTimeString($userShift->end_time);
+                $dtrRecord->time_out_2 = $setTime($requestDate, $noBioRequest->requested_time_out, $sStartStr, $sEndStr);
+            } elseif ($noBioRequest->type === 'all_morning') {
+                $tIn = $noBioRequest->requested_time_in ?: ($userShift ? $userShift->start_time : null);
+                $tOut = $noBioRequest->requested_time_out ?: ($morningOutTime); // Default to lunch start
+                
+                $dtrRecord->time_in = $setTime($requestDate, $tIn, $sStartStr, $sEndStr);
+                $dtrRecord->time_out = $setTime($requestDate, $tOut, $sStartStr, $sEndStr);
+            } elseif ($noBioRequest->type === 'all_afternoon') {
+                $tIn = $noBioRequest->requested_time_in ?: ($afternoonInTime); // Default to lunch end
+                $tOut = $noBioRequest->requested_time_out ?: ($userShift ? $userShift->end_time : null);
+                
+                $dtrRecord->time_in_2 = $setTime($requestDate, $tIn, $sStartStr, $sEndStr);
+                $dtrRecord->time_out_2 = $setTime($requestDate, $tOut, $sStartStr, $sEndStr);
+            } elseif ($noBioRequest->type === 'whole_day') {
+                $tIn = $noBioRequest->requested_time_in ?: ($userShift ? $userShift->start_time : null);
+                $tOut = $noBioRequest->requested_time_out ?: ($userShift ? $userShift->end_time : null);
+                
+                $dtrRecord->time_in = $setTime($requestDate, $tIn, $sStartStr, $sEndStr);
+                $dtrRecord->time_out = $setTime($requestDate, $morningOutTime, $sStartStr, $sEndStr);
+                $dtrRecord->time_in_2 = $setTime($requestDate, $afternoonInTime, $sStartStr, $sEndStr);
+                $dtrRecord->time_out_2 = $setTime($requestDate, $tOut, $sStartStr, $sEndStr);
             }
 
             // Set DTR record status to approved (if not already set by firstOrCreate)

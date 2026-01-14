@@ -4,27 +4,27 @@
 
 @section('content')
 @php $period = $currentPeriod; @endphp {{-- Moved this line to the very top --}}
-<div class="container mx-auto px-6 py-6"> {{-- Reduced vertical padding to py-6 --}}
+<div class="mx-6 py-6"> {{-- Reduced vertical padding to py-6 --}}
     <header class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-money-bill-wave mr-3 text-indigo-600"></i> Payroll Management
         </h1>
     </header>
 
-    <div class="bg-white rounded-lg shadow-xl p-6"> {{-- Reduced padding to p-6 --}}
+    <div class="bg-white rounded-3xl shadow-xl p-6"> {{-- Reduced padding to p-6 --}}
         <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b border-gray-400 pb-2">Payroll Overview</h2>
 
         {{-- Payroll Statistics Cards (More compact design) --}}
         <div class="mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4"> {{-- Reduced gap to 4 --}}
                 {{-- Total Employees Card --}}
-                <div class="bg-indigo-600 text-white p-5 rounded-lg shadow-md transition duration-200 hover:shadow-lg"> {{-- Reduced padding to p-5 --}}
+                <div class="bg-indigo-600 text-white p-5 rounded-3xl shadow-md transition duration-200 hover:shadow-lg"> {{-- Reduced padding to p-5 --}}
                     <h3 class="text-base font-medium mb-1 opacity-90">Total Employees</h3> {{-- Smaller text --}}
                     <p class="text-4xl font-extrabold">{{ $totalEmployees ?? 0 }}</p> {{-- Slightly smaller text --}}
                 </div>
 
                 {{-- Total Payroll Card --}}
-                <div class="bg-green-600 text-white p-5 rounded-lg shadow-md transition duration-200 hover:shadow-lg"> {{-- Reduced padding to p-5 --}}
+                <div class="bg-green-600 text-white p-5 rounded-3xl shadow-md transition duration-200 hover:shadow-lg"> {{-- Reduced padding to p-5 --}}
                     <h3 class="text-base font-medium mb-1 opacity-90">Total Payroll</h3> {{-- Smaller text --}}
                     <p class="text-4xl font-extrabold">₱{{ number_format($totalNetPay ?? 0, 2) }}</p> {{-- Slightly smaller text --}}
                 </div>
@@ -51,7 +51,7 @@
             </a>
         </div>
 
-        <div class="mb-6 flex flex-wrap gap-2 items-end p-3 bg-gray-50 rounded-lg sm:flex-nowrap sm:gap-4">
+        <div class="mb-6 flex flex-wrap gap-2 items-end p-3 bg-gray-50 rounded-3xl sm:flex-nowrap sm:gap-4">
             <a href="{{ route('admin.payroll.history.index') }}" class="w-full sm:w-auto bg-blue-600 text-white px-4 py-1.5 text-sm rounded-md font-medium hover:bg-blue-700 transition duration-150 shadow-md flex items-center justify-center">
                 <i class="fas fa-history mr-1"></i> Payroll History
             </a>
@@ -136,7 +136,7 @@
             @forelse($groupedPayslips as $departmentName => $departmentPayslips)
                 <div class="mb-6 mt-8">
                     <h3 class="text-xl font-bold text-gray-800 mb-4">{{ $departmentName }}</h3>
-                    <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                    <div class="overflow-x-auto border border-gray-200 rounded-3xl shadow-sm">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -251,7 +251,7 @@
                     </div>
                 </div>
             @empty
-                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm mb-6">
+                <div class="overflow-x-auto border border-gray-200 rounded-3xl shadow-sm mb-6">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -282,7 +282,7 @@
         @else
             {{-- Original single table rendering if not grouped --}}
             @if($payrolls->isNotEmpty())
-                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm mb-6">
+                <div class="overflow-x-auto border border-gray-200 rounded-3xl shadow-sm mb-6">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -391,7 +391,7 @@
                 </div>
             @else
                 {{-- Display message if no payrolls at all when not grouped --}}
-                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm mb-6">
+                <div class="overflow-x-auto border border-gray-200 rounded-3xl shadow-sm mb-6">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -436,7 +436,7 @@
 <input type="hidden" id="globalOvertimeMultiplierData" value="{{ $globalOvertimeMultiplier ?? '1.5' }}">
 {{-- @include('components.payroll-filter-modal') --}} {{-- No longer passing availablePayPeriods here --}}
 <div id="editDeductionsModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 p-2"> {{-- Reduced overall padding --}}
-    <div class="bg-white rounded-xl shadow-2xl p-4 max-w-xs sm:max-w-2xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100"> {{-- Reduced max-width and padding --}}
+    <div class="bg-white rounded-3xl shadow-2xl p-4 max-w-xs sm:max-w-2xl w-full max-h-screen-70 overflow-y-auto transform transition-all duration-300 scale-100"> {{-- Reduced max-width and padding --}}
         <div class="flex justify-between items-center mb-3 border-b pb-2"> {{-- Reduced margin and padding --}}
             <h2 class="text-lg font-bold text-gray-800">⚙️ Edit Deductions</h2> {{-- Smaller text --}}
             <button onclick="closeEditDeductionsModal()" class="text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-full hover:bg-gray-100">
@@ -449,7 +449,7 @@
             <input type="hidden" name="payslip_id" id="edit_deductions_payslip_id">
 
             {{-- Total Deductions Section --}}
-            <div class="bg-red-50 p-3 rounded-lg space-y-2 border border-red-200"> {{-- Reduced padding and space-y --}}
+            <div class="bg-red-50 p-3 rounded-3xl space-y-2 border border-red-200"> {{-- Reduced padding and space-y --}}
                 <h3 class="text-sm font-bold text-red-700 flex items-center"><i class="fas fa-minus-circle mr-2"></i> Total Deductions</h3> {{-- Smaller text --}}
                 <div>
                     <label for="deductions_amount" class="block text-xs font-medium text-gray-700 mb-1">Total Deductions (₱)</label>

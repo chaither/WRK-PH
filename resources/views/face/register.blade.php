@@ -4,8 +4,8 @@
 @section('title', 'Face Registration')
 
 @section('content')
-<div class="container mx-auto px-4 py-10">
-    <div class="max-w-4xl mx-auto bg-gray-50 rounded-lg shadow-lg overflow-hidden">
+<div class="mx-6 py-10">
+    <div class="max-w-4xl mx-auto bg-gray-50 rounded-3xl shadow-lg overflow-hidden">
         <div class="flex flex-col md:flex-row md:items-stretch">
             <!-- Camera area -->
             <div class="md:w-1/2 bg-gradient-to-br from-gray-200 via-gray-900 to-gray-100 p-6 flex flex-col items-center md:items-center md:justify-center h-100">

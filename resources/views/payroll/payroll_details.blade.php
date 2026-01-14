@@ -3,9 +3,9 @@
 @section('title', 'Payroll Details')
 
 @section('content')
-<div class="container mx-auto px-6 py-8">
+<div class="mx-6 py-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-receipt mr-3 text-indigo-600"></i> Payroll Details for {{ \Carbon\Carbon::parse($payPeriod->start_date)->format('F d, Y') }} - {{ \Carbon\Carbon::parse($payPeriod->end_date)->format('F d, Y') }}
         </h1>
         <a href="{{ route('admin.payroll.history.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -13,7 +13,7 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow-xl overflow-hidden p-6">
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden p-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
                 <p class="text-gray-600 font-semibold">Pay Period Dates:</p>
@@ -44,15 +44,15 @@
             <div class="md:col-span-2 mt-4 pt-4 border-t border-gray-300">
                 <h3 class="text-lg font-bold text-gray-800 mb-3">Total Payroll Summary</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="bg-blue-50 p-4 rounded-3xl">
                         <p class="text-sm text-gray-600 font-medium mb-1">Total Gross Pay</p>
                         <p class="text-2xl font-bold text-gray-900">₱{{ number_format($summaryTotalGrossPay, 2) }}</p>
                     </div>
-                    <div class="bg-red-50 p-4 rounded-lg">
+                    <div class="bg-red-50 p-4 rounded-3xl">
                         <p class="text-sm text-gray-600 font-medium mb-1">Total Deductions</p>
                         <p class="text-2xl font-bold text-red-600">₱{{ number_format($summaryTotalDeductions, 2) }}</p>
                     </div>
-                    <div class="bg-indigo-50 p-4 rounded-lg">
+                    <div class="bg-indigo-50 p-4 rounded-3xl">
                         <p class="text-sm text-gray-600 font-medium mb-1">Total Net Pay</p>
                         <p class="text-2xl font-bold text-indigo-700">₱{{ number_format($summaryTotalNetPay, 2) }}</p>
                     </div>

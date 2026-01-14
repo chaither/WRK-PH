@@ -7,14 +7,14 @@
 @endphp
 
 @section('content')
-<div class="container mx-auto px-6 py-6"> {{-- Consistent compact padding --}}
+<div class="mx-6 py-6"> {{-- Consistent compact padding --}}
     <header class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-clock mr-3 text-indigo-600"></i> DTR Management
         </h1>
     </header>
 
-    <div class="bg-white rounded-lg shadow-xl p-6"> {{-- Consistent card styling --}}
+    <div class="bg-white rounded-3xl shadow-xl p-6"> {{-- Consistent card styling --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2">
             <h2 class="text-xl font-semibold text-gray-700">
                 Daily Attendance
@@ -41,25 +41,25 @@
         {{-- Statistics Cards (Consistent, bolder colors) --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6"> {{-- Reduced gap --}}
             {{-- Present Card --}}
-            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'present'])) }}" class="block bg-green-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
+            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'present'])) }}" class="block bg-green-600 text-white p-4 rounded-3xl shadow-md transition duration-200 hover:shadow-lg">
                 <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-user-check mr-2"></i> Present</h3>
                 <p class="text-4xl font-extrabold">{{ $presentCount }}</p>
             </a>
 
             {{-- Late Card --}}
-            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'late'])) }}" class="block bg-yellow-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
+            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'late'])) }}" class="block bg-yellow-600 text-white p-4 rounded-3xl shadow-md transition duration-200 hover:shadow-lg">
                 <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-hourglass-half mr-2"></i> Late</h3>
                 <p class="text-4xl font-extrabold">{{ $lateCount }}</p>
             </a>
 
             {{-- Half Day Card --}}
-            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'half_day'])) }}" class="block bg-blue-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
+            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'half_day'])) }}" class="block bg-blue-600 text-white p-4 rounded-3xl shadow-md transition duration-200 hover:shadow-lg">
                 <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-sun mr-2"></i> Half Day</h3>
                 <p class="text-4xl font-extrabold">{{ $halfDayCount }}</p>
             </a>
 
             {{-- Absent Card --}}
-            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'absent'])) }}" class="block bg-red-600 text-white p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
+            <a href="{{ route('dtr.admin', array_merge(request()->query(), ['status' => 'absent'])) }}" class="block bg-red-600 text-white p-4 rounded-3xl shadow-md transition duration-200 hover:shadow-lg">
                 <h3 class="text-base font-medium mb-1 opacity-90 flex items-center"><i class="fas fa-user-slash mr-2"></i> Absent</h3>
                 <p class="text-4xl font-extrabold">{{ $absentCount }}</p>
             </a>
@@ -91,17 +91,17 @@
                 <form id="filterForm" action="{{ route('dtr.admin') }}" method="GET" class="space-y-4">
                     <div>
                         <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                        <input type="date" name="start_date" id="start_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        <input type="date" name="start_date" id="start_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
                                value="{{ $startDate ? $startDate->format('Y-m-d') : '' }}">
                     </div>
                     <div>
                         <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-                        <input type="date" name="end_date" id="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        <input type="date" name="end_date" id="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black"
                                value="{{ $endDate ? $endDate->format('Y-m-d') : '' }}">
                     </div>
                     <div>
                         <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee</label>
-                        <select name="employee_id" id="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <select name="employee_id" id="employee_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black">
                             <option value="">All Employees</option>
                             @foreach($allEmployees as $emp)
                                 <option value="{{ $emp->id }}" {{ (string) $emp->id === (string) $selectedEmployeeId ? 'selected' : '' }}>
@@ -112,7 +112,7 @@
                     </div>
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-black">
                             <option value="">All Statuses</option>
                             <option value="present" {{ $filterStatus === 'present' ? 'selected' : '' }}>Present</option>
                             <option value="late" {{ $filterStatus === 'late' ? 'selected' : '' }}>Late</option>
@@ -135,16 +135,16 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Employee Name</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time In 1</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 1</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time In 2</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Time Out 2</th>
+                        <th class="px-4 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Employee Name</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Time In 1</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Time Out 1</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Time In 2</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Time Out 2</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time In</th>
                         <th class="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">Overtime Time Out</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Regular Work Hours</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Total Work Hours</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Regular Work Hours</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-2 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Total Work Hours</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
@@ -155,45 +155,35 @@
                             </td>
                             @php
                                 $dtrRecord = optional($employee->dtrRecords->first());
-                                // If first (and only) log is in the afternoon, show it in the PM columns and keep AM columns blank
                                 $timeIn = $dtrRecord->time_in ? \Carbon\Carbon::parse($dtrRecord->time_in) : null;
                                 $timeOut = $dtrRecord->time_out ? \Carbon\Carbon::parse($dtrRecord->time_out) : null;
                                 $timeIn2 = $dtrRecord->time_in_2 ? \Carbon\Carbon::parse($dtrRecord->time_in_2) : null;
                                 $timeOut2 = $dtrRecord->time_out_2 ? \Carbon\Carbon::parse($dtrRecord->time_out_2) : null;
 
-                                $afternoonFirst = $timeIn && !$timeIn2 && $timeIn->format('H:i') >= '12:00';
-
-                                $displayTimeIn1 = $afternoonFirst ? '-' : ($timeIn ? TimeHelper::getTimeOfDay($timeIn) . ': ' . $timeIn->format('h:i A') : '-');
-                                $displayTimeOut1 = $afternoonFirst ? '-' : ($timeOut ? TimeHelper::getTimeOfDay($timeOut) . ': ' . $timeOut->format('h:i A') : '-');
-
-                                // If afternoon-first, reuse time_in/time_out into the PM columns
-                                $displayTimeIn2 = $timeIn2
-                                    ? TimeHelper::getTimeOfDay($timeIn2) . ': ' . $timeIn2->format('h:i A')
-                                    : ($afternoonFirst ? TimeHelper::getTimeOfDay($timeIn) . ': ' . $timeIn->format('h:i A') : '-');
-
-                                $displayTimeOut2 = $timeOut2
-                                    ? TimeHelper::getTimeOfDay($timeOut2) . ': ' . $timeOut2->format('h:i A')
-                                    : ($afternoonFirst && $timeOut ? TimeHelper::getTimeOfDay($timeOut) . ': ' . $timeOut->format('h:i A') : '-');
+                                $displayTimeIn1 = $timeIn ? TimeHelper::getTimeOfDay($timeIn) . ': ' . $timeIn->format('h:i A') : '-';
+                                $displayTimeOut1 = $timeOut ? TimeHelper::getTimeOfDay($timeOut) . ': ' . $timeOut->format('h:i A') : '-';
+                                $displayTimeIn2 = $timeIn2 ? TimeHelper::getTimeOfDay($timeIn2) . ': ' . $timeIn2->format('h:i A') : '-';
+                                $displayTimeOut2 = $timeOut2 ? TimeHelper::getTimeOfDay($timeOut2) . ': ' . $timeOut2->format('h:i A') : '-';
                             @endphp
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-center">
                                 {{ $displayTimeIn1 }}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-center">
                                 {{ $displayTimeOut1 }}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-center">
                                 {{ $displayTimeIn2 }}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-center">
                                 {{ $displayTimeOut2 }}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-purple-600 font-semibold text-center">
                                 {{ $dtrRecord->overtime_time_in ? \Carbon\Carbon::parse($dtrRecord->overtime_time_in)->format('h:i A') : '-' }}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-purple-600 font-semibold text-center">
                                 {{ $dtrRecord->overtime_time_out ? \Carbon\Carbon::parse($dtrRecord->overtime_time_out)->format('h:i A') : '-' }}
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-700 text-center">
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
                                 {{ $dtrRecord->formatted_regular_work_hours ?? '00:00:00' }}
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-center">
@@ -201,12 +191,13 @@
                                     {{ $dtrRecord->status === 'present' ? 'bg-green-100 text-green-800' : '' }}
                                     {{ $dtrRecord->status === 'late' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                     {{ $dtrRecord->status === 'absent' ? 'bg-red-100 text-red-800' : '' }}
-                                    {{ $dtrRecord->status === 'half_day' ? 'bg-blue-100 text-blue-800' : '' }}">
+                                    {{ $dtrRecord->status === 'half_day' ? 'bg-blue-100 text-blue-800' : '' }}
+                                    {{ !in_array($dtrRecord->status, ['present', 'late', 'absent', 'half_day']) ? 'bg-gray-100 text-gray-800' : '' }}">
                                     {{ str_replace('_', ' ', $dtrRecord->status ?? 'N/A') }}
                                 </span>
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-indigo-700 text-center">
-                                {{ round($dtrRecord->total_work_hours ?? 0, 2) }}
+                                {{ $dtrRecord->formatted_total_work_hours ?? '00:00:00' }}
                             </td>
                         </tr>
                     @empty

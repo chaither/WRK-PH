@@ -3,12 +3,12 @@
 @section('title', 'Employee Dashboard')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative">
+<div class="min-h-screen bg-transparent relative">
     <!-- Header Section -->
-    <div class="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50 p-6 mb-8">
+    <div class="bg-navy-800/80 backdrop-blur-sm shadow-lg border-b border-navy-700/50 p-6 mb-8">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-4xl font-bold text-[#0B1432]">
+                <h1 class="text-3xl font-bold text-white">
                     Welcome, {{ auth()->user()->name }}
                 </h1>
                 
@@ -166,24 +166,24 @@
             </div>
         </div>
         <div class="bg-white rounded-lg shadow-md p-6 mt-8">
-            <h2 class="text-xl font-bold mb-4">My Payslips</h2>
+            <h2 class="text-xl font-bold mb-4 text-gray-900">My Payslips</h2>
             <div class="overflow-x-auto">
                 <table class="min-w-full table-auto">
                     <thead>
-                        <tr class="bg-gray-100">
-                            <th class="px-4 py-2 text-left">Pay Period</th>
-                            <th class="px-4 py-2 text-right">Net Pay</th>
-                            <th class="px-4 py-2 text-left">Status</th>
-                            <th class="px-4 py-2 text-center">Actions</th>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Pay Period</th>
+                            <th class="px-4 py-2 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Net Pay</th>
+                            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-2 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="text-gray-900">
                         @forelse($payslips as $payslip)
                             <tr class="border-b">
-                                <td class="px-4 py-2 text-left">
+                                <td class="px-4 py-2 text-left text-gray-900">
                                     {{ $payslip->payPeriod->start_date->format('M d, Y') }} - {{ $payslip->payPeriod->end_date->format('M d, Y') }}
                                 </td>
-                                <td class="px-4 py-2 text-right">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                <td class="px-4 py-2 text-right text-gray-900">₱{{ number_format($payslip->net_pay, 2) }}</td>
                                 <td class="px-4 py-2 text-left">
                                     @if($payslip->payPeriod->status === 'paid')
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -194,7 +194,7 @@
                                             Closed
                                         </span>
                                     @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                             Pending
                                         </span>
                                     @endif

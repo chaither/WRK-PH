@@ -16,12 +16,10 @@ class ShiftSeeder extends Seeder
             'name' => 'Day Shift',
             'start_time' => '08:00:00',
             'end_time' => '17:00:00',
-        ]);
-
-        Shift::create([
-            'name' => 'Night Shift',
-            'start_time' => '22:00:00',
-            'end_time' => '07:00:00',
+            'lunch_break_start' => '12:00:00',
+            'lunch_break_end' => '13:00:00',
+            'lunch_break_duration' => 60,
+            'is_lunch_paid' => false,
         ]);
     }
 }
