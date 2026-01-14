@@ -13,6 +13,12 @@ class Shift extends Model
         'name',
         'start_time',
         'end_time',
+        'night_shift_multiplier',
+        'is_night_shift',
+        'lunch_break_start',
+        'lunch_break_end',
+        'lunch_break_duration',
+        'is_lunch_paid',
     ];
 
     protected $casts = [

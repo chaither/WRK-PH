@@ -3,10 +3,10 @@
 @section('title', 'Daily Time Record')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="mx-6 py-6">
     <!-- Clock In/Out Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-2xl font-bold mb-4">Time Record - {{ \Carbon\Carbon::now('Asia/Manila')->format('F d, Y - h:i A') }}</h2>
+    <div class="bg-white rounded-3xl shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold mb-4 text-gray-900">Time Record - {{ \Carbon\Carbon::now('Asia/Manila')->format('F d, Y - h:i A') }}</h2>
         
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -32,7 +32,7 @@
                         $buttonDisabled = $faceRecognitionDisabled || $alreadyComplete || $onLeave;
                     @endphp
                     <button id="clockInBtn" type="submit" 
-                        class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 w-full 
+                        class="bg-green-500 text-white px-6 py-3 rounded-3xl hover:bg-green-600 w-full 
                             {{ $buttonDisabled ? 'opacity-50 cursor-not-allowed' : '' }}"
                         {{ $buttonDisabled ? 'disabled' : '' }}>
                         <i class="fas fa-sign-in-alt mr-2"></i>
@@ -61,7 +61,7 @@
                         $buttonDisabled = $faceRecognitionDisabled || $noClockIn || $alreadyComplete || $onLeave;
                     @endphp
                     <button id="clockOutBtn" type="submit" 
-                        class="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 w-full 
+                        class="bg-red-500 text-white px-6 py-3 rounded-3xl hover:bg-red-600 w-full 
                             {{ $buttonDisabled ? 'opacity-50 cursor-not-allowed' : '' }}"
                         {{ $buttonDisabled ? 'disabled' : '' }}>
                         <i class="fas fa-sign-out-alt mr-2"></i>
@@ -98,41 +98,45 @@
     </div>
 
     <!-- Monthly Records Table -->
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="bg-white rounded-3xl shadow-md p-6">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-bold">Monthly Records - {{ now()->format('F Y') }}</h3>
+            <h3 class="text-xl font-bold text-gray-900">Monthly Records - {{ now()->format('F Y') }}</h3>
         </div>
         
         <div class="mb-4">
-            <input type="text" id="dtrSearch" placeholder="Search by Date (e.g. Jan 01, 2026)" class="px-4 py-2 bg-gray-100 border-transparent focus:border-indigo-500 focus:bg-white focus:ring-0 rounded-md w-full md:w-1/3 transition-colors duration-200">
+            <input type="text" id="dtrSearch" placeholder="Search by Date (e.g. Jan 01, 2026)" class="px-4 py-2 bg-gray-100 border-transparent focus:border-indigo-500 focus:bg-white focus:ring-0 rounded-md w-full md:w-1/3 transition-colors duration-200 text-gray-900 font-medium placeholder:text-gray-400">
         </div>
 
         <div class="overflow-x-auto">
             <table id="dtrTable" class="min-w-full table-auto">
                 <thead>
-                    <tr class="bg-gray-100">
+                    <tr class="bg-gray-100 text-gray-800">
                         <th class="px-4 py-2">Date</th>
                         <th class="px-4 py-2">Time In 1</th>
                         <th class="px-4 py-2">Time Out 1</th>
                         <th class="px-4 py-2">Time In 2</th>
                         <th class="px-4 py-2">Time Out 2</th>
+                        <th class="px-4 py-2 text-purple-600">Overtime Time In</th>
+                        <th class="px-4 py-2 text-purple-600">Overtime Time Out</th>
                         <th class="px-4 py-2">Regular Work Hours</th>
                         <th class="px-4 py-2">Overtime Hours</th>
                         <th class="px-4 py-2">Total Work Hours</th>
                         <th class="px-4 py-2">Status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-gray-900">
                     @forelse($monthlyRecords as $record)
-                        <tr class="border-b">
+                        <tr class="border-b transition duration-150 hover:bg-gray-50">
                             <td class="px-4 py-2 text-center">{{ $record->date->format('M d, Y') }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->time_in ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_in)) . ': ' . \Carbon\Carbon::parse($record->time_in)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->time_out ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_out)) . ': ' . \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->time_in_2 ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_in_2)) . ': ' . \Carbon\Carbon::parse($record->time_in_2)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->time_out_2 ? \App\Helpers\TimeHelper::getTimeOfDay(\Carbon\Carbon::parse($record->time_out_2)) . ': ' . \Carbon\Carbon::parse($record->time_out_2)->format('h:i A') : '-' }}</td>
+                            <td class="px-4 py-2 text-center text-purple-600 font-semibold">{{ $record->overtime_time_in ? \Carbon\Carbon::parse($record->overtime_time_in)->format('h:i A') : '-' }}</td>
+                            <td class="px-4 py-2 text-center text-purple-600 font-semibold">{{ $record->overtime_time_out ? \Carbon\Carbon::parse($record->overtime_time_out)->format('h:i A') : '-' }}</td>
                             <td class="px-4 py-2 text-center">{{ $record->formatted_regular_work_hours }}</td>
                             <td class="px-4 py-2 text-center">{{ round($record->overtime_hours, 2) }}</td>
-                            <td class="px-4 py-2 text-center">{{ round($record->total_work_hours, 2) }}</td>
+                            <td class="px-4 py-2 text-center">{{ $record->formatted_total_work_hours }}</td>
                             <td class="px-4 py-2 text-center">
                                 <span class="px-2 py-1 rounded-full text-xs capitalize
                                     {{ $record->status === 'present' ? 'bg-green-100 text-green-800' : '' }}
@@ -154,7 +158,7 @@
 </div>
 <!-- Modal for camera preview and capture -->
 <div id="faceModal" class="fixed inset-0 bg-transparent hidden items-center justify-center z-50 overflow-y-auto">
-    <div class="bg-white rounded-lg shadow-lg p-4 w-full max-w-lg mx-4 my-4 md:my-auto flex flex-col max-h-[95vh]">
+    <div class="bg-white rounded-3xl shadow-lg p-4 w-full max-w-lg mx-4 my-4 md:my-auto flex flex-col max-h-[95vh]">
         <div class="flex justify-between items-center mb-2 flex-shrink-0">
             <h3 class="text-lg font-semibold">Face Verification</h3>
             <button id="modalCloseBtn" class="text-gray-600 hover:text-gray-900 text-xl leading-none">✕</button>

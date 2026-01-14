@@ -3,20 +3,20 @@
 @section('title', 'Leave Management')
 
 @section('content')
-<div class="container mx-auto px-6 py-6"> {{-- Consistent compact padding --}}
+<div class="mx-6 py-6"> {{-- Consistent compact padding --}}
     <header class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-calendar-alt mr-3 text-indigo-600"></i> Leave Balance Management
         </h1>
     </header>
 
     @if (session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-3xl relative mb-6" role="alert">
             <span class="block sm:inline">{{ session('success') }}</span>
         </div>
     @endif
 
-    <div class="bg-white rounded-lg shadow-xl overflow-x-auto border border-gray-200"> {{-- Consistent card styling and border --}}
+    <div class="bg-white rounded-3xl shadow-xl overflow-x-auto border border-gray-200"> {{-- Consistent card styling and border --}}
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -70,7 +70,7 @@
 
 @push('modals')
 <div id="editLeaveBalanceModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4"> {{-- Darker, consistent overlay --}}
-    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full transform transition-all duration-300 scale-100"> {{-- Sharper corners, heavy shadow --}}
+    <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full transform transition-all duration-300 scale-100"> {{-- Sharper corners, heavy shadow --}}
         <div class="flex justify-between items-center mb-4 border-b pb-2"> {{-- Tighter header --}}
             <h2 class="text-xl font-bold text-gray-800">✍️ Edit Leave Balance</h2>
             <button onclick="closeEditLeaveBalanceModal()" class="text-gray-500 hover:text-gray-900 transition duration-150 p-1 rounded-full hover:bg-gray-100">
@@ -83,7 +83,7 @@
             {{-- @method('PUT') --}} 
             <input type="hidden" name="user_id" id="edit_leave_balance_user_id">
             
-            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+            <div class="bg-indigo-50 p-4 rounded-3xl border border-indigo-200">
                 <label for="leave_balance_amount" class="block text-xs font-medium text-gray-700 mb-1">New Leave Balance (days)</label> {{-- Smaller label --}}
                 <input type="number" min="0" name="leave_balance" id="leave_balance_amount" 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" 

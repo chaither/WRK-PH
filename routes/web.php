@@ -67,6 +67,9 @@ Route::middleware(['auth', \App\Http\Middleware\EnsureHrAdminRole::class])->grou
     Route::resource('payroll-schedules', PayrollScheduleController::class)->except(['create', 'edit']);
     Route::resource('government-contributions', GovernmentContributionController::class)->except(['create', 'edit']);
     Route::resource('hmo-deductions', HmoDeductionController::class)->except(['create', 'edit']);
+    
+    // Shift Management Routes
+    Route::resource('shifts', \App\Http\Controllers\ShiftController::class)->except(['create', 'edit', 'show']);
 });
 
 // Organization Chart Routes

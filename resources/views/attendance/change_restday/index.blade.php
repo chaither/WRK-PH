@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-semibold text-gray-800 mb-4">Change Restday Request</h1>
+<div class="mx-6 py-6">
+    <h1 class="text-2xl font-semibold text-white mb-4">Change Restday Request</h1>
 
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -10,7 +10,7 @@
         </div>
     @endif
 
-    <div class="bg-white shadow-md rounded-lg p-6">
+    <div class="bg-white shadow-md rounded-3xl p-6">
         <form action="{{ route('attendance.change-restday.store') }}" method="POST">
             @csrf
             <div class="mb-4">
@@ -21,7 +21,7 @@
                 <label for="requested_restdays" class="block text-gray-700 text-sm font-bold mb-2">Requested Restdays:</label>
                 <div class="relative">
                     <button type="button" @click="open = !open" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <span x-text="selectedRestDays.length ? selectedRestDays.join(', ') : 'Select rest days'" class="block truncate"></span>
+                        <span x-text="selectedRestDays.length ? selectedRestDays.join(', ') : 'Select rest days'" class="block truncate text-black"></span>
                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -52,7 +52,7 @@
         </form>
     </div>
 
-    <div class="bg-white shadow-md rounded-lg p-6 mt-6">
+    <div class="bg-white shadow-md rounded-3xl p-6 mt-6">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">My Pending Restday Change Requests</h2>
         @if ($changeRestdayRequests->isEmpty())
             <p class="text-gray-600">No pending change restday requests.</p>
@@ -66,13 +66,13 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-gray-200 text-gray-900">
                     @foreach ($changeRestdayRequests as $request)
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ implode(', ', $request->current_restdays) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ implode(', ', $request->requested_restdays) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $request->reason }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($request->status) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ implode(', ', $request->current_restdays) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ implode(', ', $request->requested_restdays) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900">{{ $request->reason }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap"><span class="px-3 py-1 rounded-full text-xs font-semibold {{ $request->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ($request->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') }}">{{ ucfirst($request->status) }}</span></td>
                         </tr>
                     @endforeach
                 </tbody>

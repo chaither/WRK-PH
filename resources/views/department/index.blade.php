@@ -3,8 +3,8 @@
 @section('title', 'Departments')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Departments</h1>
+<div class="mx-6 py-6">
+    <h1 class="text-3xl font-bold text-white mb-6">Departments</h1>
 
     <div class="flex justify-end mb-4">
         <button onclick="openEmployeeModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md flex items-center mr-2">
@@ -16,7 +16,9 @@
     </div>
 
     <!-- Department List (Table) -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <!-- Department List (Table) -->
+    <!-- Department List (Table) -->
+    <div class="bg-white shadow-md rounded-3xl overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
@@ -31,7 +33,7 @@
                     </th>
                 </tr>
             </thead>
-            <tbody id="departmentTableBody" class="bg-white divide-y divide-gray-200">
+            <tbody id="departmentTableBody" class="bg-white divide-y divide-gray-200 text-gray-900">
                 {{-- Department data will be loaded here by JavaScript or passed from the controller --}}
                 @forelse ($departments as $department)
                     <tr x-data="{ open: false }" class="mobile-accordion hover:bg-gray-50 transition-colors duration-150">
@@ -71,7 +73,6 @@
         </table>
     </div>
 
-    <!-- Delete Department Modal -->
     <!-- Delete Department Modal -->
     <div id="deleteDepartmentModal" class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 transform transition-all duration-300 scale-100 flex flex-col">

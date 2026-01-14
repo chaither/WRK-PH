@@ -3,9 +3,9 @@
 @section('title', 'Employee List - DTR')
 
 @section('content')
-<div class="container mx-auto px-6 py-6">
+<div class="mx-6 py-6">
     <header class="mb-6 flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-users mr-3 text-indigo-600"></i> Employee List
         </h1>
         <a href="{{ route('dtr.admin') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -13,10 +13,10 @@
         </a>
     </header>
 
-    <div class="bg-white rounded-lg shadow-xl p-6">
+    <div class="bg-white rounded-3xl shadow-xl p-6">
         <div class="mb-4 flex justify-end">
             <form action="{{ route('dtr.employees.index') }}" method="GET" class="flex items-center space-x-2 w-full md:w-1/4">
-                <input type="text" name="search" id="employeeSearchInput" placeholder="Search by name..." class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm" value="{{ $search ?? '' }}">
+                <input type="text" name="search" id="employeeSearchInput" placeholder="Search by name..." class="form-input mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-900" value="{{ $search ?? '' }}">
                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <i class="fas fa-search"></i>
                 </button>
@@ -27,7 +27,7 @@
                 @endif
             </form>
         </div>
-        <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+        <div class="overflow-x-auto border border-gray-200 rounded-3xl shadow-sm">
             <table id="employeesTable" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>

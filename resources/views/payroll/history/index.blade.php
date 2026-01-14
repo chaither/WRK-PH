@@ -3,9 +3,9 @@
 @section('title', 'Payroll History')
 
 @section('content')
-<div class="container mx-auto px-6 py-8">
+<div class="mx-6 py-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-history mr-3 text-indigo-600"></i> All Payroll History
         </h1>
         <a href="{{ route('payroll.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -29,7 +29,7 @@
         <input type="text" id="payrollHistorySearch" onkeyup="filterPayrollHistory()" placeholder="Search by date (e.g., Dec 01, 2025)..." class="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
     </div>
 
-    <div class="bg-white rounded-lg shadow-xl overflow-hidden p-6">
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden p-6">
         @if($payPeriods->isEmpty())
             <div class="text-center py-10">
                 <p class="text-gray-600 text-lg mb-4">No payroll history available yet.</p>

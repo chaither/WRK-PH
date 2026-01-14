@@ -31,17 +31,16 @@
 }
 </style>
 
-<div id="dashboard-root" class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative" data-role="{{ auth()->user()->role ?? '' }}">
+<div id="dashboard-root" class="min-h-screen bg-transparent relative" data-role="{{ auth()->user()->role ?? '' }}">
     <!-- Header Section -->
-    <div class="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50 p-6 mb-8">
+    <div class="bg-navy-800/80 backdrop-blur-sm shadow-lg border-b border-navy-700/50 p-6 mb-8 rounded-3xl">
         <div class="flex flex-wrap justify-between items-center">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center space-x-3">
-                    <h1 class="text-4xl font-bold text-[#0B1432] truncate">
-                        LIMEHILLS HRIS
+                    <h1 class="text-2xl font-bold text-white truncate">
+                        HUMAN RESOURCES INFORMATION SYSTEM
                     </h1>
                 </div>
-                <p class="text-gray-600 mt-2">Period: June 2025 - May 2026</p>
             </div>
             <div class="flex items-center space-x-4">
                 <button id="dashboard-orgchart-btn" type="button" aria-label="Open organization chart" title="Organization Chart" class="inline-flex items-center bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300" onclick="window.location='{{ route('organization.index') }}'">
@@ -54,11 +53,11 @@
 
     <!-- Main Dashboard Grid -->
     @if(auth()->user()->role !== 'employee')
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+    <div class="mx-6 grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         
         <!-- Combined Payroll and Deductions Chart -->
         <div class="space-y-8">
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105">
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                     <i class="fas fa-money-bill-transfer text-indigo-600 mr-3"></i>
                     Monthly Payroll & Deductions
@@ -73,7 +72,7 @@
 
         <!-- Employee Attendance Summary Chart (moved to right column) -->
         <div class="space-y-8">
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105">
+            <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 hover:shadow-2xl transition-all duration-500 hover:scale-105">
                 <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                     <i class="fas fa-users-line text-cyan-600 mr-3"></i>
                     Employee Attendance Summary
@@ -88,12 +87,12 @@
     </div>
 
     <!-- Top 10 Departments Section -->
-    <div class="container mx-auto px-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 mx-6 mb-8 hover:shadow-2xl transition-all duration-500">
+    <div class="mx-6 bg-white rounded-3xl shadow-xl border border-gray-100 p-6 mb-8 hover:shadow-2xl transition-all duration-500">
         <div class="flex flex-wrap justify-between items-center mb-6">
             <h2 class="text-3xl font-bold text-gray-800">Daily Update</h2>
             <div class="flex items-center space-x-4">
                 <form id="departmentFilterForm" action="{{ route('dashboard') }}" method="GET">
-                    <select name="department_id" id="departmentFilter" class="bg-white/60 backdrop-blur-sm border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select name="department_id" id="departmentFilter" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Departments</option>
                         @foreach($departments as $department)
                             <option value="{{ $department->id }}" {{ (string)$department->id === (string)$selectedDepartmentId ? 'selected' : '' }}>
@@ -107,7 +106,7 @@
         
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6" id="dailyUpdateMetrics">
-            <div class="bg-blue-600 rounded-xl p-6 text-white hover:scale-105">
+            <div class="bg-blue-600 rounded-3xl p-6 text-white hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-blue-100 text-sm">Total Employees</p>
@@ -117,7 +116,7 @@
                 </div>
             </div>
             
-            <div class="bg-green-600 rounded-xl p-6 text-white hover:scale-105">
+            <div class="bg-green-600 rounded-3xl p-6 text-white hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-green-100 text-sm">Present Today</p>
@@ -127,7 +126,7 @@
                 </div>
             </div>
             
-            <div class="bg-yellow-600 rounded-xl p-6 text-white hover:scale-105">
+            <div class="bg-yellow-600 rounded-3xl p-6 text-white hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-yellow-100 text-sm">Late Today</p>
@@ -137,7 +136,7 @@
                 </div>
             </div>
             
-            <div class="bg-red-600 rounded-xl p-6 text-white hover:scale-105">
+            <div class="bg-red-600 rounded-3xl p-6 text-white hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-red-100 text-sm">Absent Today</p>

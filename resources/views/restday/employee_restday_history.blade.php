@@ -3,9 +3,9 @@
 @section('title', $employee->name . ' Rest Day Change Request History')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="mx-6 py-6">
     <header class="mb-6 flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-sun mr-3 text-indigo-600"></i>{{ $employee->name }}'s Rest Day Change Request History
         </h1>
         <div class="flex items-center space-x-2">
@@ -33,7 +33,7 @@
         'isFiltered' => $isFiltered
     ])
 
-    <div class="bg-white shadow-md rounded-lg p-6">
+    <div class="bg-white shadow-md rounded-3xl p-6">
         <h2 class="text-2xl font-semibold text-gray-700 mb-4">All Rest Day Change Requests</h2>
         @if ($records->isEmpty())
             <p class="text-gray-500">No rest day change requests found for this employee within the selected date range.</p>

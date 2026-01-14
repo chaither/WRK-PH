@@ -8,7 +8,7 @@
     $ceoNode = $nodes->whereNull('parent_id')->first();
 @endphp
 
-<section class="relative bg-gradient-to-b from-[#f5f7fb] via-[#eef2fb] to-[#f7f9ff] min-h-screen py-10 overflow-hidden">
+<section class="relative bg-transparent min-h-screen py-10 overflow-hidden">
     <!-- Parallax layers -->
     <div class="pointer-events-none absolute inset-0">
         <div class="parallax-layer absolute -left-20 top-10 w-56 h-56 rounded-full bg-indigo-100/60 blur-3xl" data-speed="0.25"></div>
@@ -17,14 +17,14 @@
     </div>
 
     <div class="relative max-w-7xl mx-auto px-4 space-y-8">
-        <div class="bg-white/90 backdrop-blur border border-indigo-50 rounded-2xl shadow-lg p-6">
+        <div class="bg-navy-800/90 backdrop-blur border border-navy-700/50 rounded-2xl shadow-lg p-6">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div class="space-y-1">
                     <p class="text-sm text-gray-500">{{ $today }}</p>
-                    <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">HRIS DASHBOARD</h1>
+                    <h1 class="text-3xl font-extrabold text-white tracking-tight">HRIS DASHBOARD</h1>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="bg-gray-100 rounded-full p-1 flex">
+                    <div class="bg-navy-950 rounded-full p-1 flex">
                         <a href="{{ Auth::user()->isAdmin() ? route('dashboard') : '#' }}" class="px-4 py-2 text-sm font-semibold text-gray-500 rounded-full">Graph</a>
                         <button class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-full shadow">Org</button>
                     </div>
@@ -47,12 +47,12 @@
             @endif
         </div>
 
-        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="bg-navy-800 border border-navy-700 rounded-2xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h2 class="text-2xl font-bold text-gray-900">Organizational Chart</h2>
+                <h2 class="text-2xl font-bold text-white">Organizational Chart</h2>
             </div>
 
-            <div class="bg-[#f0f1f6] px-4 py-8">
+            <div class="bg-navy-900 px-4 py-8">
                 <div id="orgChartViewport" class="w-full max-w-6xl mx-auto overflow-auto relative h-[85vh]">
                     <div id="orgChartContent" class="relative w-max h-max">
                         @if ($ceoNode)

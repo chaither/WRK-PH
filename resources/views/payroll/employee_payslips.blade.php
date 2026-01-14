@@ -3,12 +3,12 @@
 @section('title', 'My Payslips')
 
 @section('content')
-<div class="container mx-auto px-6 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+<div class="mx-6 py-8">
+    <h1 class="text-3xl font-bold text-white mb-6 flex items-center">
         <i class="fas fa-receipt mr-3 text-indigo-600"></i> My Payslips
     </h1>
 
-    <div class="bg-white rounded-lg shadow-xl overflow-hidden">
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden">
         <div class="p-6">
             <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Your Payroll History</h2>
 
@@ -20,7 +20,7 @@
             @else
                 <!-- Search Input -->
                 <div class="mb-4">
-                    <input type="text" id="payslip-search" placeholder="Search payslips by pay period..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="payslip-search" placeholder="Search payslips by pay period..." class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black">
                 </div>
                 <!-- Desktop View -->
                 <div class="hidden sm:block">
@@ -79,7 +79,7 @@
                 <!-- Mobile View -->
                 <div class="sm:hidden">
                     @foreach($payslips as $payslip)
-                        <div x-data="{ open: false }" class="payslip-card mb-4 bg-white rounded-lg shadow-md overflow-hidden">
+                        <div x-data="{ open: false }" class="payslip-card mb-4 bg-white rounded-3xl shadow-md overflow-hidden">
                             <button @click="open = !open; console.log('Mobile Button clicked, open state:', open)" class="flex justify-between items-center w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 focus:outline-none">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($payslip->pay_period_start)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($payslip->pay_period_end)->format('M d, Y') }}</div>

@@ -3,9 +3,9 @@
 @section('title', 'Employees in ' . $department->name)
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="mx-6 py-6">
     <header class="mb-6 flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-3xl font-bold text-white flex items-center">
             <i class="fas fa-building mr-3 text-indigo-600"></i>Employees in {{ $department->name }} Department
         </h1>
         <a href="{{ route('department.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -14,7 +14,7 @@
     </header>
 
     <div class="flex justify-end mb-4">
-        <button onclick="openEmployeeModal(null, {{ $department->id }})" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md flex items-center mr-2">
+        <button onclick="openEmployeeModal(null, {{ $department->id }})" class="bg-indigo-600 text-white px-4 py-2 rounded-3xl hover:bg-indigo-700 transition duration-150 shadow-md flex items-center mr-2">
             <i class="fas fa-plus mr-2"></i> Add Employee
         </button>
     </div>
@@ -31,7 +31,7 @@
         </div>
     @endif
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="bg-white shadow-md rounded-3xl overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>

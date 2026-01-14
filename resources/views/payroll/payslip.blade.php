@@ -62,7 +62,7 @@
         }
     }
 </style>
-<div class="bg-white rounded-lg shadow-md p-6">
+<div class="bg-white rounded-lg shadow-md p-6 text-gray-900">
     <div class="flex justify-between items-center mb-6 no-print">
         <h1 class="text-2xl font-bold">Payslip</h1>
         <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
