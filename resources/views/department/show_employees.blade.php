@@ -5,7 +5,7 @@
 @section('content')
 <div class="mx-6 py-6">
     <header class="mb-6 flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-white flex items-center">
+        <h1 class="text-3xl font-bold text-blue-900 flex items-center">
             <i class="fas fa-building mr-3 text-indigo-600"></i>Employees in {{ $department->name }} Department
         </h1>
         <a href="{{ route('department.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -35,22 +35,22 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                         #
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                         Name
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                         Email
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                         Employee ID
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-900 uppercase tracking-wider">
                         Position
                     </th>
-                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-blue-900 uppercase tracking-wider">
                         Actions
                     </th>
                 </tr>
@@ -58,15 +58,15 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse ($employees as $employee)
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $loop->iteration }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-900 font-bold">{{ $loop->iteration }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <a href="{{ route('employees.profile', $employee->id) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
                                 {{ $employee->name }}
                             </a>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $employee->email }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $employee->employee_id ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $employee->position ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-800">{{ $employee->email }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-800">{{ $employee->employee_id ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-800">{{ $employee->position ?? 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button type="button" onclick="editEmployee({{ $employee->id }})" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Edit Employee">
                                 <i class="fas fa-edit"></i>

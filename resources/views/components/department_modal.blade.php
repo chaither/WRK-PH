@@ -15,7 +15,7 @@
                     <div>
                         <label for="department_name" class="block text-sm font-medium text-gray-700 mb-1">Department Name</label>
                         <input type="text" name="name" id="department_name" required 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter department name">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-black" placeholder="Enter department name">
                     </div>
                 </div>
             </div>
