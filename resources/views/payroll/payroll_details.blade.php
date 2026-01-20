@@ -69,11 +69,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Employee</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Gross Pay</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Deductions</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Net Pay</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Actions</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">Employee</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">Gross Pay</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">Deductions</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">Net Pay</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -89,12 +89,12 @@
                                 $totalNetPay += $payslip->net_pay;
                             @endphp
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ $payslip->user->name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-black">₱{{ number_format($payslip->gross_pay, 2) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-black">₱{{ number_format($payslip->deductions, 2) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-black">₱{{ number_format($payslip->net_pay, 2) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payPeriod->id]) }}" class="text-indigo-600 hover:text-indigo-800 p-1.5 inline-flex items-center justify-center rounded-full hover:bg-gray-200 transition duration-150" title="View Payslip">
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-black">{{ $payslip->user->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-black">₱{{ number_format($payslip->gross_pay, 2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-black">₱{{ number_format($payslip->deductions, 2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-black">₱{{ number_format($payslip->net_pay, 2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap flex justify-center items-center">
+                                    <a href="{{ route('payroll.show-payslip', ['employee' => $payslip->user->id, 'payPeriod' => $payPeriod->id]) }}" class="text-indigo-600 hover:text-indigo-800 hover:bg-gray-200 transition duration-150" title="View Payslip">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 </td>
@@ -103,10 +103,10 @@
                     </tbody>
                     <tfoot class="bg-gray-100">
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">TOTAL</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">₱{{ number_format($totalGrossPay, 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-bold text-red-600">₱{{ number_format($totalDeductions, 2) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-bold text-indigo-700">₱{{ number_format($totalNetPay, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-center text-gray-900">TOTAL</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-center text-gray-900">₱{{ number_format($totalGrossPay, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-center text-red-600">₱{{ number_format($totalDeductions, 2) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-center text-indigo-700">₱{{ number_format($totalNetPay, 2) }}</td>
                             <td class="px-6 py-4 whitespace-nowrap"></td>
                         </tr>
                     </tfoot>
