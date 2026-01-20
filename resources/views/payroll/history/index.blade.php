@@ -33,7 +33,7 @@
         @if($payPeriods->isEmpty())
             <div class="text-center py-10">
                 <p class="text-gray-600 text-lg mb-4">No payroll history available yet.</p>
-                <p class="text-gray-500">Generate payrolls to see them listed here.</p>
+                <p class="text-gray-600">Generate payrolls to see them listed here.</p>
             </div>
         @else
             <div class="overflow-x-auto">
@@ -53,12 +53,12 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($payPeriods as $period)
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ \Carbon\Carbon::parse($period->start_date)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($period->end_date)->format('M d, Y') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($period->pay_period_type) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ ucfirst($period->status) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $period->generatedBy->name ?? 'N/A' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $period->regeneratedBy->name ?? 'N/A' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $period->markedPaidBy->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ \Carbon\Carbon::parse($period->start_date)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($period->end_date)->format('M d, Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ ucfirst($period->pay_period_type) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ ucfirst($period->status) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ $period->generatedBy->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ $period->regeneratedBy->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-black">{{ $period->markedPaidBy->name ?? 'N/A' }}</td>
                                 @php
                                     $totalNet = $period->payslips?->sum('net_pay') ?? 0;
                                 @endphp
