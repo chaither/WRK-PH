@@ -660,11 +660,9 @@ class DTRController extends Controller
                 ['status' => 'present'] // Default status
             );
 
-            // Logic to map Punch to DTR Column
-            // Simple logic: AM = time_in/out, PM = time_in_2/out_2
-            // Or use state: 0/4=In, 1/5=Out
-            
-            $isAm = $timestamp->hour < 12;
+            // CRITICAL FIX: Use shift-based lunch break time as AM/PM boundary
+            // This ensures proper classification of 12:00 PM punches
+            $isAm = $this->classifyAsAM($user, $timestamp);
             $state = $log['status']; // 0=In, 1=Out, etc.
             
             if ($state == 0 || $state == 4) { // Check In
@@ -696,5 +694,40 @@ class DTRController extends Controller
         }
 
         return response()->json(['success' => true, 'processed' => $count], 200);
+    }
+
+    /**
+     * Classify if a timestamp should be treated as AM (morning session)
+     * Uses shift lunch break time as the boundary
+     */
+    private function classifyAsAM($user, $timestamp)
+    {
+        if (!$user) return true; // Default to AM
+
+        $carbonTime = Carbon::parse($timestamp);
+        
+        // Load shift relationship if not already loaded
+        if (!$user->relationLoaded('shift')) {
+            $user->load('shift');
+        }
+        
+        // If user has a shift with lunch break defined, use it as the boundary
+        if ($user->shift && $user->shift->lunch_break_start) {
+            $lunchBreakStart = Carbon::parse($user->shift->lunch_break_start);
+            
+            // AM if BEFORE or AT lunch break start (to include the punch that ends morning session)
+            // PM if AFTER lunch break start
+            if ($carbonTime->hour < $lunchBreakStart->hour || 
+                ($carbonTime->hour == $lunchBreakStart->hour && $carbonTime->minute <= $lunchBreakStart->minute)) {
+                return true; // AM
+            } else {
+                return false; // PM
+            }
+        }
+        
+        // CRITICAL FIX: Fallback when no shift or lunch break is defined
+        // Use 1:00 PM (13:00) as boundary to include 12:00-12:59 PM in AM session
+        // This handles the common lunch break period (12:00 PM - 1:00 PM)
+        return $carbonTime->hour < 13;
     }
 }
