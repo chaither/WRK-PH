@@ -38,29 +38,34 @@ class AttendanceController extends Controller
 
                 $updated = false;
 
+                // SMARTER SEQUENTIAL FILLING:
+                // We prioritize the assigned session (AM/PM), but overflow if necessary.
                 if ($type === 'AM') {
-                    // Logic for AM:
-                    // If both time_in and time_out are already set, IGNORE further punches (Locked).
-                    if ($dtr->time_in && $dtr->time_out) {
-                         // Locked - do nothing
-                         $updated = false;
-                    } elseif (!$dtr->time_in) {
+                    if (!$dtr->time_in) {
                         $dtr->time_in = $timestamp;
                         $updated = true;
-                    } elseif ($timestamp->greaterThan(Carbon::parse($dtr->time_in)) && !$dtr->time_out) {
+                    } elseif (!$dtr->time_out && $timestamp->greaterThan(Carbon::parse($dtr->time_in))) {
                         $dtr->time_out = $timestamp;
+                        $updated = true;
+                    } elseif (!$dtr->time_in_2) {
+                        // Overflow to session 2 if morning is already complete
+                        $dtr->time_in_2 = $timestamp;
+                        $updated = true;
+                    } elseif (!$dtr->time_out_2 && $timestamp->greaterThan(Carbon::parse($dtr->time_in_2))) {
+                        $dtr->time_out_2 = $timestamp;
                         $updated = true;
                     }
                 } else {
                     // Logic for PM:
-                    // If both time_in_2 and time_out_2 are already set, IGNORE further punches (Locked).
-                    if ($dtr->time_in_2 && $dtr->time_out_2) {
-                         // Locked - do nothing
-                         $updated = false;
+                    // If morning session is incomplete (missing time_out) and this punch is close to midday,
+                    // we allow it to fill the morning clock-out slot first.
+                    if ($dtr->time_in && !$dtr->time_out && $timestamp->hour < 14) {
+                         $dtr->time_out = $timestamp;
+                         $updated = true;
                     } elseif (!$dtr->time_in_2) {
                         $dtr->time_in_2 = $timestamp;
                         $updated = true;
-                    } elseif ($timestamp->greaterThan(Carbon::parse($dtr->time_in_2)) && !$dtr->time_out_2) {
+                    } elseif (!$dtr->time_out_2 && $timestamp->greaterThan(Carbon::parse($dtr->time_in_2))) {
                         $dtr->time_out_2 = $timestamp;
                         $updated = true;
                     }
