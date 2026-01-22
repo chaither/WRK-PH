@@ -660,31 +660,30 @@ class DTRController extends Controller
                 ['status' => 'present'] // Default status
             );
 
-            // CRITICAL FIX: Use shift-based lunch break time as AM/PM boundary
-            // This ensures proper classification of 12:00 PM punches
             $isAm = $this->classifyAsAM($user, $timestamp);
-            $state = $log['status']; // 0=In, 1=Out, etc.
-            
-            if ($state == 0 || $state == 4) { // Check In
-                if ($isAm) {
-                     if (!$record->time_in) $record->time_in = $timestamp;
-                } else {
-                     if (!$record->time_in_2) $record->time_in_2 = $timestamp;
-                }
-            } elseif ($state == 1 || $state == 5) { // Check Out
-                if ($isAm) {
-                     if (!$record->time_out) $record->time_out = $timestamp;
-                } else {
-                     if (!$record->time_out_2) $record->time_out_2 = $timestamp;
+
+            // SMARTER SEQUENTIAL FILLING:
+            // We prioritize the assigned session (AM/PM), but overflow if necessary.
+            if ($isAm) {
+                if (!$record->time_in) {
+                    $record->time_in = $timestamp;
+                } elseif (!$record->time_out && $timestamp->greaterThan(Carbon::parse($record->time_in))) {
+                    $record->time_out = $timestamp;
+                } elseif (!$record->time_in_2) {
+                    $record->time_in_2 = $timestamp;
+                } elseif (!$record->time_out_2 && $timestamp->greaterThan(Carbon::parse($record->time_in_2))) {
+                    $record->time_out_2 = $timestamp;
                 }
             } else {
-                // Fallback auto-detection if state is unknown or generic
-                if ($isAm) {
-                    if (!$record->time_in) $record->time_in = $timestamp;
-                    else $record->time_out = $timestamp;
-                } else {
-                    if (!$record->time_in_2) $record->time_in_2 = $timestamp;
-                    else $record->time_out_2 = $timestamp;
+                // Logic for PM:
+                // If morning session is incomplete (missing time_out) and this punch is close to midday,
+                // we allow it to fill the morning clock-out slot first.
+                if ($record->time_in && !$record->time_out && $timestamp->hour < 14) {
+                     $record->time_out = $timestamp;
+                } elseif (!$record->time_in_2) {
+                    $record->time_in_2 = $timestamp;
+                } elseif (!$record->time_out_2 && $timestamp->greaterThan(Carbon::parse($record->time_in_2))) {
+                    $record->time_out_2 = $timestamp;
                 }
             }
             
@@ -711,14 +710,13 @@ class DTRController extends Controller
             $user->load('shift');
         }
         
-        // If user has a shift with lunch break defined, use it as the boundary
-        if ($user->shift && $user->shift->lunch_break_start) {
-            $lunchBreakStart = Carbon::parse($user->shift->lunch_break_start);
+        // If user has a shift with lunch break defined, use the END of it as the boundary
+        if ($user->shift && $user->shift->lunch_break_end) {
+            $lunchBreakEnd = Carbon::parse($user->shift->lunch_break_end);
             
-            // AM if BEFORE or AT lunch break start (to include the punch that ends morning session)
-            // PM if AFTER lunch break start
-            if ($carbonTime->hour < $lunchBreakStart->hour || 
-                ($carbonTime->hour == $lunchBreakStart->hour && $carbonTime->minute <= $lunchBreakStart->minute)) {
+            // AM if BEFORE or AT lunch break end
+            if ($carbonTime->hour < $lunchBreakEnd->hour || 
+                ($carbonTime->hour == $lunchBreakEnd->hour && $carbonTime->minute <= $lunchBreakEnd->minute)) {
                 return true; // AM
             } else {
                 return false; // PM
@@ -726,8 +724,11 @@ class DTRController extends Controller
         }
         
         // CRITICAL FIX: Fallback when no shift or lunch break is defined
-        // Use 1:00 PM (13:00) as boundary to include 12:00-12:59 PM in AM session
-        // This handles the common lunch break period (12:00 PM - 1:00 PM)
-        return $carbonTime->hour < 13;
+        // Use 1:00 PM (13:00) as boundary and include 1:00 PM in AM session
+        // This handles clocking out for lunch AT 1:00 PM.
+        if ($carbonTime->hour < 13 || ($carbonTime->hour == 13 && $carbonTime->minute == 0)) {
+            return true;
+        }
+        return false;
     }
 }
