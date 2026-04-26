@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTR System - @yield('title')</title>
+    <title>WRK Services PH HRIS - @yield('title')</title>
     {{-- <script src="https://cdn.tailwindcss.com"></script> --}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Alpine.js CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
             <meta name="csrf-token" content="{{ csrf_token() }}">
-            <link rel="preload" as="image" href="{{ asset('asset/images/limehills_top_logo.png') }}">
+            <link rel="preload" as="image" href="{{ asset('logo.png') }}">
             <script type="module">
                 import hotwiredTurbo from 'https://cdn.skypack.dev/@hotwired/turbo';
             </script>
@@ -47,18 +47,24 @@
         }
     </script>
 </head>
-<body class="bg-navy-900 text-white font-sans antialiased selection:bg-primary-blue selection:text-white">
+<body class="text-white font-sans antialiased selection:bg-blue-500 selection:text-white" style="background-color:#051534;">
     <!-- Fixed Header -->
     <!-- Fixed Header -->
-    <header id="permanent-header" data-turbo-permanent class="fixed top-0 left-0 w-full h-16 text-white flex items-center justify-between px-4 shadow-md bg-navy-950 border-b border-navy-800" 
-            style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 64px !important; z-index: 100 !important; background-color: #0f1523 !important;">
+    <header id="permanent-header" data-turbo-permanent class="fixed top-0 left-0 w-full h-16 text-white flex items-center justify-between px-4 shadow-lg border-b" 
+            style="position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 64px !important; z-index: 100 !important; background: linear-gradient(90deg, #051534 0%, #0b2059 100%) !important; border-color: rgba(59,130,246,0.18) !important;">
         <!-- Left: Toggle + Logo -->
         <div class="flex items-center gap-4">
             <button id="sidebarToggle" class="text-white focus:outline-none hover:bg-white/10 p-2 rounded-lg transition-colors">
                  <i class="fas fa-bars text-xl align-middle"></i>
             </button>
-            <a href="{{ route('dashboard') }}" id="sidebarTitle" class="flex items-center cursor-pointer">
-                <img src="{{ asset('asset/images/limehills_top_logo.png') }}" alt="Limehills HRIS" width="150" height="32" decoding="sync" class="h-8 w-auto object-contain hover:opacity-90 transition-opacity" style="height: 2rem;">
+            <a href="{{ route('dashboard') }}" id="sidebarTitle" class="flex items-center gap-2 cursor-pointer group" style="text-decoration:none;">
+                <div style="background:white; border-radius:8px; padding:3px 6px; display:flex; align-items:center; box-shadow:0 2px 8px rgba(59,130,246,0.25);">
+                    <img src="{{ asset('logo.png') }}" alt="WRK Services PH HRIS" decoding="sync" class="object-contain" style="height:2rem; width:auto;">
+                </div>
+                <div class="sidebar-text" style="line-height:1.1;">
+                    <div style="font-size:0.78rem; font-weight:800; color:#ffffff; letter-spacing:0.06em; text-transform:uppercase;">WRK SERVICES PH</div>
+                    <div style="font-size:0.6rem; font-weight:500; color:rgba(147,197,253,0.85); letter-spacing:0.08em; text-transform:uppercase;">HRIS</div>
+                </div>
             </a>
         </div>
 
@@ -113,7 +119,7 @@
 
     <div class="flex min-h-screen" style="padding-top: 4rem !important;">
         <!-- Sidebar -->
-        <div id="sidebar" class="bg-navy-950 text-white w-64 space-y-6 py-4 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50 border-r border-navy-700/50 shadow-[4px_0_24px_rgba(0,0,0,0.3)] h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar" style="top: 4rem !important; background-color: #0f1523 !important;">
+        <div id="sidebar" class="text-white w-64 space-y-6 py-4 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out z-50 border-r h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar" style="top: 4rem !important; background: linear-gradient(180deg, #051534 0%, #0a1e50 100%) !important; border-color: rgba(59,130,246,0.15) !important; box-shadow: 4px 0 24px rgba(0,0,0,0.35) !important;">
             
             <nav class="mt-2">
                 <a href="{{ route('dashboard') }}" class="flex items-center py-2.5 px-4 rounded transition duration-200 hover:bg-blue-700 hover:text-white {{ request()->routeIs('dashboard') ? 'bg-blue-700' : '' }}">
@@ -254,7 +260,7 @@
 
         <!-- Content -->
         <!-- Content -->
-        <div id="content" class="flex-1 transition-all duration-300 ease-in-out md:ml-64 bg-navy-900 p-6">
+        <div id="content" class="flex-1 transition-all duration-300 ease-in-out md:ml-64 p-6" style="background: linear-gradient(160deg, #051534 0%, #0a1e4f 50%, #071640 100%); min-height: 100vh;">
              @yield('content')
         </div>
         </div>

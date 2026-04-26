@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTR System - Reset Password</title>
+    <title>WRK Services PH HRIS - Reset Password</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -11,7 +11,7 @@
         /* HRIS Theme: Deep Ocean Blue Gradient - Professional & Calming */
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #051025 0%, #0E2242 100%);
+            background: linear-gradient(135deg, #051534 0%, #0b2059 55%, #0e3280 100%);
             min-height: 100vh;
             display: flex;
             overflow: hidden;
@@ -121,9 +121,9 @@
 
     <div class="login-card p-10 w-full max-w-md relative z-10">
         <div class="text-center mb-8">
-            <img src="{{ asset('limehills.png') }}" alt="Limehills Logo" class="mx-auto h-24 w-24 mb-4">
-            <h2 class="limehills-heading font-extrabold mb-1 text-gray-900">LIMEHILLS HRIS</h2>
-            <p class="hris-system-text text-gray-700">Reset Password</p>
+            <img src="{{ asset('logo.png') }}" alt="WRK Services PH Logo" class="mx-auto mb-4" style="height:80px;width:auto;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(26,86,196,0.2));">
+            <h2 style="font-size:1rem;font-weight:800;color:#1a56c4;letter-spacing:0.01em;margin-bottom:0.2rem;">WRK SERVICES PH HRIS</h2>
+            <p class="hris-system-text text-gray-500">Reset Password</p>
         </div>
 
         @if (session('status'))

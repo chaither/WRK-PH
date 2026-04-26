@@ -3,270 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LIMEHILLS DTR - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>WRK Services PH HRIS – Login</title>
+    <meta name="description" content="Sign in to WRK Services PH Human Resource Information System – streamlining attendance, payroll, and workforce management.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* HRIS Theme: Deep Ocean Blue Gradient - Professional & Calming */
-        body {
+        :root {
+            --brand-dark:    #051534;
+            --brand-mid:     #0d2d6b;
+            --brand-blue:    #1a56c4;
+            --brand-accent:  #3b82f6;
+            --brand-light:   #60a5fa;
+            --white:         #ffffff;
+            --gray-50:       #f8fafc;
+            --gray-100:      #f1f5f9;
+            --gray-200:      #e2e8f0;
+            --gray-400:      #94a3b8;
+            --gray-600:      #475569;
+            --gray-800:      #1e293b;
+            --red-100:       #fee2e2;
+            --red-600:       #dc2626;
+        }
+
+        html, body {
+            height: 100%;
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #051025 0%, #0E2242 100%);
-            min-height: 100vh;
-            display: flex;
             overflow: hidden;
-            color: white;
         }
 
-        /* Login Card: Clean, Elevated, and Inviting */
-        .login-card {
-            background: #FFFFFF;
-            border-radius: 1.5rem; /* Slightly reduced radius for more compactness */
-            box-shadow: 0 20px 60px rgba(0,0,0,0.09); /* Softer shadow */
-            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.05);
-            color: #1F2937;
-            border: none;
-        }
-
-        .login-card:hover {
-            transform: translateY(-5px); /* Reduced lift on hover */
-            box-shadow: 0 25px 75px rgba(0,0,0,0.12);
-        }
-
-        /* Input Fields: Clear, Accessible, and Subtle */
-        .input-field {
-            background: #F8FAFC;
-            color: #1A202C;
-            border: 1px solid #E2E8F0;
-            border-radius: 0.75rem;
-            padding: 0.85rem 1.15rem; /* Further reduced padding for inputs */
-            font-size: 0.9rem; /* Slightly smaller input text */
-            transition: all 0.3s ease-in-out;
-        }
-
-        .input-field::placeholder {
-            color: #94A3B8;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: #4299E1;
-            box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.2);
-            background: white;
-        }
-
-        /* Button: Strong, Trustworthy, and Engaging */
-        .btn-gradient {
-            background: linear-gradient(90deg, #3182CE 0%, #4299E1 100%);
-            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.05);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); /* Slightly softer shadow */
-            font-size: 1.05rem; /* Further smaller button text */
-            padding: 0.85rem 1.5rem; /* Reduced button padding */
-            border-radius: 0.9rem;
-            letter-spacing: 0.01em; /* Reduced letter spacing */
-        }
-
-        .btn-gradient:hover {
-            transform: translateY(-3px) scale(1.005); /* Reduced lift */
-            box-shadow: 0 12px 28px rgba(0,0,0,0.18);
-        }
-
-        /* Parallax Elements: Barely-There Visual Texture */
-        .parallax {
-            position: absolute;
-            will-change: transform;
-            pointer-events: none;
-            transition: transform 0.08s ease-out;
-            opacity: 0.04; /* Even more subtle */
-        }
-        .parallax.bg-purple-500 { background-color: rgba(147, 51, 234, 0.025); }
-        .parallax.bg-indigo-400 { background-color: rgba(79, 70, 229, 0.015); }
-
-        /* Icon Wrapper: Minimalist & Clean */
-        .icon-wrapper {
-            position: relative;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.05);
-            background-color: rgba(255, 255, 255, 0.04); /* Even more subtle white background */
-            border-radius: 50%;
-            padding: 1.15rem; /* Further reduced icon padding */
+        /* ─── LAYOUT ───────────────────────────────────────────────── */
+        .page-wrapper {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.06); /* Lighter shadow */
-        }
-        .icon-wrapper:hover {
-            transform: translateY(-3px) scale(1.02); /* Reduced lift */
-            background-color: rgba(255, 255, 255, 0.06);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .icon-wrapper svg {
-            transition: transform 0.3s ease, color 0.3s ease;
-            color: #C3D0E8;
-            width: 3rem; /* Further smaller icon size */
-            height: 3rem; /* Further smaller icon size */
-            stroke-width: 1.5; /* Slightly finer stroke */
-        }
-        .icon-wrapper:hover svg {
-            color: #FFFFFF;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--brand-dark) 0%, #0b2059 55%, #0e3280 100%);
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Specific Text Adjustments for HRIS Clarity */
-        .main-title {
-            font-size: 3.5rem; /* Further reduced main title size */
-            line-height: 1.1; 
-            letter-spacing: -0.06em;
-            font-weight: 800;
+        /* Subtle animated radial glow blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            will-change: transform;
+            animation: drift 18s ease-in-out infinite alternate;
         }
-        .sub-title {
-            font-size: 1.15rem; /* Further reduced subtitle size */
-            opacity: 0.9;
-            line-height: 1.35;
-            margin-bottom: 1.8rem; /* Further reduced margin */
-            max-width: 400px;
+        .blob-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%);
+            top: -120px; left: -100px;
+            animation-duration: 20s;
         }
-        .limehills-heading {
-            font-size: 2.1rem; /* Further reduced heading for logo section */
-            letter-spacing: 0.02em;
-            margin-bottom: 0.6rem;
+        .blob-2 {
+            width: 450px; height: 450px;
+            background: radial-gradient(circle, rgba(26,86,196,0.15) 0%, transparent 70%);
+            bottom: -80px; left: 30%;
+            animation-duration: 16s;
+            animation-delay: -5s;
+        }
+        .blob-3 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 70%);
+            top: 40%; right: 35%;
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+
+        @keyframes drift {
+            0%   { transform: translate(0, 0) scale(1); }
+            50%  { transform: translate(30px, 20px) scale(1.04); }
+            100% { transform: translate(-20px, 40px) scale(0.97); }
+        }
+
+        /* ─── LEFT HERO ───────────────────────────────────────────── */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(8px);
+            color: #93c5fd;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 0.45rem 1rem;
+            border-radius: 999px;
+            margin-bottom: 2rem;
+            width: fit-content;
+        }
+        .hero-badge i { font-size: 0.65rem; }
+
+        .hero-title {
+            font-size: clamp(2.8rem, 4.5vw, 4.2rem);
             font-weight: 900;
-            color: #1A202C;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            color: var(--white);
+            margin-bottom: 1.4rem;
         }
-        .hris-system-text {
-            font-size: 1rem; /* Further reduced HRIS system identifier */
-            color: #718096;
-            font-weight: 500;
+        .hero-title .accent {
+            color: #60a5fa;
+        }
+
+        .hero-desc {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.65);
+            line-height: 1.7;
+            max-width: 420px;
+            margin-bottom: 3rem;
+        }
+
+        /* Feature cards */
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.09);
+            backdrop-filter: blur(6px);
+            border-radius: 0.875rem;
+            padding: 0.9rem 1.2rem;
+            transition: background 0.3s ease, transform 0.3s ease;
+            cursor: default;
+            max-width: 360px;
+        }
+        .feature-item:hover {
+            background: rgba(255,255,255,0.11);
+            transform: translateX(5px);
+        }
+
+        .feature-icon {
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 0.6rem;
+            background: linear-gradient(135deg, var(--brand-blue), var(--brand-accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+        }
+        .feature-icon i {
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .feature-text h4 {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.15rem;
+        }
+        .feature-text p {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+            font-weight: 400;
+        }
+
+        /* ─── RIGHT LOGIN PANEL ──────────────────────────────────── */
+        .login-panel {
+            width: 440px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: 1.5rem;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05);
+            padding: 2.5rem 2.2rem;
+            width: 100%;
+            animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Logo area */
+        .card-logo-wrap {
+            text-align: center;
+            margin-bottom: 1.6rem;
+        }
+        .card-logo {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            margin: 0 auto 0.8rem;
+            display: block;
+            filter: drop-shadow(0 4px 12px rgba(26,86,196,0.2));
+        }
+        .card-brand-name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--brand-blue);
             letter-spacing: 0.01em;
+            margin-bottom: 0.2rem;
+        }
+        .card-brand-sub {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            font-weight: 400;
+        }
+
+        /* Divider */
+        .card-divider {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 1.4rem 0;
+        }
+
+        /* Form fields */
+        .form-group {
+            margin-bottom: 1rem;
         }
         .form-label {
-            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            color: #2D3748;
-            letter-spacing: 0.01em;
+            color: var(--gray-800);
+            margin-bottom: 0.45rem;
         }
-        .remember-forgot-text {
-            font-size: 0.85rem; /* Further reduced */
-            color: #616E82;
-        }
-        .remember-forgot-text a {
-            color: #4299E1;
-            font-weight: 500;
-        }
-        /* Password visibility icon styling */
-        .password-toggle-icon {
-            color: #A0AEC0;
-            transition: color 0.2s ease;
-        }
-        .password-toggle-icon:hover {
-            color: #718096;
+        .form-label i {
+            color: var(--brand-accent);
+            font-size: 0.75rem;
         }
 
-        /* Mobile Responsiveness */
-        @media (max-width: 768px) {
-            body {
-                overflow-y: auto; /* Allow scrolling on smaller screens */
-            }
-            .parallax {
-                display: none; /* Hide parallax on mobile */
-            }
-            .left-section {
-                display: none; /* Hide left section on mobile */
-            }
-            .login-card {
-                width: 90%; /* Take up more width on small screens */
-                max-width: 350px; /* Smaller max-width for mobile */
-                padding: 2rem; /* Reduced padding for mobile */
-                border-radius: 1.25rem;
-                margin: 15px auto; /* Center card on mobile with less vertical margin */
-            }
-            .main-title {
-                font-size: 2.2rem; /* Even smaller title on mobile */
-                margin-bottom: 0.8rem;
-            }
-            .sub-title {
-                font-size: 0.9rem;
-                margin-bottom: 1.2rem;
-            }
-            .limehills-heading {
-                font-size: 1.8rem;
-                margin-bottom: 0.4rem;
-            }
-            .hris-system-text {
-                font-size: 0.85rem;
-            }
-            .input-field {
-                padding: 0.7rem 0.9rem;
-                font-size: 0.85rem;
-            }
-            .btn-gradient {
-                font-size: 0.95rem;
-                padding: 0.75rem 1.2rem;
-            }
-            .icon-wrapper {
-                padding: 0.8rem;
-            }
-            .icon-wrapper svg {
-                width: 2rem;
-                height: 2rem;
-            }
-            .flex-1.flex.items-center.justify-center.p-12.relative {
-                padding: 0.5rem; /* Adjust container padding for mobile */
-            }
+        .input-wrap { position: relative; }
+        .input-field {
+            width: 100%;
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: 0.65rem;
+            padding: 0.72rem 1rem;
+            font-size: 0.88rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--gray-800);
+            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+            outline: none;
+        }
+        .input-field::placeholder { color: var(--gray-400); }
+        .input-field:focus {
+            border-color: var(--brand-accent);
+            background: var(--white);
+            box-shadow: 0 0 0 3.5px rgba(59,130,246,0.16);
         }
 
+        /* Password toggle */
+        .pw-toggle {
+            position: absolute;
+            right: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .pw-toggle:hover { color: var(--gray-600); }
+
+        /* Remember / Forgot */
+        .remember-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.7rem;
+            margin-bottom: 1.4rem;
+        }
+        .remember-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            cursor: pointer;
+        }
+        .remember-label input[type="checkbox"] {
+            accent-color: var(--brand-accent);
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+        .forgot-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--brand-accent);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .forgot-link:hover { color: var(--brand-blue); }
+
+        /* Submit button */
+        .btn-signin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: linear-gradient(135deg, #1a56c4 0%, #3b82f6 100%);
+            color: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(59,130,246,0.38);
+            transition: transform 0.25s, box-shadow 0.25s, filter 0.25s;
+        }
+        .btn-signin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(59,130,246,0.5);
+            filter: brightness(1.06);
+        }
+        .btn-signin:active { transform: translateY(0); }
+
+        /* Error alert */
+        .error-alert {
+            background: var(--red-100);
+            border: 1px solid #fca5a5;
+            color: var(--red-600);
+            font-size: 0.8rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .error-alert ul { list-style: disc; padding-left: 1.2rem; }
+
+        /* Footer */
+        .card-footer {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--gray-400);
+            margin-top: 1.6rem;
+        }
+
+        /* ─── RESPONSIVE ─────────────────────────────────────────── */
+        @media (max-width: 860px) {
+            .page-wrapper { overflow-y: auto; }
+            .hero { display: none; }
+            .login-panel {
+                width: 100%;
+                min-height: 100vh;
+                align-items: flex-start;
+                padding: 3rem 1.5rem;
+            }
+            html, body { overflow: auto; }
+        }
     </style>
 </head>
-<body class="antialiased min-h-screen flex relative overflow-hidden">
+<body>
+<div class="page-wrapper">
 
-    <!-- Parallax Circles - More & Larger, Extremely Subtle -->
-    <div class="parallax w-72 h-72 rounded-full top-12 left-1/4 transform -translate-x-1/2 bg-purple-500 hidden md:block" data-speed="0.00025"></div>
-    <div class="parallax w-56 h-56 rounded-full bottom-24 right-1/3 transform translate-x-1/2 bg-indigo-400 hidden md:block" data-speed="0.00015"></div>
-    <div class="parallax w-96 h-96 rounded-full top-1/2 left-3/4 transform -translate-x-1/2 -translate-y-1/2 bg-purple-500 hidden md:block" data-speed="0.00035"></div>
-    <div class="parallax w-40 h-40 rounded-full top-1/3 right-1/4 transform translate-x-1/2 -translate-y-1/2 bg-indigo-400 hidden md:block" data-speed="0.0002"></div>
+    <!-- Ambient blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
 
-    <!-- Left Section -->
-    <div class="hidden md:flex flex-1 flex-col justify-center items-center relative px-20 py-32 left-section">
-        <h1 class="main-title font-extrabold mb-6 text-center text-white">Human Resource <br> Information System</h1>
-        <p class="sub-title mb-24 text-center text-white max-w-xl">Your gateway to effortless time management and employee empowerment with a modern, intuitive interface.</p>
+    <!-- ── LEFT HERO ── -->
+    <div class="hero">
+        <div class="hero-badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            Human Resource Information System
+        </div>
 
-        
-        <div class="flex space-x-14 mt-10">
-            <div class="icon-wrapper">
-                <!-- Clock Icon -->
-                <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12,6 12,12 16,14"></polyline>
-                </svg>
+        <h1 class="hero-title">
+            Where <span class="accent">Talent</span><br>
+            Meets Opportunity
+        </h1>
+
+        <p class="hero-desc">
+            A powerful, modern HRIS built for WRK Services PH
+            — streamlining attendance, payroll, and workforce
+            management with precision.
+        </p>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="feature-text">
+                    <h4>Daily Time Record</h4>
+                    <p>Real-time attendance tracking</p>
+                </div>
             </div>
-            <div class="icon-wrapper">
-                <!-- Calendar Icon -->
-                <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <div class="feature-text">
+                    <h4>Payroll Management</h4>
+                    <p>Automated computation &amp; payslips</p>
+                </div>
             </div>
-            <div class="icon-wrapper">
-                <!-- Person Icon -->
-                <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div class="feature-text">
+                    <h4>Leave &amp; Schedules</h4>
+                    <p>Smart leave requests &amp; approvals</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Right Section: Login Form -->
-    <div class="flex-1 flex items-center justify-center p-12 relative">
-        <div class="login-card p-10 w-full max-w-md relative z-10">
-            <div class="text-center mb-8">
-                <img src="{{ asset('limehills.png') }}" alt="Limehills Logo" class="mx-auto h-24 w-24 mb-4">
-                <h2 class="limehills-heading font-extrabold mb-1 text-gray-900">LIMEHILLS HRIS</h2>
+    <!-- ── RIGHT LOGIN PANEL ── -->
+    <div class="login-panel">
+        <div class="login-card">
+
+            <!-- Logo / Branding -->
+            <div class="card-logo-wrap">
+                <img src="{{ asset('logo.png') }}" alt="WRK Services PH Logo" class="card-logo">
+                <div class="card-brand-name">WRK SERVICES PH HRIS</div>
+                <div class="card-brand-sub">Where Talent Meets Opportunity</div>
             </div>
 
+            <div class="card-divider"></div>
+
             @if($errors->any())
-                <div class="bg-red-100 border border-red-300 text-red-700 text-sm px-5 py-3.5 rounded-xl mb-6 shadow-sm">
-                    <ul class="list-disc list-inside space-y-1.5">
+                <div class="error-alert">
+                    <ul>
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -274,83 +468,96 @@
                 </div>
             @endif
 
-            <form action="{{ route('login') }}" method="POST" class="space-y-5">
+            <form action="{{ route('login') }}" method="POST" autocomplete="on">
                 @csrf
 
-                <div>
-                    <label for="email" class="form-label block mb-2">Email</label>
-                    <input type="email" name="email" id="email" required autocomplete="email"
-                        class="input-field w-full"
-                        placeholder="Enter your email address"
-                        value="{{ old('email') }}">
-                </div>
-
-                <div>
-                    <label for="password" class="form-label block mb-2">Password</label>
-                    <div class="relative">
-                        <input type="password" name="password" id="password" required autocomplete="current-password"
-                            class="input-field w-full pr-12"
-                            placeholder="••••••••">
-                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer password-toggle-icon"
-                            onclick="togglePasswordVisibility('password')">
-                            <i id="togglePasswordIcon" class="far fa-eye"></i>
-                        </span>
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label" for="email">
+                        <i class="fa-solid fa-envelope"></i> Email Address
+                    </label>
+                    <div class="input-wrap">
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="input-field"
+                            placeholder="you@wrk.com.ph"
+                            value="{{ old('email') }}"
+                            required
+                            autocomplete="email"
+                        >
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between remember-forgot-text">
-                    <label class="flex items-center space-x-2.5 cursor-pointer">
-                        <input type="checkbox" name="remember" class="h-4.5 w-4.5 text-blue-700 rounded focus:ring focus:ring-blue-600">
-                        <span>Remember me</span>
+                <!-- Password -->
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="fa-solid fa-lock"></i> Password
                     </label>
-                    <a href="{{ route('password.request') }}" class="hover:underline text-blue-600">Forgot password?</a>
+                    <div class="input-wrap">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="input-field"
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                            style="padding-right: 2.6rem;"
+                        >
+                        <button type="button" class="pw-toggle" onclick="togglePw()" aria-label="Toggle password visibility">
+                            <i id="pw-icon" class="far fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn-gradient w-full text-white font-bold shadow-lg mt-5">
-                    Log In
+                <!-- Remember / Forgot -->
+                <div class="remember-row">
+                    <label class="remember-label">
+                        <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                        Remember me
+                    </label>
+                    <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <!-- Sign In -->
+                <button type="submit" class="btn-signin" id="signin-btn">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    SIGN IN
                 </button>
             </form>
+
+            <div class="card-footer">
+                &copy; {{ date('Y') }} WRK Services PH. All rights reserved.
+            </div>
         </div>
     </div>
 
-    <!-- Parallax Script -->
-    <script>
-        const parallaxElements = document.querySelectorAll('.parallax');
+</div>
 
-        document.addEventListener('mousemove', (e) => {
-            parallaxElements.forEach(el => {
-                const speed = parseFloat(el.getAttribute('data-speed')) || 0.00025; // Use data-speed or a subtle default
-                const x = (window.innerWidth - e.pageX * speed);
-                const y = (window.innerHeight - e.pageY * speed);
-                el.style.transform = `translate(${x}px, ${y}px)`;
-            });
+<script>
+    // Password toggle
+    function togglePw() {
+        const field = document.getElementById('password');
+        const icon  = document.getElementById('pw-icon');
+        const isPass = field.type === 'password';
+        field.type = isPass ? 'text' : 'password';
+        icon.className = isPass ? 'far fa-eye-slash' : 'far fa-eye';
+    }
+
+    // Subtle parallax on hero blobs from mouse
+    const blobs = document.querySelectorAll('.blob');
+    document.addEventListener('mousemove', (e) => {
+        const cx = window.innerWidth  / 2;
+        const cy = window.innerHeight / 2;
+        const dx = (e.clientX - cx) / cx;
+        const dy = (e.clientY - cy) / cy;
+        blobs.forEach((b, i) => {
+            const factor = (i + 1) * 12;
+            b.style.transform = `translate(${dx * factor}px, ${dy * factor}px)`;
         });
-
-        // Set initial random positions for a more dynamic start
-        parallaxElements.forEach(el => {
-            const randomX = Math.random() * 30 - 15; // -15 to 15px
-            const randomY = Math.random() * 30 - 15;
-            el.style.transform = `translate(${randomX}px, ${randomY}px)`;
-            el.setAttribute('data-speed', (Math.random() * 0.0003 + 0.0001).toFixed(5)); // Even finer random speed
-        });
-
-    </script>
-
-    <script>
-        function togglePasswordVisibility(fieldId) {
-            const passwordField = document.getElementById(fieldId);
-            const toggleIcon = document.getElementById('togglePasswordIcon');
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordField.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
-            }
-        }
-    </script>
-
+    });
+</script>
 </body>
 </html>
