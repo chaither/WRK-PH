@@ -438,8 +438,8 @@
                     <i class="fa-solid fa-calendar-check"></i>
                 </div>
                 <div class="feature-text">
-                    <h4>Leave &amp; Schedules</h4>
-                    <p>Smart leave requests &amp; approvals</p>
+                    <h4>Shift &amp; Overtime</h4>
+                    <p>Manage work schedules &amp; additional hours</p>
                 </div>
             </div>
         </div>
